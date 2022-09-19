@@ -35,6 +35,7 @@ from builders.bl602 import Bl602App, Bl602Board, Bl602Builder
 from builders.bouffalolab import BouffalolabApp, BouffalolabBoard, BouffalolabBuilder
 from builders.imx import IMXApp, IMXBuilder
 from builders.genio import GenioApp, GenioBuilder
+from builders.openiotsdk import OpenIotSdkApp, OpenIotSdkBuilder
 
 
 class Target:
@@ -650,6 +651,11 @@ def MW320Targets():
 
     yield target.Extend('all-clusters-app', app=MW320App.ALL_CLUSTERS)
 
+def OpenIotSdkTargets():
+    target = Target('openiotsdk', OpenIotSdkBuilder)
+
+    yield target.Extend('shell', app=OpenIotSdkApp.SHELL)
+    yield target.Extend('lock', app=OpenIotSdkApp.LOCK)
 
 def GenioTargets():
     target = Target('genio', GenioBuilder)
@@ -678,6 +684,7 @@ target_generators = [
     IMXTargets(),
     MW320Targets(),
     GenioTargets(),
+    OpenIotSdkTargets(),
 ]
 
 for generator in target_generators:
