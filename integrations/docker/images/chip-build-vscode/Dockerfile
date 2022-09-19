@@ -12,6 +12,7 @@ FROM connectedhomeip/chip-build-ameba:${VERSION} AS ameba
 FROM connectedhomeip/chip-build-k32w:${VERSION} AS k32w
 FROM connectedhomeip/chip-build-imx:${VERSION} AS imx
 FROM connectedhomeip/chip-build-ti:${VERSION} AS ti
+FROM connectedhomeip/chip-build-openiotsdk:${VERSION} AS openiotsdk
 FROM connectedhomeip/chip-build-zap:${VERSION} AS zap
 FROM connectedhomeip/chip-build:${VERSION}
 
@@ -46,6 +47,9 @@ COPY --from=k32w /opt/sdk /opt/k32w_sdk
 COPY --from=imx /opt/fsl-imx-xwayland /opt/fsl-imx-xwayland
 
 COPY --from=ti /opt/ti/sysconfig_1.13.0 /opt/ti/sysconfig_1.13.0
+
+COPY --from=openiotsdk /opt/gcc-arm-none-eabi-10.3-2021.10/ /opt/gcc-arm-none-eabi-10.3-2021.10/
+COPY --from=openiotsdk /opt/FVP_Corstone_SSE-300/ /opt/FVP_Corstone_SSE-300/
 
 COPY --from=zap /opt/zap /opt/zap
 
@@ -95,3 +99,6 @@ ENV ZEPHYR_TOOLCHAIN_VARIANT=gnuarmemb
 ENV TIZEN_VERSION 6.0
 ENV TIZEN_SDK_ROOT /opt/tizen-sdk
 ENV TIZEN_SDK_SYSROOT $TIZEN_SDK_ROOT/platforms/tizen-$TIZEN_VERSION/mobile/rootstraps/mobile-$TIZEN_VERSION-device.core
+
+ENV FVP_CORSTONE_300_PATH=/opt/FVP_Corstone_SSE-300
+ENV ARM_GCC_TOOLCHAIN_PATH=/opt/gcc-arm-none-eabi-10.3-2021.10
