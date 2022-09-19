@@ -38,6 +38,7 @@ from builders.bl602 import Bl602App, Bl602Board, Bl602Builder
 from builders.bouffalolab import BouffalolabApp, BouffalolabBoard, BouffalolabBuilder
 from builders.imx import IMXApp, IMXBuilder
 from builders.genio import GenioApp, GenioBuilder
+from builders.openiotsdk import OpenIotSdkApp, OpenIotSdkBuilder
 
 
 def BuildHostTestRunnerTarget():
@@ -499,7 +500,6 @@ def BuildGenioTarget():
     target.AppendFixedTargets([TargetPart('lighting-app', app=GenioApp.LIGHT)])
     return target
 
-
 def BuildTelinkTarget():
     target = BuildTarget('telink', TelinkBuilder)
     target.AppendFixedTargets([TargetPart('tlsr9518adk80d', board=TelinkBoard.TLSR9518ADK80D)])
@@ -508,6 +508,16 @@ def BuildTelinkTarget():
         TargetPart('light', app=TelinkApp.LIGHT),
         TargetPart('light-switch', app=TelinkApp.SWITCH),
         TargetPart('ota-requestor', app=TelinkApp.OTA_REQUESTOR),
+    ])
+
+    return target
+
+def BuildOpenIotSdkTargets():
+    target = BuildTarget('openiotsdk', OpenIotSdkBuilder)
+
+    target.AppendFixedTargets([
+        TargetPart('shell', app=OpenIotSdkApp.SHELL),
+        TargetPart('lock', app=OpenIotSdkApp.LOCK),
     ])
 
     return target
@@ -536,4 +546,5 @@ BUILD_TARGETS = [
     BuildQorvoTarget(),
     BuildTizenTarget(),
     BuildTelinkTarget(),
+    BuildOpenIotSdkTargets(),
 ]
