@@ -1210,7 +1210,7 @@ class ChipDeviceController():
         except:
             raise UnknownCommand(cluster, command)
         try:
-            res = asyncio.run(self.SendCommand(nodeid, endpoint, req))
+            res = asyncio.run(self.SendCommand(nodeid, endpoint, req, timedRequestTimeoutMs=1000))
             print(f"CommandResponse {res}")
             return (0, res)
         except InteractionModelError as ex:
