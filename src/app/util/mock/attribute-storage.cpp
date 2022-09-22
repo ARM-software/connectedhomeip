@@ -279,7 +279,7 @@ CHIP_ERROR ReadSingleMockClusterData(FabricIndex aAccessingFabricIndex, const Co
         (emberAfGetServerAttributeIndexByAttributeId(aPath.mEndpointId, aPath.mClusterId, aPath.mAttributeId) != UINT16_MAX);
 
     ChipLogDetail(DataManagement, "Reading Mock Endpoint %" PRIx32 "Mock Cluster %" PRIx32 ", Field %" PRIx32 " is dirty",
-                  aPath.mEndpointId, aPath.mClusterId, aPath.mAttributeId);
+                  (uint32_t) aPath.mEndpointId, (uint32_t) aPath.mClusterId, (uint32_t) aPath.mAttributeId);
 
     if (!dataExists)
     {
