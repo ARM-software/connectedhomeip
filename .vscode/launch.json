@@ -435,6 +435,20 @@
             "runToEntryPoint": "main",
             "preLaunchTask": "Debug Open IoT SDK example",
             "showDevDebugOutput": "parsed"
+        },
+        {
+            "name": "Debug Open IoT SDK unit-tests application",
+            "type": "cortex-debug",
+            "request": "launch",
+            "cwd": "${workspaceRoot}/src/test_driver/openiotsdk/unit-tests",
+            "executable": "./build/${input:openiotsdkUnittest}.elf",
+            "armToolchainPath": "${env:ARM_GCC_TOOLCHAIN_PATH}/bin",
+            "servertype": "external",
+            "gdbTarget": ":31627", //GDBserver port on FVP
+            "overrideLaunchCommands": ["-enable-pretty-printing"],
+            "runToEntryPoint": "main",
+            "preLaunchTask": "Debug Open IoT SDK unit-tests",
+            "showDevDebugOutput": "parsed"
         }
     ],
     "inputs": [
