@@ -889,6 +889,7 @@ MyPASSWORD
 MySSID
 NAMESERVER
 NAMESPACE
+namespaces
 namespacing
 nano
 natively

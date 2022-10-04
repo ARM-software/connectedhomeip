@@ -29,7 +29,7 @@ jobs:
         timeout-minutes: 140
 
         env:
-            NETWORK_TAP_DEVICE_NAME: ARMfmtap
+            TEST_NETWORK_NAME: OIStest
 
         runs-on: ubuntu-latest
         if: github.actor != 'restyled-io[bot]'
@@ -41,7 +41,7 @@ jobs:
               password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
             volumes:
                 - "/tmp/bloat_reports:/tmp/bloat_reports"
-            options: --privileged --sysctl "net.ipv6.conf.all.disable_ipv6=0 net.ipv4.conf.all.forwarding=1 net.ipv6.conf.all.forwarding=1"
+            options: --privileged
 
         steps:
             - uses: Wandalen/wretry.action@v1.0.15
@@ -117,6 +117,6 @@ jobs:
               if: steps.build_lock_app.outcome == 'success'
               timeout-minutes: 5
               run: |
-                  scripts/setup/openiotsdk/network_setup.sh -t $NETWORK_TAP_DEVICE_NAME up
-                  scripts/examples/openiotsdk_example.sh -C test -n $NETWORK_TAP_DEVICE_NAME lock-app
-                  scripts/setup/openiotsdk/network_setup.sh -t $NETWORK_TAP_DEVICE_NAME down
+                  scripts/setup/openiotsdk/network_setup.sh -n $TEST_NETWORK_NAME up
+                  scripts/run_in_ns.sh ${TEST_NETWORK_NAME}ns scripts/examples/openiotsdk_example.sh -C test -n ${TEST_NETWORK_NAME}tap lock-app
+                  scripts/setup/openiotsdk/network_setup.sh -n $TEST_NETWORK_NAME down

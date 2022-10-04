@@ -292,10 +292,12 @@
         {
             "label": "Run Open IoT SDK example",
             "type": "shell",
-            "command": "scripts/examples/openiotsdk_example.sh",
+            "command": "scripts/run_in_ns.sh",
             "args": [
+                "${input:openiotsdkNetworkNamespace}",
+                " scripts/examples/openiotsdk_example.sh",
                 "-Crun",
-                "-n${input:openiotsdkNetwork}",
+                "-n${input:openiotsdkNetworkInterface}",
                 "${input:openiotsdkExample}"
             ],
             "group": "test",
@@ -326,10 +328,12 @@
         {
             "label": "Test Open IoT SDK example",
             "type": "shell",
-            "command": "scripts/examples/openiotsdk_example.sh",
+            "command": "scripts/run_in_ns.sh",
             "args": [
+                "${input:openiotsdkNetworkNamespace}",
+                "scripts/examples/openiotsdk_example.sh",
                 "-Ctest",
-                "-n${input:openiotsdkNetwork}",
+                "-n${input:openiotsdkNetworkInterface}",
                 "${input:openiotsdkExample}"
             ],
             "group": "test",
@@ -345,10 +349,12 @@
         {
             "label": "Debug Open IoT SDK example",
             "type": "shell",
-            "command": "scripts/examples/openiotsdk_example.sh",
+            "command": "scripts/run_in_ns.sh",
             "args": [
+                "${input:openiotsdkNetworkNamespace}",
+                "scripts/examples/openiotsdk_example.sh",
                 "-Crun",
-                "-n${input:openiotsdkNetwork}",
+                "-n${input:openiotsdkNetworkInterface}",
                 "-dtrue",
                 "${input:openiotsdkExample}"
             ],
@@ -488,8 +494,14 @@
         },
         {
             "type": "promptString",
-            "id": "openiotsdkNetwork",
-            "description": "Type the network name that you want to use. \"user\" means user network mode",
+            "id": "openiotsdkNetworkNamespace",
+            "description": "Type the network namespace that you want to use. \"default\" means host default network namespace",
+            "default": "default"
+        },
+        {
+            "type": "promptString",
+            "id": "openiotsdkNetworkInterface",
+            "description": "Type the network interface name that you want to use. \"user\" means user network mode",
             "default": "user"
         },
         {

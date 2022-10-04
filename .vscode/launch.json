@@ -430,7 +430,7 @@
             "executable": "./build/chip-openiotsdk-${input:openiotsdkApp}-example.elf",
             "armToolchainPath": "${env:ARM_GCC_TOOLCHAIN_PATH}/bin",
             "servertype": "external",
-            "gdbTarget": ":31627", //GDBserver port on FVP
+            "gdbTarget": "${input:openiotsdkRemoteHost}:31627", //GDBserver port on FVP
             "overrideLaunchCommands": ["-enable-pretty-printing"],
             "runToEntryPoint": "main",
             "preLaunchTask": "Debug Open IoT SDK example",
@@ -526,6 +526,12 @@
                 "UserDirectedCommissioningTests"
             ],
             "default": "accesstest"
+        },
+        {
+            "type": "promptString",
+            "id": "openiotsdkRemoteHost",
+            "description": "Type the hostname/IP address of external GDB target that you want to connect to. Leave blank for internal GDB server",
+            "default": ""
         }
     ]
 }
