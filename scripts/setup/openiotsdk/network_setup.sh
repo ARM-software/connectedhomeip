@@ -16,14 +16,21 @@
 #    limitations under the License.
 #
 
-# Enable/disable/restart TAP/TUN Open IoT SDK networking environment.
+# Enable/disable/restart Open IoT SDK networking environment.
 
-USER="$(id -u -n)"
-TAP_TUN_INTERFACE_NAME="ARMfmtap"
-BRIDGE_INTERFACE_NAME="ARMfmbr"
-NETWORK_INTERFACE="eth0"
+NAMESPACE_NAME="ns"
+HOST_SIDE_IF_NAME="hveth"
+NAMESPACE_SIDE_IF_NAME="nveth"
+TAP_TUN_INTERFACE_NAME="tap"
+BRIDGE_INTERFACE_NAME="br"
+HOST_IPV6_ADDR="fe00::1"
+NAMESPACE_IPV6_ADDR="fe00::2"
+HOST_IPV4_ADDR="10.200.1.1"
+NAMESPACE_IPV4_ADDR="10.200.1.2"
 USER_PREFIX=""
-DHCP_ENABLE=false
+NAME="ARM"
+INTERNET_ENABLE=false
+USER="$(id -u -n)"
 
 if [ "$EUID" -ne 0 ]; then
     USER_PREFIX="sudo"
@@ -37,11 +44,9 @@ Enable, disable or restart Open IoT SDK networking environment.
 
 Options:
     -h,--help                           Show this help
-    -d,--dhcp                           Run dhcp client on bridge interface
-    -b,--bridge  <bridge_name>          Network bridge name <bridge_name - default is ARMfmbr>
-    -t,--tap     <tap_name>             Network TAP device name <tap_name - default is ARMfmtap>
+    -n,--name    <base_name>            Open IoT SDK network base name <base_name - default is ARM>
     -u,--user    <user_name>            Network user <user_name - default is current user>
-    -n,--network <network_interface>    Network/parent interface name <network_interface - default is eth0>
+    -I,--Internet                       Add Internet connection support to network namespace <disabled by default>
 
 command:
     up
@@ -51,38 +56,74 @@ command:
 EOF
 }
 
-function net_up {
-    echo "Create ${TAP_TUN_INTERFACE_NAME} TAP device for ${USER} user"
-    ${USER_PREFIX} ip tuntap add dev $TAP_TUN_INTERFACE_NAME mode tap user $USER
-    ${USER_PREFIX} ifconfig $TAP_TUN_INTERFACE_NAME 0.0.0.0 promisc
+function net_ns_up {
+    # Enable IPv6 and IP-forwarding
+    ${USER_PREFIX} sysctl net.ipv6.conf.all.disable_ipv6=0 net.ipv4.conf.all.forwarding=1 net.ipv6.conf.all.forwarding=1
 
-    echo "Create ${BRIDGE_INTERFACE_NAME} bridge interface between ${NETWORK_INTERFACE} and ${TAP_TUN_INTERFACE_NAME}"
-    ${USER_PREFIX} ip link add $BRIDGE_INTERFACE_NAME type bridge
-    ${USER_PREFIX} ip link set $TAP_TUN_INTERFACE_NAME master $BRIDGE_INTERFACE_NAME
-    ${USER_PREFIX} ip address flush dev $NETWORK_INTERFACE
-    ${USER_PREFIX} ip link set $NETWORK_INTERFACE master $BRIDGE_INTERFACE_NAME
-    ${USER_PREFIX} ip link set dev $BRIDGE_INTERFACE_NAME up
-    if $DHCP_ENABLE; then
-        ${USER_PREFIX} dhclient -v $BRIDGE_INTERFACE_NAME
+    echo "Create ${NAMESPACE_NAME} network namespace"
+    # Create namespace.
+    ${USER_PREFIX} ip netns add "$NAMESPACE_NAME"
+
+    # Enable lo interface in namespace
+    ${USER_PREFIX} ip netns exec "$NAMESPACE_NAME" ip link set dev lo up
+
+    echo "Adding ${HOST_SIDE_IF_NAME} veth with peer ${NAMESPACE_SIDE_IF_NAME}"
+    # Create two virtual interfaces and link them - one on host side, one on namespace side.
+    ${USER_PREFIX} ip link add "$HOST_SIDE_IF_NAME" type veth peer name "$NAMESPACE_SIDE_IF_NAME"
+
+    # Give the host a known IPv6 addr and set the host side up
+    echo "Set IP addresses ${HOST_IPV4_ADDR}/24 ${HOST_IPV6_ADDR}/64 to ${HOST_SIDE_IF_NAME} interface"
+    ${USER_PREFIX} ip addr add "$HOST_IPV4_ADDR"/24 dev "$HOST_SIDE_IF_NAME"
+    ${USER_PREFIX} ip -6 addr add "$HOST_IPV6_ADDR"/64 dev "$HOST_SIDE_IF_NAME"
+    ${USER_PREFIX} ip link set "$HOST_SIDE_IF_NAME" up
+
+    echo "Adding ${NAMESPACE_SIDE_IF_NAME} veth to namespace ${NAMESPACE_NAME}"
+    # Associate namespace IF with the namespace
+    ${USER_PREFIX} ip link set "$NAMESPACE_SIDE_IF_NAME" netns "$NAMESPACE_NAME"
+    ${USER_PREFIX} ip netns exec "$NAMESPACE_NAME" ip link set dev "$NAMESPACE_SIDE_IF_NAME" up
+
+    echo "Create ${TAP_TUN_INTERFACE_NAME} TAP device"
+    ${USER_PREFIX} ip netns exec "$NAMESPACE_NAME" ip tuntap add dev "$TAP_TUN_INTERFACE_NAME" mode tap user "$USER"
+    ${USER_PREFIX} ip netns exec "$NAMESPACE_NAME" ifconfig "$TAP_TUN_INTERFACE_NAME" 0.0.0.0 promisc
+
+    echo "Create ${BRIDGE_INTERFACE_NAME} bridge interface between ${NAMESPACE_SIDE_IF_NAME} and ${TAP_TUN_INTERFACE_NAME}"
+    ${USER_PREFIX} ip netns exec "$NAMESPACE_NAME" ip link add "$BRIDGE_INTERFACE_NAME" type bridge
+    echo "Set IP addresses ${NAMESPACE_IPV4_ADDR}/24 ${NAMESPACE_IPV6_ADDR}/64 to ${BRIDGE_INTERFACE_NAME} bridge interface"
+    ${USER_PREFIX} ip netns exec "$NAMESPACE_NAME" ip -6 addr add "$NAMESPACE_IPV6_ADDR"/64 dev "$BRIDGE_INTERFACE_NAME"
+    ${USER_PREFIX} ip netns exec "$NAMESPACE_NAME" ip addr add "$NAMESPACE_IPV4_ADDR"/24 dev "$BRIDGE_INTERFACE_NAME"
+    ${USER_PREFIX} ip netns exec "$NAMESPACE_NAME" ip addr flush dev "$NAMESPACE_SIDE_IF_NAME"
+    ${USER_PREFIX} ip netns exec "$NAMESPACE_NAME" ip link set "$TAP_TUN_INTERFACE_NAME" master "$BRIDGE_INTERFACE_NAME"
+    ${USER_PREFIX} ip netns exec "$NAMESPACE_NAME" ip link set "$NAMESPACE_SIDE_IF_NAME" master "$BRIDGE_INTERFACE_NAME"
+    ${USER_PREFIX} ip netns exec "$NAMESPACE_NAME" ip link set dev "$BRIDGE_INTERFACE_NAME" up
+
+    ${USER_PREFIX} ip netns exec "$NAMESPACE_NAME" ip route add default via "$HOST_IPV4_ADDR"
+
+    if $INTERNET_ENABLE; then
+        echo "Set Internet connection to ${NAMESPACE_NAME} namespace"
+        DEFAULT_ROUTE=$(route | grep '^default' | grep -o '[^ ]*$')
+        echo "Default route interface ${DEFAULT_ROUTE}"
+        # Enable masquerading of namespace IP address
+        ${USER_PREFIX} iptables -t nat -A POSTROUTING -s "$NAMESPACE_IPV4_ADDR"/24 -o "$DEFAULT_ROUTE" -j MASQUERADE
+
+        ${USER_PREFIX} iptables -A FORWARD -i "$DEFAULT_ROUTE" -o "$HOST_SIDE_IF_NAME" -j ACCEPT
+        ${USER_PREFIX} iptables -A FORWARD -o "$DEFAULT_ROUTE" -i "$HOST_SIDE_IF_NAME" -j ACCEPT
     fi
+
+    echo "${NAMESPACE_NAME} namespace configuration"
+    ${USER_PREFIX} ip netns exec "$NAMESPACE_NAME" ifconfig
+    echo "Host configuration"
     ifconfig
 }
 
-function net_down {
-    ${USER_PREFIX} ip link set $NETWORK_INTERFACE nomaster
-    echo "Delete ${BRIDGE_INTERFACE_NAME} bridge and and ${TAP_TUN_INTERFACE_NAME} TAP device"
-    ${USER_PREFIX} ip link set dev $TAP_TUN_INTERFACE_NAME down
-    ${USER_PREFIX} ip link set dev $BRIDGE_INTERFACE_NAME down
-    ${USER_PREFIX} ip link delete $BRIDGE_INTERFACE_NAME type bridge
-    ${USER_PREFIX} ip tuntap del dev $TAP_TUN_INTERFACE_NAME mode tap
-    if $DHCP_ENABLE; then
-        ${USER_PREFIX} dhclient -v $NETWORK_INTERFACE
-    fi
+function net_ns_down {
+    ${USER_PREFIX} ip netns delete "$NAMESPACE_NAME"
+    ${USER_PREFIX} ip link delete dev "$HOST_SIDE_IF_NAME"
+    echo "Host configuration"
     ifconfig
 }
 
-SHORT=d,b:,t:,u:,n:,h
-LONG=dhcp,bridge:,tap:,user:,network:,help
+SHORT=n:,u:,I,h,
+LONG=name:,user:,Internet,help
 OPTS=$(getopt -n build --options $SHORT --longoptions $LONG -- "$@")
 
 eval set -- "$OPTS"
@@ -93,25 +134,17 @@ while :; do
         show_usage
         exit 0
         ;;
-    -d | --dhcp)
-        DHCP_ENABLE=true
-        shift
-        ;;
-    -b | --bridge)
-        BRIDGE_INTERFACE_NAME=$2
-        shift 2
-        ;;
-    -t | --tap)
-        TAP_TUN_INTERFACE_NAME=$2
+    -n | --name)
+        NAME=$2
         shift 2
         ;;
     -u | --user)
         USER=$2
         shift 2
         ;;
-    -n | --network)
-        NETWORK_INTERFACE=$2
-        shift 2
+    -I | --Internet)
+        INTERNET_ENABLE=true
+        shift
         ;;
     -* | --*)
         shift
@@ -141,10 +174,16 @@ up | down | restart)
     ;;
 esac
 
+NAMESPACE_NAME="${NAME}${NAMESPACE_NAME}"
+HOST_SIDE_IF_NAME="${NAME}${HOST_SIDE_IF_NAME}"
+NAMESPACE_SIDE_IF_NAME="${NAME}${NAMESPACE_SIDE_IF_NAME}"
+TAP_TUN_INTERFACE_NAME="${NAME}${TAP_TUN_INTERFACE_NAME}"
+BRIDGE_INTERFACE_NAME="${NAME}${BRIDGE_INTERFACE_NAME}"
+
 if [[ "$COMMAND" == *"down"* || "$COMMAND" == *"restart"* ]]; then
-    net_down
+    net_ns_down
 fi
 
 if [[ "$COMMAND" == *"up"* || "$COMMAND" == *"restart"* ]]; then
-    net_up
+    net_ns_up
 fi
