@@ -24,81 +24,62 @@ Matter Project. Please read this
 ### Networking setup
 
 Running ARM Fast Model with TAP/TUN device networking mode requires setup proper
-network interfaces. Depending on development environment the following steps
-should be performed:
+network interfaces. Special scripts were designed to make setup easy. In
+`scripts/setup/openiotsdk` directory you can find:
 
--   host environment - follow steps from
-    [Reference Manual](https://developer.arm.com/documentation/100964/1116/Introduction-to-the-Fast-Models-Reference-Manual/TAP-TUN-networking)
-    to configuring the networking environment
-
--   Docker container environment
-
-    Before running project inside the Docker container create a
-    [macvlan network](https://docs.docker.com/network/macvlan/) in bridge mode.
-    It is important that the subnet and gateway values need to match those of
-    the Docker host network interface. Simply put, the subnet and default
-    gateway for your macvlan network should mirror that of your Docker host.
-    Also, remember about IPv6 support in your macvlan network.
-
-    Example:
-
-    ```
-    docker network create -d macvlan --subnet=192.168.1.0/24 --gateway=192.168.1.1 --ipv6 --subnet=fd12:41:e237:6905::/64 --gateway=fd12:41:e237:6905::11 -o parent=eth0 macvlan`
-    ```
-
-    The next step is to run Docker container and attach the macvlan network to
-    it using the `--network` option. We can also assign the IP address to our
-    container with `--ip`. Be sure to specify an IP that is not within your DHCP
-    IP range to avoid instances of an IP conflict.
-
-    It is also recommended to add IPv6 traffic forwarding configuration with
-    `--sysctl` option.
-
-    The Vscode devcontainer users should edit the
-    `.devcontainer/devcontainer.json` file and add run options.
-
-    Example:
-
-    ```
-    ...
-    "runArgs": [
-        ...
-        "--network=macvlan",
-        "--ip=192.168.1.110",
-        "--sysctl",
-        "net.ipv6.conf.all.disable_ipv6=0 net.ipv4.conf.all.forwarding=1 net.ipv6.conf.all.forwarding=1",
-        ...
-    ],
-    ...
-    ```
-
-    If you launch the Docker container directly from CLI, use the above
-    arguments with `docker run` command.
-
-    To set up proper network interfaces inside Docker container use the designed
-    script `scripts/setup/openiotsdk/network_setup.sh`. Select the main Ethernet
-    interface that TAP device should be linked with `--network` option (the
-    default value is **eth0**). To keep Internet access use the DHCP client
-    `--dhcp`.
+-   **network_setup.sh** - script to create the specific network namespace and
+    Virtual Ethernet interface to connect with host network. Both host and
+    namespace sides have linked IP addresses. Inside the network namespace the
+    TAP device interface is created and bridged with Virtual Ethernet peer.
+    There is also option to enable Internet connection in namespace by
+    forwarding traffic to host default interface.
 
     To enable Open IoT SDK networking environment:
 
     ```
-    ${MATTER_ROOT}/scripts/setup/openiotsdk/network_setup.sh --network eth0 --dhcp up
+    ${MATTER_ROOT}/scripts/setup/openiotsdk/network_setup.sh up
     ```
 
     To disable Open IoT SDK networking environment:
 
     ```
-    ${MATTER_ROOT}/scripts/setup/openiotsdk/network_setup.sh --network eth0 --dhcp down
+    ${MATTER_ROOT}/scripts/setup/openiotsdk/network_setup.sh down
     ```
 
     Use `--help` to get more information about the script options.
 
-    **NOTE**
+-   **connect_if.sh** - script that connects specified network interfaces with
+    the default route interface. It creates a bridge and links all interfaces to
+    it. The bridge becomes the default interface.
 
-    This option is limited to a Docker running on a Linux host as creating
-    macvlan interface is not properly supported on other systems.
+    Example:
+
+    ```
+    ${MATTER_ROOT}/scripts/setup/openiotsdk/connect_if.sh ARMhveth
+    ```
+
+    Use `--help` to get more information about the script options.
+
+After setting up the Open IoT SDK network environment the user will be able to
+run Matter examples on FVP in an isolated network namespace in TAP device mode.
+
+To execute a command in a specific network namespace use the helper script
+`scripts/run_in_ns.sh`.
+
+Example:
+
+```
+${MATTER_ROOT}/scripts/run_in_ns.sh ARMns <command to run>
+```
+
+Use `--help` to get more information about the script options.
+
+**NOTE**
+
+For Docker environment users it's recommended to use the
+[default bridge network](https://docs.docker.com/network/bridge/#use-the-default-bridge-network)
+for a running container. This guarantees full isolation of the Open IoT SDK
+network from host settings.
 
 ### Debugging setup
 
@@ -190,7 +171,7 @@ directly.
 ### Running using vscode task
 
 ```
-Command Palette (F1) => Run Task... => Run Open IoT SDK example => (network name) => <example name>
+Command Palette (F1) => Run Task... => Run Open IoT SDK example => (network namespace) => (network interface) => <example name>
 ```
 
 This will call the scripts with the selected example name.
@@ -201,6 +182,12 @@ You can call the script directly yourself.
 
 ```
 ${MATTER_ROOT}/scripts/examples/openiotsdk_example.sh -C run <example name>
+```
+
+Run example in specific network namespace with TAP device mode:
+
+```
+${MATTER_ROOT}/scripts/run_in_ns.sh ARMns ${MATTER_ROOT}/scripts/examples/openiotsdk_example.sh -C run -n ARMtap <example name>
 ```
 
 ### Commissioning
@@ -223,7 +210,7 @@ line.
 ### Testing using vscode task
 
 ```
-Command Palette (F1) => Run Task... => Test Open IoT SDK example => (network name) => <example name>
+Command Palette (F1) => Run Task... => Test Open IoT SDK example => (network namespace) => (network interface) => <example name>
 ```
 
 This will call the scripts with the selected example name.
@@ -236,13 +223,32 @@ You can call the script directly yourself.
 ${MATTER_ROOT}/scripts/examples/openiotsdk_example.sh -C test <example name>
 ```
 
+Test example in specific network namespace with TAP device mode:
+
+```
+${MATTER_ROOT}/scripts/run_in_ns.sh ARMns ${MATTER_ROOT}/scripts/examples/openiotsdk_example.sh -C test -n ARMtap <example name>
+```
+
 ## Debugging
 
 Debugging can be started using a VS code launch task:
 
 ```
-Run and Debug (Ctrl+Shift+D) => Debug Open IoT SDK example application => Start Debugging (F5) => <example name> => (network name) => <example name>
+Run and Debug (Ctrl+Shift+D) => Debug Open IoT SDK example application => Start
+Debugging (F5) => <example name> => (GDB target address) => (network namespace) => (network interface) => <example name>
 ```
+
+For debugging remote targets (i.e. run in other network namespaces) you need to
+pass hostname/IP address of external GDB target that you want to connect to
+(_GDB target address_). In case of using the
+[Open IoT SDK network environment](#networking-setup) the GDB server runs inside a
+namespace and has the same IP address as bridge interface.
+
+```
+${MATTER_ROOT}/scripts/run_in_ns.sh <namespace_name> ifconfig <bridge_name>
+```
+
+**NOTE**
 
 As you can see above, you will need to select the name of the example twice.
 This is because the debug task needs to launch the run task and currently VS
