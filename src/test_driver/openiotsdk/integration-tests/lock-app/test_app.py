@@ -100,7 +100,7 @@ def test_lock_ctrl(device, controller):
                     LOCK_CTRL_TEST_USER_INDEX,
                     DoorLock.Enums.DlUserStatus.kOccupiedEnabled, 
                     DoorLock.Enums.DlUserType.kUnrestrictedUser, 
-                    DoorLock.Enums.DlCredentialRule.kSingle))
+                    DoorLock.Enums.DlCredentialRule.kSingle), requestTimeoutMs=1000)
     assert err == 0
 
     ret = device.wait_for_output("Successfully set the user [mEndpointId={},index={},adjustedIndex=0]".format(
@@ -129,7 +129,7 @@ def test_lock_ctrl(device, controller):
                     LOCK_CTRL_TEST_PIN_CODE,
                     LOCK_CTRL_TEST_USER_INDEX,
                     DoorLock.Enums.DlUserStatus.kOccupiedEnabled, 
-                    DoorLock.Enums.DlUserType.kUnrestrictedUser))
+                    DoorLock.Enums.DlUserType.kUnrestrictedUser), requestTimeoutMs=1000)
     assert err == 0
     assert res.status == DoorLock.Enums.DlStatus.kSuccess
 
@@ -142,14 +142,14 @@ def test_lock_ctrl(device, controller):
         devCtrl, "DoorLock GetCredentialStatus {} {} credential=struct:DlCredential(credentialType={},"
                     "credentialIndex={})".format(nodeId, LOCK_CTRL_TEST_ENDPOINT_ID,
                     DoorLock.Enums.DlCredentialType.kPin,
-                    LOCK_CTRL_TEST_CREDENTIAL_INDEX))
+                    LOCK_CTRL_TEST_CREDENTIAL_INDEX), requestTimeoutMs=1000)
     assert err == 0
     assert res.credentialExists
     assert res.userIndex == LOCK_CTRL_TEST_USER_INDEX
 
     err, res = send_zcl_command(
         devCtrl, "DoorLock LockDoor {} {} pinCode=str:{}".format(nodeId, LOCK_CTRL_TEST_ENDPOINT_ID,
-                    LOCK_CTRL_TEST_PIN_CODE))
+                    LOCK_CTRL_TEST_PIN_CODE), requestTimeoutMs=1000)
     assert err == 0
 
     ret = device.wait_for_output("Setting door lock state to \"Locked\" [endpointId={}]".format(LOCK_CTRL_TEST_ENDPOINT_ID))
@@ -162,7 +162,7 @@ def test_lock_ctrl(device, controller):
 
     err, res = send_zcl_command(
         devCtrl, "DoorLock UnlockDoor {} {} pinCode=str:{}".format(nodeId, LOCK_CTRL_TEST_ENDPOINT_ID,
-                    LOCK_CTRL_TEST_PIN_CODE))
+                    LOCK_CTRL_TEST_PIN_CODE), requestTimeoutMs=1000)
     assert err == 0
 
     ret = device.wait_for_output("Setting door lock state to \"Unlocked\" [endpointId={}]".format(LOCK_CTRL_TEST_ENDPOINT_ID))
