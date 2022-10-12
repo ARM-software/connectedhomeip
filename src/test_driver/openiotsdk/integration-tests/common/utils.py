@@ -20,6 +20,7 @@ import random
 import shlex
 import re
 import ctypes
+import asyncio
 from time import sleep
 
 from chip.setup_payload import SetupPayload
@@ -203,12 +204,12 @@ def FormatZCLArguments(cluster, args, cmdArgsWithType):
     return cmdArgsDict
 
 
-def send_zcl_command(devCtrl, line):
+def send_zcl_command(devCtrl, line, requestTimeoutMs: int = None):
     """
-    Send ZCL message to device:
-    <cluster> <command> <nodeid> <endpoint> [key=value]...
+    Format and send ZCL message to device.
     :param devCtrl: device controller instance
     :param line: command line
+    :param requestTimeoutMs: command request timeout in ms
     :return: error code and command response
     """
     res = None
@@ -228,8 +229,12 @@ def send_zcl_command(devCtrl, line):
         if command == None:
             raise exceptions.UnknownCommand(cluster, command)
 
-        err, res = devCtrl.ZCLSend(cluster, command, int(
-                    nodeId), int(endpoint), 0, FormatZCLArguments(cluster, cmdArgsLine, cmdArgsWithType))
+        args = FormatZCLArguments(cluster, cmdArgsLine, cmdArgsWithType)
+        clusterObj = getattr(GeneratedObjects, cluster)
+        commandObj = getattr(clusterObj.Commands, command)
+        req = commandObj(**args)
+
+        res = asyncio.run(devCtrl.SendCommand(int(nodeId), int(endpoint), req, timedRequestTimeoutMs=requestTimeoutMs))
 
     except exceptions.ChipStackException as ex:
         log.error("An exception occurred during processing ZCL command: {}".format(str(ex)))
