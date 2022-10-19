@@ -17,10 +17,18 @@
 cmake_minimum_required(VERSION 3.21)
 
 get_filename_component(CHIP_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/../../../.. REALPATH)
-get_filename_component(OPENIOTSDK_COMMON ${CHIP_ROOT}/examples/platform/openiotsdk REALPATH)
+get_filename_component(OPEN_IOT_SDK_CONFIG ${CHIP_ROOT}/config/openiotsdk REALPATH)
+get_filename_component(OPEN_IOT_SDK_EXAMPLE_COMMON ${CHIP_ROOT}/examples/platform/openiotsdk REALPATH)
 
-include(${OPENIOTSDK_COMMON}/cmake/sdk.cmake)
-include(${OPENIOTSDK_COMMON}/cmake/linker.cmake)
+list(APPEND CMAKE_MODULE_PATH ${OPEN_IOT_SDK_CONFIG}/cmake)
+
+# Toolchain files need to exist before first call to project
+include(toolchain)
+
+project(chip-open-iot-sdk-unit-tests LANGUAGES C CXX ASM)
+
+include(sdk)
+include(linker)
 
 # LwIP configuration
 if(TARGET lwip-cmsis-port)
@@ -38,11 +46,9 @@ set(CONFIG_CHIP_PROGRESS_LOGGING NO)
 set(CONFIG_CHIP_AUTOMATION_LOGGING YES)
 set(CONFIG_CHIP_ERROR_LOGGING NO)
 
-project(open-iot-sdk-unit-tests LANGUAGES C CXX ASM)
+include(chip)
 
-include(${OPENIOTSDK_COMMON}/cmake/chip.cmake)
-
-add_subdirectory(${OPENIOTSDK_COMMON}/app ./app_build)
+add_subdirectory(${OPEN_IOT_SDK_EXAMPLE_COMMON}/app ./app_build)
 
 file(STRINGS testnames.txt TEST_NAMES_FROM_FILE)
 STRING(REGEX REPLACE "\n" ";" TEST_NAMES_FROM_FILE "${TEST_NAMES_FROM_FILE}")

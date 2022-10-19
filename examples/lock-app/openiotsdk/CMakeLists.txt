@@ -17,12 +17,20 @@
 cmake_minimum_required(VERSION 3.21)
 
 get_filename_component(CHIP_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/../../.. REALPATH)
-get_filename_component(OPENIOTSDK_COMMON ${CHIP_ROOT}/examples/platform/openiotsdk REALPATH)
+get_filename_component(OPEN_IOT_SDK_CONFIG ${CHIP_ROOT}/config/openiotsdk REALPATH)
+get_filename_component(OPEN_IOT_SDK_EXAMPLE_COMMON ${CHIP_ROOT}/examples/platform/openiotsdk REALPATH)
 get_filename_component(GEN_DIR ${CHIP_ROOT}/zzz_generated/ REALPATH)
+
+list(APPEND CMAKE_MODULE_PATH ${OPEN_IOT_SDK_CONFIG}/cmake)
 
 set(APP_TARGET chip-openiotsdk-lock-app-example)
 
-include(${OPENIOTSDK_COMMON}/cmake/sdk.cmake)
+# Toolchain files need to exist before first call to project
+include(toolchain)
+
+project(${APP_TARGET} LANGUAGES C CXX ASM)
+
+include(sdk)
 
 # LwIP configuration
 if(TARGET lwip-cmsis-port)
@@ -40,13 +48,12 @@ if(TARGET lwip-cmsis-port)
     endif()
 endif()
 
-project(${APP_TARGET} LANGUAGES C CXX ASM)
 add_executable(${APP_TARGET})
 
 # Application CHIP build configuration
-include(${OPENIOTSDK_COMMON}/cmake/chip.cmake)
+include(chip)
 
-add_subdirectory(${OPENIOTSDK_COMMON}/app ./app_build)
+add_subdirectory(${OPEN_IOT_SDK_EXAMPLE_COMMON}/app ./app_build)
 
 target_include_directories(${APP_TARGET} 
     PRIVATE
@@ -75,5 +82,5 @@ chip_configure_data_model(${APP_TARGET}
     ZAP_FILE ${CMAKE_CURRENT_SOURCE_DIR}/../lock-common/lock-app.zap
 )
 
-include(${OPENIOTSDK_COMMON}/cmake/linker.cmake)
+include(linker)
 set_target_link(${APP_TARGET})
