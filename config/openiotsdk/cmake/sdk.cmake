@@ -23,8 +23,6 @@ include(FetchContent)
 
 get_filename_component(OPEN_IOT_SDK_SOURCE ${CHIP_ROOT}/third_party/open-iot-sdk/sdk REALPATH)
 get_filename_component(OPEN_IOT_SDK_STORAGE_SOURCE ${CHIP_ROOT}/third_party/open-iot-sdk/storage REALPATH)
-get_filename_component(OPEN_IOT_SDK_TOOLCHAIN ${CHIP_ROOT}/third_party/open-iot-sdk/toolchain REALPATH)
-get_filename_component(OPEN_IOT_SDK_CONFIG ${CHIP_ROOT}/config/openiotsdk REALPATH)
 
 # List of binary directories to Open IoT SDK sources
 list(APPEND SDK_SOURCES_BINARY_DIRS)
@@ -42,17 +40,12 @@ set(IOTSDK_EXAMPLES OFF)
 set(BUILD_TESTING NO)
 set(VARIANT "FVP")
 
-# Toolchain files need to exist before first call of Open IoT SDk project
-FetchContent_Declare(iotsdk-toolchains
-    GIT_REPOSITORY  https://git.gitlab.arm.com/iot/open-iot-sdk/toolchain.git
-    GIT_TAG         aef3fb8a7509ab85f20e2be9dfbb6ba315d2f34c
-    SOURCE_DIR      ${CMAKE_BINARY_DIR}/toolchains
-)
-FetchContent_MakeAvailable(iotsdk-toolchains)
-
 # Add Open IoT SDK source
 add_subdirectory(${OPEN_IOT_SDK_SOURCE} ./sdk_build)
 list(APPEND SDK_SOURCES_BINARY_DIRS ${CMAKE_CURRENT_BINARY_DIR}/sdk_build)
+
+# Add Open IoT SDK modules to path
+list(APPEND CMAKE_MODULE_PATH ${open-iot-sdk_SOURCE_DIR}/cmake)
 
 # CMSIS-RTOS configuration
 # CMSIS 5 require projects to provide configuration macros via RTE_Components.h

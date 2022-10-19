@@ -50,7 +50,7 @@ def fvpConfig(request, rootDir):
     if request.config.getoption('fvpConfig'):
         return request.config.getoption('fvpConfig')
     else:
-        return os.path.join(rootDir, 'examples/platform/openiotsdk/fvp/cs300.conf')  
+        return os.path.join(rootDir, 'config/openiotsdk/fvp/cs300.conf')  
 
 @pytest.fixture(scope="session")
 def telnetPort(request):
