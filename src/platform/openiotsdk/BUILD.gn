@@ -43,6 +43,7 @@ static_library("openiotsdk") {
     "OpenIoTSDKArchUtils.h",
     "OpenIoTSDKConfig.cpp",
     "OpenIoTSDKConfig.h",
+    "OpenIoTSDKConfig.h",
     "PlatformManagerImpl.cpp",
     "PlatformManagerImpl.h",
     "SystemPlatformConfig.h",
