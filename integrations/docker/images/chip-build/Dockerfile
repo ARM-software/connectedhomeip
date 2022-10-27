@@ -16,13 +16,11 @@ RUN set -x \
     clang-format \
     clang-tidy \
     curl \
-    expect \
     flex \
     g++ \
     git \
     gperf \
     iproute2 \
-    isc-dhcp-client \
     jq \
     lcov \
     libavahi-client-dev \
@@ -62,7 +60,6 @@ RUN set -x \
     shellcheck \
     strace \
     systemd \
-    telnet \
     udev \
     unzip \
     wget \

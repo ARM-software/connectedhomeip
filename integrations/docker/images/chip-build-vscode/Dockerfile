@@ -70,6 +70,17 @@ RUN set -x \
     && rm -rf /var/lib/apt/lists/* \
     && : # last line
 
+# Required for the Open IoT SDK platform
+RUN set -x \
+    && apt-get update \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -fy \
+    expect \
+    telnet \
+    srecord \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/ \
+    && : # last line
+
 # Required for the Bouffalolab platform
 RUN set -x \
     && pip3 install bflb-iot-tool \

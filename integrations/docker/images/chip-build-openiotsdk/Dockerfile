@@ -33,6 +33,17 @@ FROM connectedhomeip/chip-build:${VERSION}
 COPY --from=build /opt/gcc-arm-none-eabi-10.3-2021.10/ /opt/gcc-arm-none-eabi-10.3-2021.10/
 COPY --from=build /opt/FVP_Corstone_SSE-300/ /opt/FVP_Corstone_SSE-300/
 
+# Required packages for building, running and testing
+RUN set -x \
+    && apt-get update \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -fy \
+    expect \
+    telnet \
+    srecord \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/ \
+    && : # last line
+
 # ------------------------------------------------------------------------------
 # Configure environment variables
 ENV FVP_CORSTONE_300_PATH=/opt/FVP_Corstone_SSE-300
