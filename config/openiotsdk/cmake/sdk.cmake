@@ -32,6 +32,14 @@ set(TFM_SUPPORT NO CACHE BOOL "Add Trusted Firmware-M (TF-M) support to applicat
 set(TFM_NS_APP_VERSION "0.0.0" CACHE STRING "TF-M non-secure application version (in the x.x.x format)")
 
 FetchContent_Declare(
+    lwip
+    GIT_REPOSITORY  https://github.com/lwip-tcpip/lwip.git
+    GIT_TAG         STABLE-2_1_3_RELEASE
+    GIT_PROGRESS    ON
+    PATCH_COMMAND   git apply --ignore-space-change --ignore-whitespace ${CHIP_ROOT}/config/openiotsdk/lwip/lwip.patch || true
+)
+
+FetchContent_Declare(
     cmsis-sockets-api
     GIT_REPOSITORY  https://github.com/paul-szczepanek-arm/IoT_Socket.git
     GIT_TAG         extended-api
