@@ -99,6 +99,12 @@ function build_with_cmake {
         rm -rf $BUILD_PATH
     fi
 
+    if [ ! -d $BUILD_PATH/venv ]; then
+        python3 -m venv $BUILD_PATH/venv
+    fi
+
+    source $BUILD_PATH/venv/bin/activate
+
     BUILD_OPTIONS="-DCMAKE_SYSTEM_PROCESSOR=cortex-m55"
     if $DEBUG; then
         BUILD_OPTIONS="${BUILD_OPTIONS} -DCMAKE_BUILD_TYPE=Debug"
@@ -108,7 +114,14 @@ function build_with_cmake {
     rm -rf "$BUILD_PATH/chip-"*
 
     cmake -G Ninja -S $EXAMPLE_PATH -B $BUILD_PATH --toolchain=$TOOLCHAIN_PATH $BUILD_OPTIONS
+
+    if [ -f $BUILD_PATH/_deps/tf-m-src/tools/requirements.txt ]; then
+        pip3 install -r $BUILD_PATH/_deps/tf-m-src/tools/requirements.txt
+    fi
+
     cmake --build $BUILD_PATH
+
+    deactivate
 }
 
 function run_fvp {
@@ -224,8 +237,8 @@ function run_test {
     fi
 }
 
-SHORT=C:,p:,d:.n:,c,s,h
-LONG=command:,path:,debug:.network:,clean,scratch,help
+SHORT=C:,p:,d:,n:,c,s,h
+LONG=command:,path:,debug:,network:,clean,scratch,help
 OPTS=$(getopt -n build --options $SHORT --longoptions $LONG -- "$@")
 
 eval set -- "$OPTS"

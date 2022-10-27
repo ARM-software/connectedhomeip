@@ -19,6 +19,7 @@
 #ifndef RTE_COMPONENTS_H
 #define RTE_COMPONENTS_H
 
-#define OS_STACK_SIZE (4 * 1024)
+// TrustZone support
+#define DOMAIN_NS 1
 
 #endif // RTE_COMPONENTS_H
