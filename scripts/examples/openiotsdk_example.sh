@@ -154,7 +154,7 @@ function run_fvp {
     if [[ $IS_TEST -eq 1 ]]; then
         set +e
         expect <<EOF
-        set timeout 1200
+        set timeout 1800
         set retcode -1
         spawn telnet localhost ${TELNET_TERMINAL_PORT}
         expect -re {Test status: (-?\d+)} {
