@@ -35,10 +35,7 @@ jobs:
         if: github.actor != 'restyled-io[bot]'
 
         container:
-            image: atmobica/chip-build-openiotsdk:latest
-            credentials:
-              username: ${{ secrets.DOCKER_HUB_USERNAME }}
-              password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+            image: connectedhomeip/chip-build-openiotsdk:latest
             volumes:
                 - "/tmp/bloat_reports:/tmp/bloat_reports"
             options: --privileged
