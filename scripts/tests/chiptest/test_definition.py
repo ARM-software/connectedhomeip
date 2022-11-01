@@ -25,6 +25,7 @@ from enum import Enum, auto
 from random import randrange
 
 TEST_NODE_ID = '0x12344321'
+QR_TIMEOUT_SECONDS = 60
 
 
 class App:
@@ -52,6 +53,7 @@ class App:
                 self.runner, self.command)
             self.waitForAnyAdvertisement()
             self.__updateSetUpCode()
+
             with self.cv_stopped:
                 self.stopped = False
                 self.cv_stopped.notify()
@@ -142,10 +144,13 @@ class App:
         logging.debug('Success waiting for: %s' % waitForString)
 
     def __updateSetUpCode(self):
-        qrLine = self.outpipe.FindLastMatchingLine('.*SetupQRCode: *\\[(.*)]')
-        if not qrLine:
-            raise Exception("Unable to find QR code")
-        self.setupCode = qrLine.group(1)
+        for _ in range(QR_TIMEOUT_SECONDS):
+            qrLine = self.outpipe.FindLastMatchingLine('.*SetupQRCode: *\\[(.*)]')
+            if qrLine:
+                self.setupCode = qrLine.group(1)
+                return
+            time.sleep(1)
+        raise TimeoutError(f"Unable to find QR code within {QR_TIMEOUT_SECONDS} seconds")
 
 
 class TestTarget(Enum):
