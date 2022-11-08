@@ -42,13 +42,13 @@ class App:
         self.killed = False
 
     def start(self, options=None):
-        if not self.process:
+        if not self.process or not self.process.is_alive():
             # Cache command line options to be used for reboots
             if options:
                 self.options = options
             # Make sure to assign self.process before we do any operations that
             # might fail, so attempts to kill us on failure actually work.
-            self.process, self.outpipe, errpipe = self.__startServer(
+            self.process, self.outpipe, _ = self.__startServer(
                 self.runner, self.command)
             self.waitForAnyAdvertisement()
             self.__updateSetUpCode()
@@ -66,7 +66,6 @@ class App:
             self.process.kill()
             self.process.wait(10)
             self.process = None
-            self.outpipe = None
             return True
         return False
 
@@ -86,6 +85,7 @@ class App:
     def kill(self):
         if self.process:
             self.process.kill()
+            self.process.wait()
         self.killed = True
 
     def wait(self, timeout=None):
