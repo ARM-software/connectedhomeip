@@ -118,7 +118,10 @@ def main(context, dry_run, log_level, target, target_glob, target_skip_glob,
     log_fmt = '%(asctime)s.%(msecs)03d %(levelname)-7s %(message)s'
     if no_log_timestamps:
         log_fmt = '%(levelname)-7s %(message)s'
-    coloredlogs.install(level=__LOG_LEVELS__[log_level], fmt=log_fmt)
+    if os.isatty(1):
+        coloredlogs.install(level=__LOG_LEVELS__[log_level], fmt=log_fmt)
+    else:
+        logging.basicConfig(level=__LOG_LEVELS__[log_level], format=log_fmt)
 
     if chip_tool is None:
         chip_tool = FindBinaryPath('chip-tool')
