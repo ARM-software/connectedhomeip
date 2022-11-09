@@ -211,8 +211,13 @@ def cmd_list(context):
     type=click.Choice(['linux','fvp']),
     help='Select the network rules to set up'
 )
+@click.option(
+    '--ignore-failure',
+    is_flag=True,
+    help='Continue running tests after a test fails'
+)
 @click.pass_context
-def cmd_run(context, iterations, all_clusters_app, lock_app, ota_provider_app, ota_requestor_app, tv_app, bridge_app, pics_file, test_timeout_seconds, network):
+def cmd_run(context, iterations, all_clusters_app, lock_app, ota_provider_app, ota_requestor_app, tv_app, bridge_app, pics_file, test_timeout_seconds, network, ignore_failure):
     runner = chiptest.runner.Runner()
 
     if all_clusters_app is None:
@@ -263,6 +268,8 @@ def cmd_run(context, iterations, all_clusters_app, lock_app, ota_provider_app, o
     apps_register = AppsRegister()
     apps_register.init()
 
+    success = True
+
     for i in range(iterations):
         logging.info("Starting iteration %d" % (i+1))
         for test in context.obj.tests:
@@ -279,10 +286,14 @@ def cmd_run(context, iterations, all_clusters_app, lock_app, ota_provider_app, o
                 test_end = time.monotonic()
                 logging.exception('%s - FAILED in %0.2f seconds' %
                                   (test.name, (test_end - test_start)))
-                apps_register.uninit()
-                sys.exit(2)
+                success = False
+                if not ignore_failure:
+                    break
 
     apps_register.uninit()
+
+    if not success:
+        sys.exit(2)
 
 
 # On linux, allow an execution shell to be prepared
