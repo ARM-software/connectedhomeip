@@ -35,6 +35,10 @@
         "editor.defaultFormatter": "esbenp.prettier-vscode"
     },
     "files.associations": {
+        "*.make": "makefile",
+        "Makefile2": "makefile",
+        "*.cmake": "cmake",
+        "*.in": "cmake",
         "iostream": "cpp",
         "array": "cpp",
         "atomic": "cpp",
@@ -115,7 +119,8 @@
         "condition_variable": "cpp",
         "numeric": "cpp",
         "random": "cpp",
-        "thread": "cpp"
+        "thread": "cpp",
+        "ranges": "c"
     },
     // Configure paths or glob patterns to exclude from file watching.
     "files.watcherExclude": {
