@@ -27,6 +27,7 @@ chip_config_network_layer_ble = false
 chip_system_config_use_lwip = true
 lwip_platform = "external"
 chip_system_config_use_sockets = false
+chip_system_config_use_iot_socket = true
 
 custom_toolchain = "${chip_root}/config/openiotsdk/chip-gn/toolchain:openiotsdk"
 mbedtls_target = "${chip_root}/config/openiotsdk/chip-gn/mbedtls:mbedtls"

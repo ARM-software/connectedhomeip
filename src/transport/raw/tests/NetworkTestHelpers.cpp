@@ -29,10 +29,6 @@ namespace Test {
 
 CHIP_ERROR IOContext::Init()
 {
-#if defined(CHIP_DEVICE_LAYER_TARGET_OPEN_IOT_SDK)
-    ReturnErrorOnFailure(chip::DeviceLayer::PlatformMgr().InitChipStack());
-#endif // CHIP_DEVICE_LAYER_TARGET_OPEN_IOT_SDK
-
     CHIP_ERROR err = Platform::MemoryInit();
     chip::DeviceLayer::SetConfigurationMgr(&chip::DeviceLayer::ConfigurationManagerImpl::GetDefaultInstance());
 
@@ -53,9 +49,6 @@ void IOContext::Shutdown()
     ShutdownNetwork();
     ShutdownSystemLayer();
     Platform::MemoryShutdown();
-#if defined(CHIP_DEVICE_LAYER_TARGET_OPEN_IOT_SDK)
-    chip::DeviceLayer::PlatformMgr().Shutdown();
-#endif // CHIP_DEVICE_LAYER_TARGET_OPEN_IOT_SDK
 }
 
 void IOContext::DriveIO()
