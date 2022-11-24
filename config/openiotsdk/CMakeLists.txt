@@ -258,6 +258,8 @@ target_link_libraries(openiotsdk-chip INTERFACE
     $<$<TARGET_EXISTS:mbedtls>:mbedtls>
     $<$<TARGET_EXISTS:lwipcore>:lwipcore>
     $<$<TARGET_EXISTS:iotsdk-ip-network-api>:iotsdk-ip-network-api>
+    $<$<TARGET_EXISTS:cmsis-sockets-api>:cmsis-sockets-api>
+    $<$<TARGET_EXISTS:lwip-sockets>:lwip-sockets>
     $<$<TARGET_EXISTS:iotsdk-tdbstore>:iotsdk-tdbstore>
     $<$<TARGET_EXISTS:iotsdk-blockdevice>:iotsdk-blockdevice>
     $<$<TARGET_EXISTS:iotsdk-serial-retarget>:$<TARGET_OBJECTS:iotsdk-serial-retarget>>
