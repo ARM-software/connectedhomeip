@@ -20,7 +20,7 @@ from time import sleep
 
 from chip.setup_payload import SetupPayload
 from chip import exceptions
-from chip import ChipDeviceCtrl
+import chip.native
 
 from common.utils import *
 
@@ -79,7 +79,16 @@ def test_smoke_test(device):
 
 
 @pytest.mark.ctrltest
-def test_command_check(device, controller):
+def test_command_check(device):
+    try:
+        chip.native.Init()
+    except exceptions.ChipStackException as ex:
+        log.error("CHIP initialization failed {}".format(ex))
+        assert False
+    except:
+        log.error("CHIP initialization failed")
+        assert False
+
     ret = device.wait_for_output("Open IoT SDK shell example application start")
     assert ret != None and len(ret) > 0
     ret = device.wait_for_output("Open IoT SDK shell example application run")
