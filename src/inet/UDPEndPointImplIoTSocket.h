@@ -23,10 +23,6 @@
 #include <inet/EndPointStateIoTSocket.h>
 #include <inet/UDPEndPoint.h>
 
-#if CHIP_SYSTEM_CONFIG_USE_DISPATCH
-#include <dispatch/dispatch.h>
-#endif
-
 namespace chip {
 namespace Inet {
 
@@ -58,10 +54,6 @@ private:
     void CloseImpl() override;
 
     CHIP_ERROR GetSocket(IPAddressType addressType);
-
-#if CHIP_SYSTEM_CONFIG_USE_DISPATCH
-    dispatch_source_t mReadableSource = nullptr;
-#endif // CHIP_SYSTEM_CONFIG_USE_DISPATCH
 
 #if CHIP_SYSTEM_CONFIG_USE_PLATFORM_MULTICAST_API
 public:

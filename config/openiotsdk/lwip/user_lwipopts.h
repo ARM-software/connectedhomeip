@@ -23,7 +23,6 @@
 #define LWIP_IGMP (1)
 #define LWIP_RAW (1)
 #define LWIP_NETIF_API (1)
-#define LWIP_IPV6_MLD (1)
 
 #define MEM_LIBC_MALLOC (1)
 #define MEM_USE_POOLS (0)

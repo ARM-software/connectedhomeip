@@ -47,10 +47,6 @@ CHIP_ERROR TCPEndPointImplIoTSocket::BindImpl(IPAddressType addrType, const IPAd
 
     if (res == CHIP_NO_ERROR && reuseAddr)
     {
-        uint32_t n = 1;
-        iotSocketSetOpt(mSocket, IOT_SOCKET_SO_REUSEADDR, &n, sizeof(n));
-
-#ifdef SO_REUSEPORT
         // Enable SO_REUSEPORT.  This permits coexistence between an
         // untargetted CHIP client and other services that listen on
         // a CHIP port on a specific address (such as a CHIP client
@@ -61,12 +57,12 @@ CHIP_ERROR TCPEndPointImplIoTSocket::BindImpl(IPAddressType addrType, const IPAd
         // e.g. two untargetted-listen CHIP clients, or two
         // targeted-listen CHIP clients with the same node id.
 
+        int32_t n       = 1;
         int32_t retcode = iotSocketSetOpt(mSocket, IOT_SOCKET_SO_REUSEADDR, &n, sizeof(n));
         if (retcode)
         {
-            ChipLogError(Inet, "SO_REUSEPORT: %d", retcode);
+            ChipLogError(Inet, "SO_REUSEPORT: %ld", retcode);
         }
-#endif // defined(SO_REUSEPORT)
     }
 
     if (res == CHIP_NO_ERROR)
@@ -145,21 +141,16 @@ CHIP_ERROR TCPEndPointImplIoTSocket::ConnectImpl(const IPAddress & addr, uint16_
         if (!addr.IsIPv6LinkLocal())
         {
 #ifdef SO_BINDTODEVICE
-
-            char interfaceName[IF_NAMESIZE];
-            ReturnErrorOnFailure(intfId.GetInterfaceName(interfaceName, IF_NAMESIZE));
+            char interfaceName[NETIF_NAMESIZE];
+            ReturnErrorOnFailure(intfId.GetInterfaceName(interfaceName, NETIF_NAMESIZE));
 
             // Attempt to iotSocketBind to the interface using SO_BINDTODEVICE which requires privileged access.
             // If the permission is denied(EACCES) because CHIP is running in a context
             // that does not have privileged access, choose a source address on the
             // interface to iotSocketBind the connetion to.
             int32_t retcode = iotSocketSetOpt(mSocket, IOT_SOCKET_SO_BINDTODEVICE, &interfaceName, strlen(interfaceName));
-            if (r < 0)
-            {
-                return MapErrorIoTSocket(retcode);
-            }
 
-            if (r == 0)
+            if (retcode == 0)
             {
                 mBoundInterface = intfId;
             }
@@ -231,7 +222,7 @@ CHIP_ERROR TCPEndPointImplIoTSocket::ConnectImpl(const IPAddress & addr, uint16_
     return CHIP_NO_ERROR;
 }
 
-CHIP_ERROR TCPEndPointImplIoTSocket::GetPeerInfo(IPAddress * retAddr, uint16_t * retPort) const
+CHIP_ERROR TCPEndPointImplIoTSocket::GetInfo(IPAddress * retAddr, uint16_t * retPort, bool local) const
 {
     VerifyOrReturnError(IsConnected(), CHIP_ERROR_INCORRECT_STATE);
 
@@ -242,7 +233,17 @@ CHIP_ERROR TCPEndPointImplIoTSocket::GetPeerInfo(IPAddress * retAddr, uint16_t *
     } addr;
     uint32_t iplen = sizeof(addr);
 
-    int32_t ret = iotSocketGetPeerName(mSocket, (uint8_t *) &addr, &iplen, retPort);
+    int32_t ret;
+
+    if (local)
+    {
+        ret = iotSocketGetSockName(mSocket, (uint8_t *) &addr, &iplen, retPort);
+    }
+    else
+    {
+
+        ret = iotSocketGetPeerName(mSocket, (uint8_t *) &addr, &iplen, retPort);
+    }
 
     if (iplen == sizeof(iot_in6_addr))
     {
@@ -261,19 +262,14 @@ CHIP_ERROR TCPEndPointImplIoTSocket::GetPeerInfo(IPAddress * retAddr, uint16_t *
     return CHIP_ERROR_INCORRECT_STATE;
 }
 
+CHIP_ERROR TCPEndPointImplIoTSocket::GetPeerInfo(IPAddress * retAddr, uint16_t * retPort) const
+{
+    return GetInfo(retAddr, retPort, false);
+}
+
 CHIP_ERROR TCPEndPointImplIoTSocket::GetLocalInfo(IPAddress * retAddr, uint16_t * retPort) const
 {
-    VerifyOrReturnError(IsConnected(), CHIP_ERROR_INCORRECT_STATE);
-    uint32_t iplen = sizeof(retAddr);
-
-    int32_t ret = iotSocketGetSockName(mSocket, (uint8_t *) retAddr, &iplen, retPort);
-
-    if (ret == 0)
-    {
-        return CHIP_NO_ERROR;
-    }
-
-    return CHIP_ERROR_INCORRECT_STATE;
+    return GetInfo(retAddr, retPort, true);
 }
 
 CHIP_ERROR TCPEndPointImplIoTSocket::GetInterfaceId(InterfaceId * retInterface)
@@ -591,7 +587,7 @@ CHIP_ERROR TCPEndPointImplIoTSocket::GetSocket(IPAddressType addrType)
         // If creating an IPv6 socket, tell the kernel that it will be IPv6 only.  This makes it
         // posible to iotSocketBind two sockets to the same port, one for IPv4 and one for IPv6.
 #ifdef IPV6_V6ONLY
-        if (family == PF_INET6)
+        if (mSocketFamily == IOT_SOCKET_AF_INET6)
         {
             int one = 1;
             iotSocketSetOpt(mSocket, IOT_SOCKET_IPV6_V6ONLY, &one, sizeof(one));

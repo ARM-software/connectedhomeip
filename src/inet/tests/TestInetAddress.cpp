@@ -1722,14 +1722,13 @@ void CheckIPPrefix(nlTestSuite * inSuite, void * inContext)
     }
 }
 
-#if CHIP_SYSTEM_CONFIG_USE_LWIP
+#if CHIP_SYSTEM_CONFIG_USE_LWIP && !CHIP_SYSTEM_CONFIG_USE_IOT_SOCKET
 
 bool sameLwIPAddress(const ip6_addr_t & a, const ip6_addr_t & b)
 {
     return (a.addr[0] == b.addr[0]) && (a.addr[1] == b.addr[1]) && (a.addr[2] == b.addr[2]) && (a.addr[3] == b.addr[3]);
 }
 
-#if !CHIP_SYSTEM_CONFIG_USE_IOT_SOCKET
 #if LWIP_IPV4 && LWIP_IPV6
 bool sameLwIPAddress(const ip_addr_t & a, const ip_addr_t & b)
 {
@@ -1824,8 +1823,7 @@ void CheckToLwIPAddr(nlTestSuite * inSuite, void * inContext)
         ++lCurrent;
     }
 }
-#endif // !CHIP_SYSTEM_CONFIG_USE_IOT_SOCKET
-#endif // CHIP_SYSTEM_CONFIG_USE_LWIP
+#endif // CHIP_SYSTEM_CONFIG_USE_LWIP && !CHIP_SYSTEM_CONFIG_USE_IOT_SOCKET
 
 /**
  *   Test Suite. It lists all the test functions.
@@ -1867,11 +1865,9 @@ const nlTest sTests[] =
     NL_TEST_DEF("Assemble IPv6 Transient Multicast address",   CheckMakeIPv6TransientMulticast),
     NL_TEST_DEF("Assemble IPv6 Prefix Multicast address",      CheckMakeIPv6PrefixMulticast),
     NL_TEST_DEF("IPPrefix test",                               CheckIPPrefix),
-#if CHIP_SYSTEM_CONFIG_USE_LWIP
-#if !CHIP_SYSTEM_CONFIG_USE_IOT_SOCKET
+#if CHIP_SYSTEM_CONFIG_USE_LWIP && !CHIP_SYSTEM_CONFIG_USE_IOT_SOCKET
     NL_TEST_DEF("Convert IPAddress to LwIP address",           CheckToLwIPAddr),
-#endif // !CHIP_SYSTEM_CONFIG_USE_IOT_SOCKET
-#endif
+#endif // CHIP_SYSTEM_CONFIG_USE_LWIP && !CHIP_SYSTEM_CONFIG_USE_IOT_SOCKET
     NL_TEST_SENTINEL()
 };
 // clang-format on

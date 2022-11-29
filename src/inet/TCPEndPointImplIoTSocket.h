@@ -23,10 +23,6 @@
 #include <inet/EndPointStateIoTSocket.h>
 #include <inet/TCPEndPoint.h>
 
-#if CHIP_SYSTEM_CONFIG_USE_DISPATCH
-#include <dispatch/dispatch.h>
-#endif
-
 namespace chip {
 namespace Inet {
 
@@ -67,12 +63,8 @@ private:
     void TCPUserTimeoutHandler() override{};
 #endif // INET_CONFIG_OVERRIDE_SYSTEM_TCP_USER_TIMEOUT
 
-#if CHIP_SYSTEM_CONFIG_USE_DISPATCH
-    dispatch_source_t mReadableSource  = nullptr;
-    dispatch_source_t mWriteableSource = nullptr;
-#endif // CHIP_SYSTEM_CONFIG_USE_DISPATCH
-
 private:
+    CHIP_ERROR GetInfo(IPAddress * retAddr, uint16_t * retPort, bool local) const;
     InterfaceId mBoundInterface;
 };
 

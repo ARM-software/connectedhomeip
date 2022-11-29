@@ -30,8 +30,6 @@
 #include "lwip/ip6.h"
 #endif // CHIP_SYSTEM_CONFIG_USE_LWIP
 
-#define ENABLE_PKTINFO 1
-
 namespace chip {
 namespace System {
 CHIP_ERROR MapErrorIoTSocket(int32_t errorCode);
@@ -58,8 +56,14 @@ CHIP_ERROR IPv6Bind(int socket, const IPAddress & address, uint16_t port, Interf
 #ifdef IPV6_MULTICAST_IF
         // Instruct the kernel that any messages to multicast destinations should be
         // sent down the interface specified by the caller.
-        iotSocketSetOpt(socket, IOT_SOCKET_IPV6_MULTICAST_IF, &interfaceId, sizeof(interfaceId));
-#endif // defined(IPV6_MULTICAST_IF)
+        int32_t index;
+#if CHIP_SYSTEM_CONFIG_USE_LWIP
+        index = interface.GetPlatformInterface()->num + 1;
+#else
+#error "must provide mapping to interface index"
+#endif // CHIP_SYSTEM_CONFIG_USE_LWIP
+        iotSocketSetOpt(socket, IOT_SOCKET_IPV6_MULTICAST_IF, &index, sizeof(int32_t));
+#endif // IPV6_MULTICAST_IF
     }
 
 #ifdef IPV6_MULTICAST_HOPS
@@ -236,10 +240,8 @@ CHIP_ERROR UDPEndPointImplIoTSocket::SendMsgImpl(const IPPacketInfo * aPktInfo, 
     msgIOV.iov_base = msg->Start();
     msgIOV.iov_len  = msg->DataLength();
 
-#if ENABLE_PKTINFO
     uint8_t controlData[256];
     memset(controlData, 0, sizeof(controlData));
-#endif // ENABLE_PKTINFO
 
     iot_msghdr msgHeader;
     memset(&msgHeader, 0, sizeof(msgHeader));
@@ -291,7 +293,6 @@ CHIP_ERROR UDPEndPointImplIoTSocket::SendMsgImpl(const IPPacketInfo * aPktInfo, 
 #endif // CHIP_SYSTEM_CONFIG_USE_LWIP
     }
 
-#if ENABLE_PKTINFO
     // If the packet should be sent over a specific interface, or with a specific source
     // address, construct an IOT_SOCKET_IP_PKTINFO/IOT_SOCKET_IPV6_PKTINFO "control message" to that effect
     // add add it to the message header.  If the local OS doesn't support IOT_SOCKET_IP_PKTINFO/IOT_SOCKET_IPV6_PKTINFO
@@ -347,7 +348,6 @@ CHIP_ERROR UDPEndPointImplIoTSocket::SendMsgImpl(const IPPacketInfo * aPktInfo, 
             }
         }
     }
-#endif // ENABLE_PKTINFO
 
     // Send IP packet.
     const ssize_t lenSent = iotSocketSendMsg(mSocket, &msgHeader, 0);
@@ -427,12 +427,11 @@ CHIP_ERROR UDPEndPointImplIoTSocket::GetSocket(IPAddressType addressType)
             res = iotSocketSetOpt(mSocket, IOT_SOCKET_IPV6_V6ONLY, &one, sizeof(one));
             if (res != 0)
             {
-                ChipLogError(Inet, "IPV6_V6ONLY failed: %d", res);
+                ChipLogError(Inet, "IPV6_V6ONLY failed: %ld", res);
             }
         }
 #endif // defined(IPV6_V6ONLY)
 
-#if ENABLE_PKTINFO
 #if INET_CONFIG_ENABLE_IPV4
         if (addressType == IPAddressType::kIPv4)
         {
@@ -452,7 +451,6 @@ CHIP_ERROR UDPEndPointImplIoTSocket::GetSocket(IPAddressType addressType)
                 ChipLogError(Inet, "IOT_SOCKET_IPV6_PKTINFO failed: %ld", res);
             }
         }
-#endif // ENABLE_PKTINFO
     }
     else
     {
@@ -545,7 +543,8 @@ void UDPEndPointImplIoTSocket::SelectCallback(void * readMask, void * writeMask,
             for (iot_cmsghdr * controlHdr = IOT_CMSG_FIRSTHDR(&msgHeader); controlHdr != nullptr;
                  controlHdr               = IOT_CMSG_NXTHDR(&msgHeader, controlHdr))
             {
-#if ENABLE_PKTINFO
+                // the control message contains the pktinfo that has the index of the interface,
+                // we need to translate that index into a pointer to the interface struct
 #if INET_CONFIG_ENABLE_IPV4
                 if (controlHdr->cmsg_level == IOT_SOCKET_LEVEL_IPPROTO_IP && controlHdr->cmsg_type == IOT_SOCKET_IP_PKTINFO)
                 {
@@ -596,7 +595,6 @@ void UDPEndPointImplIoTSocket::SelectCallback(void * readMask, void * writeMask,
                     lPacketInfo.DestAddress = IPAddress(in6PktInfo->ipi6_addr);
                     continue;
                 }
-#endif // ENABLE_PKTINFO
             }
         }
     }
@@ -622,6 +620,7 @@ void UDPEndPointImplIoTSocket::SelectCallback(void * readMask, void * writeMask,
 #if IP_MULTICAST_LOOP || IPV6_MULTICAST_LOOP
 static CHIP_ERROR SocketsSetMulticastLoopback(int aSocket, bool aLoopback, int aProtocol, int aOption)
 {
+    (void) aProtocol;
     const int32_t lValue = static_cast<unsigned int>(aLoopback);
     int32_t retcode      = iotSocketSetOpt(aSocket, aOption, &lValue, sizeof(lValue));
     if (retcode)
@@ -642,12 +641,12 @@ static CHIP_ERROR SocketsSetMulticastLoopback(int aSocket, IPVersion aIPVersion,
     {
 
     case kIPVersion_6:
-        lRetval = SocketsSetMulticastLoopback(aSocket, aLoopback, IPPROTO_IPV6, IOT_SOCKET_IPV6_MULTICAST_LOOP);
+        lRetval = SocketsSetMulticastLoopback(aSocket, aLoopback, 0, IOT_SOCKET_IPV6_MULTICAST_LOOP);
         break;
 
 #if INET_CONFIG_ENABLE_IPV4
     case kIPVersion_4:
-        lRetval = SocketsSetMulticastLoopback(aSocket, aLoopback, IPPROTO_IP, IOT_SOCKET_IP_MULTICAST_LOOP);
+        lRetval = SocketsSetMulticastLoopback(aSocket, aLoopback, 0, IOT_SOCKET_IP_MULTICAST_LOOP);
         break;
 #endif // INET_CONFIG_ENABLE_IPV4
 
