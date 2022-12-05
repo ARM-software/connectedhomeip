@@ -15,22 +15,23 @@
 
 import logging
 import os
-import sys
+import subprocess
 import threading
 import time
 import typing
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum, auto
-from random import randrange
+from typing import Optional
 
 TEST_NODE_ID = '0x12344321'
+QR_TIMEOUT_SECONDS = 60
 
 
 class App:
 
     def __init__(self, runner, command):
-        self.process = None
+        self.process:Optional[subprocess.Popen] = None
         self.outpipe = None
         self.runner = runner
         self.command = command
@@ -48,10 +49,11 @@ class App:
                 self.options = options
             # Make sure to assign self.process before we do any operations that
             # might fail, so attempts to kill us on failure actually work.
-            self.process, self.outpipe, errpipe = self.__startServer(
+            self.process, self.outpipe, _ = self.__startServer(
                 self.runner, self.command)
             self.waitForAnyAdvertisement()
             self.__updateSetUpCode()
+
             with self.cv_stopped:
                 self.stopped = False
                 self.cv_stopped.notify()
@@ -63,10 +65,13 @@ class App:
             with self.cv_stopped:
                 self.stopped = True
                 self.cv_stopped.notify()
-            self.process.kill()
-            self.process.wait(10)
+            self.process.terminate()
+            try:
+                self.process.wait(10)
+            except subprocess.TimeoutExpired:
+                self.process.kill()
+                self.process.wait()
             self.process = None
-            self.outpipe = None
             return True
         return False
 
@@ -86,6 +91,7 @@ class App:
     def kill(self):
         if self.process:
             self.process.kill()
+            self.process.wait()
         self.killed = True
 
     def wait(self, timeout=None):
@@ -142,10 +148,13 @@ class App:
         logging.debug('Success waiting for: %s' % waitForString)
 
     def __updateSetUpCode(self):
-        qrLine = self.outpipe.FindLastMatchingLine('.*SetupQRCode: *\\[(.*)]')
-        if not qrLine:
-            raise Exception("Unable to find QR code")
-        self.setupCode = qrLine.group(1)
+        for _ in range(QR_TIMEOUT_SECONDS):
+            qrLine = self.outpipe.FindLastMatchingLine('.*SetupQRCode: *\\[(.*)]')
+            if qrLine:
+                self.setupCode = qrLine.group(1)
+                return
+            time.sleep(1)
+        raise TimeoutError(f"Unable to find QR code within {QR_TIMEOUT_SECONDS} seconds")
 
 
 class TestTarget(Enum):
@@ -237,7 +246,14 @@ class TestDefinition:
                 raise Exception("Unknown test target - "
                                 "don't know which application to run")
 
+            if not target_app:
+                logging.warning('Skipped')
+                return
+
             for path in paths.items():
+                if not path:
+                    continue
+
                 # Do not add chip-tool to the register
                 if path == paths.chip_tool:
                     continue
@@ -293,6 +309,7 @@ class TestDefinition:
             runner.capture_delegate.LogContents()
             raise
         finally:
+            apps_register.stopAll()
             apps_register.killAll()
             apps_register.factoryResetAll()
             apps_register.removeAll()

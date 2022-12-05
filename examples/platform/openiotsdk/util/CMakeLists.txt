@@ -16,28 +16,19 @@
 
 cmake_minimum_required(VERSION 3.21)
 
-# Declare Open IoT SDK app interface target
-add_library(openiotsdk-app
-    openiotsdk_platform.cpp
-    ${CHIP_ROOT}/examples/providers/DeviceInfoProviderImpl.cpp
+# Declare Open IoT SDK util target
+add_library(openiotsdk-util
+    LEDWidget.cpp
 )
 
-target_include_directories(openiotsdk-app
+target_include_directories(openiotsdk-util
     PUBLIC
-        .
-        ${CHIP_ROOT}/examples/providers
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
 )
 
-target_link_libraries(openiotsdk-app
+target_link_libraries(openiotsdk-util
     PUBLIC
         openiotsdk-chip
+        mdh-arm-an552-mps3
         cmsis-rtos-implementation
-)
-
-add_library(openiotsdk-app-cmdline
-    cmdline.c
-)
-target_link_libraries(openiotsdk-app-cmdline
-    PUBLIC
-        openiotsdk-app
 )

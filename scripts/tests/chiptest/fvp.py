@@ -15,9 +15,10 @@
 #
 
 """
-Handles linux-specific functionality for running test cases
+Handles FVP-specific functionality for running test cases
 """
 
+import atexit
 import logging
 import os
 import subprocess
@@ -58,60 +59,62 @@ def EnsurePrivateState():
         sys.exit(1)
 
 
+def _runCommands(*commands, stopOnFail=True):
+    """Run a series of commands with os.system"""
+    for command in commands:
+        logging.debug("Executing '%s'" % command)
+        if os.system(command) != 0:
+            logging.error("Failed to execute '%s'" % command)
+            logging.error("Are you using --privileged if running in docker?")
+            if stopOnFail:
+                sys.exit(1)
+
+
+def _destroyNamespaceForAppTest():
+    """Revert the changes made by CreateNamespacesForAppTest"""
+    atexit.unregister(_destroyNamespaceForAppTest)
+    _runCommands(
+        'ip link delete chiphveth',
+        'ip netns delete chipns',
+        stopOnFail=False
+    )
+
+
 def CreateNamespacesForAppTest():
     """
     Creates appropriate namespaces for a tool and app binaries in a simulated
     isolated network.
     """
-    COMMANDS = [
-        # 2 virtual hosts: for app and for the tool
-        "ip netns add app",
-        "ip netns add tool",
+    _runCommands(
+        'sysctl net.ipv6.conf.all.disable_ipv6=0 net.ipv4.conf.all.forwarding=1 net.ipv6.conf.all.forwarding=1',
+        # Create chipns network namespace
+        'ip netns add chipns',
+        'ip netns exec chipns ip link set dev lo up',
+        # Adding chiphveth veth with peer chipnveth
+        'ip link add chiphveth type veth peer name chipnveth',
+        # Set IP addresses 10.200.1.1/24 fe00::1/64 to chiphveth interface
+        'ip addr add 10.200.1.1/24 dev chiphveth',
+        'ip -6 addr add fe00::1/64 dev chiphveth',
+        'ip link set chiphveth up',
+        # Adding chipnveth veth to namespace chipns
+        'ip link set chipnveth netns chipns',
+        'ip netns exec chipns ip link set dev chipnveth up',
+        # Create chiptap TAP device
+        'ip netns exec chipns ip tuntap add dev chiptap mode tap user root',
+        'ip netns exec chipns ifconfig chiptap 0.0.0.0 promisc',
+        # Create chipbr bridge interface between chipnveth and chiptap
+        'ip netns exec chipns ip link add chipbr type bridge',
+        # Set IP addresses 10.200.1.2/24 fe00::2/64 to chipbr bridge interface
+        'ip netns exec chipns ip -6 addr add fe00::2/64 dev chipbr',
+        'ip netns exec chipns ip addr add 10.200.1.2/24 dev chipbr',
+        'ip netns exec chipns ip addr flush dev chipnveth',
+        'ip netns exec chipns ip link set chiptap master chipbr',
+        'ip netns exec chipns ip link set chipnveth master chipbr',
+        'ip netns exec chipns ip link set dev chipbr up',
+        'ip netns exec chipns ip route add default via 10.200.1.1'
+    )
 
-        # create links for switch to net connections
-        "ip link add eth-app type veth peer name eth-app-switch",
-        "ip link add eth-tool type veth peer name eth-tool-switch",
-        "ip link add eth-ci type veth peer name eth-ci-switch",
-
-        # link the connections together
-        "ip link set eth-app netns app",
-        "ip link set eth-tool netns tool",
-
-        "ip link add name br1 type bridge",
-        "ip link set br1 up",
-        "ip link set eth-app-switch master br1",
-        "ip link set eth-tool-switch master br1",
-        "ip link set eth-ci-switch master br1",
-
-        # mark connections up
-        "ip netns exec app ip addr add 10.10.10.1/24 dev eth-app",
-        "ip netns exec app ip link set dev eth-app up",
-        "ip netns exec app ip link set dev lo up",
-        "ip link set dev eth-app-switch up",
-
-        "ip netns exec tool ip addr add 10.10.10.2/24 dev eth-tool",
-        "ip netns exec tool ip link set dev eth-tool up",
-        "ip netns exec tool ip link set dev lo up",
-        "ip link set dev eth-tool-switch up",
-
-        # Force IPv6 to use ULAs that we control
-        "ip netns exec tool ip -6 addr flush eth-tool",
-        "ip netns exec app ip -6 addr flush eth-app",
-        "ip netns exec tool ip -6 a add fd00:0:1:1::2/64 dev eth-tool",
-        "ip netns exec app ip -6 a add fd00:0:1:1::3/64 dev eth-app",
-
-        # create link between virtual host 'tool' and the test runner
-        "ip addr add 10.10.10.5/24 dev eth-ci",
-        "ip link set dev eth-ci up",
-        "ip link set dev eth-ci-switch up",
-    ]
-
-    for command in COMMANDS:
-        logging.debug("Executing '%s'" % command)
-        if os.system(command) != 0:
-            logging.error("Failed to execute '%s'" % command)
-            logging.error("Are you using --privileged if running in docker?")
-            sys.exit(1)
+    atexit.register(_destroyNamespaceForAppTest)
 
     # IPv6 does Duplicate Address Detection even though
     # we know ULAs provided are isolated. Wait for 'tenative'
@@ -141,13 +144,12 @@ def _Prefixify(prefix:str, path:Optional[str]) -> str:
     '''Return path with prefix if path is not None, else return None.'''
     return prefix + path if path else None
 
-
 def PathsWithNetworkNamespaces(paths: ApplicationPaths) -> ApplicationPaths:
     """
     Returns a copy of paths with updated command arrays to invoke the
     commands in an appropriate network namespace.
     """
-    prefix = 'ip netns exec app'.split()
+    prefix = 'ip netns exec chipns'.split()
     return ApplicationPaths(
         chip_tool=_Prefixify(prefix, paths.chip_tool),
         all_clusters_app=_Prefixify(prefix, paths.all_clusters_app),
@@ -155,5 +157,5 @@ def PathsWithNetworkNamespaces(paths: ApplicationPaths) -> ApplicationPaths:
         ota_provider_app=_Prefixify(prefix, paths.ota_provider_app),
         ota_requestor_app=_Prefixify(prefix, paths.ota_requestor_app),
         tv_app=_Prefixify(prefix, paths.tv_app),
-        bridge_app=_Prefixify(prefix, paths.bridge_app),
+        bridge_app=_Prefixify(prefix, paths.bridge_app)
     )
