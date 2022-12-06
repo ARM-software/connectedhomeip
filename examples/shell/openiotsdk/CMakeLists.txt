@@ -79,4 +79,4 @@ target_link_libraries(${APP_TARGET}
 include(linker)
 set_target_link(${APP_TARGET})
 
-tfm_post_build(${APP_TARGET})
+sdk_post_build(${APP_TARGET})

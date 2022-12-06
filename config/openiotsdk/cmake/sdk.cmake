@@ -57,6 +57,7 @@ if(TFM_SUPPORT)
     if(CONFIG_CHIP_OPEN_IOT_SDK_USE_PSA_PS)
         set(TFM_CMAKE_ARGS "${TFM_CMAKE_ARGS};-DPS_NUM_ASSETS=30")
     endif()
+    set(LINKER_SCRIPT ${OPEN_IOT_SDK_CONFIG}/ld/cs300_gcc_tfm.ld)
 endif()
 
 # Add Open IoT SDK source
@@ -76,6 +77,11 @@ if(TARGET cmsis-rtos-api)
     target_include_directories(cmsis-rtos-api
             PUBLIC
                 cmsis-config
+    )
+
+    target_compile_definitions(cmsis-rtos-api
+        PUBLIC
+            DOMAIN_NS=$<IF:$<BOOL:${TFM_SUPPORT}>,1,0>
     )
 endif()
 
@@ -114,6 +120,13 @@ if(TARGET ethernet-lan91c111)
     )
 endif()
 
+if(TARGET mcu-driver-hal)
+    target_compile_definitions(mcu-driver-hal
+        INTERFACE
+            DOMAIN_NS=$<IF:$<BOOL:${TFM_SUPPORT}>,1,0>
+    )
+endif()
+
 # Mbedtls config
 if(TARGET mbedtls-config)
     target_include_directories(mbedtls-config
@@ -137,17 +150,6 @@ if(TARGET mbedtls-config)
     )
 endif()
 
-if(TFM_SUPPORT)
-    set(LINKER_SCRIPT ${OPEN_IOT_SDK_CONFIG}/ld/cs300_gcc_tfm.ld)
-
-    # It is required to pass to mcu-driver-hal that it is compiled in NS mode
-    target_compile_definitions(mcu-driver-hal
-        INTERFACE
-            DOMAIN_NS=1
-    )
-
-endif()
-
 # Declare RTOS interface target
 add_library(cmsis-rtos-implementation INTERFACE)
 
@@ -160,6 +162,11 @@ if(TARGET freertos-kernel)
     target_include_directories(cmsis-rtos-implementation 
         INTERFACE
             ${CMAKE_CURRENT_SOURCE_DIR}/freertos-config
+    )
+
+    target_compile_definitions(cmsis-rtos-implementation
+        INTERFACE
+            CONFIG_RUN_FREERTOS_SECURE_ONLY=$<IF:$<BOOL:${TFM_SUPPORT}>,0,1>
     )
 elseif(TARGET cmsis-rtx)
     target_link_libraries(cmsis-rtos-implementation
@@ -174,45 +181,68 @@ endif()
 add_subdirectory(${OPEN_IOT_SDK_STORAGE_SOURCE} ./sdk_storage_build)
 list(APPEND SDK_SOURCES_BINARY_DIRS ${CMAKE_CURRENT_BINARY_DIR}/sdk_storage_build)
 
+function(sdk_post_build target)
+    string(REPLACE "_ns" "" APP_NAME ${APP_TARGET})
 if(TFM_SUPPORT)
     include(ElfToBin)
     include(TfmSignImage)
-
-    function(tfm_post_build target)
-        string(REPLACE "_ns" "" APP_NAME ${APP_TARGET})
-        target_elf_to_bin(${APP_TARGET})
-        iotsdk_tf_m_sign_image(${APP_TARGET})
-        iotsdk_tf_m_merge_images(${APP_TARGET} 0x10000000 0x38000000 0x28060000)
-        ExternalProject_Get_Property(tf-m-build BINARY_DIR)
-        # Cleanup
-        add_custom_command(
-            TARGET
-                ${APP_TARGET}
-            POST_BUILD
-            DEPENDS
-                $<TARGET_FILE_DIR:${APP_TARGET}>/tfm_s_signed.bin
-                $<TARGET_FILE_DIR:${APP_TARGET}>/${APP_TARGET}.bin
-                $<TARGET_FILE_DIR:${APP_TARGET}>/${APP_TARGET}_signed.bin
-                $<TARGET_FILE_DIR:${APP_TARGET}>/${APP_TARGET}_merged.hex
+    target_elf_to_bin(${APP_TARGET})
+    iotsdk_tf_m_sign_image(${APP_TARGET})
+    iotsdk_tf_m_merge_images(${APP_TARGET} 0x10000000 0x38000000 0x28060000)
+    ExternalProject_Get_Property(tf-m-build BINARY_DIR)
+    # Cleanup
+    add_custom_command(
+        TARGET
+            ${APP_TARGET}
+        POST_BUILD
+        DEPENDS
+            $<TARGET_FILE_DIR:${APP_TARGET}>/tfm_s_signed.bin
+            $<TARGET_FILE_DIR:${APP_TARGET}>/${APP_TARGET}.bin
+            $<TARGET_FILE_DIR:${APP_TARGET}>/${APP_TARGET}_signed.bin
+            $<TARGET_FILE_DIR:${APP_TARGET}>/${APP_TARGET}_merged.hex
+            $<TARGET_FILE_DIR:${APP_TARGET}>/${APP_TARGET}_merged.elf
+        COMMAND
+            # Copy the TF-M secure elf image
+            ${CMAKE_COMMAND} -E copy
+                ${BINARY_DIR}/install/outputs/tfm_s.elf
+                $<TARGET_FILE_DIR:${APP_TARGET}>/
+        COMMAND
+            # Rename output file
+            ${CMAKE_COMMAND} -E copy
                 $<TARGET_FILE_DIR:${APP_TARGET}>/${APP_TARGET}_merged.elf
-            COMMAND
-                # Copy the TF-M secure elf image
-                ${CMAKE_COMMAND} -E copy
-                    ${BINARY_DIR}/install/outputs/tfm_s.elf
-                    $<TARGET_FILE_DIR:${APP_TARGET}>/
-            COMMAND
-                    # Rename output file
-                    ${CMAKE_COMMAND} -E copy
-                        $<TARGET_FILE_DIR:${APP_TARGET}>/${APP_TARGET}_merged.elf
-                        $<TARGET_FILE_DIR:${APP_TARGET}>/${APP_NAME}.elf
-            COMMAND rm
-            ARGS -Rf
-                $<TARGET_FILE_DIR:${APP_TARGET}>/tfm_s_signed.bin 
-                $<TARGET_FILE_DIR:${APP_TARGET}>/${APP_TARGET}.bin
-                $<TARGET_FILE_DIR:${APP_TARGET}>/${APP_TARGET}_signed.bin 
-                $<TARGET_FILE_DIR:${APP_TARGET}>/${APP_TARGET}_merged.hex
-                $<TARGET_FILE_DIR:${APP_TARGET}>/${APP_TARGET}_merged.elf
-            VERBATIM
-        )
-    endfunction()
+                $<TARGET_FILE_DIR:${APP_TARGET}>/${APP_NAME}.elf
+        COMMAND rm
+        ARGS -Rf
+            $<TARGET_FILE_DIR:${APP_TARGET}>/tfm_s_signed.bin 
+            $<TARGET_FILE_DIR:${APP_TARGET}>/${APP_TARGET}.bin
+            $<TARGET_FILE_DIR:${APP_TARGET}>/${APP_TARGET}_signed.bin 
+            $<TARGET_FILE_DIR:${APP_TARGET}>/${APP_TARGET}_merged.hex
+            $<TARGET_FILE_DIR:${APP_TARGET}>/${APP_TARGET}_merged.elf
+        VERBATIM
+    )
+else()
+    add_custom_command(
+        TARGET
+            ${APP_TARGET}
+        POST_BUILD
+        DEPENDS
+            $<TARGET_FILE_DIR:${APP_TARGET}>/${APP_TARGET}.elf
+            $<TARGET_FILE_DIR:${APP_TARGET}>/${APP_TARGET}.map
+        COMMAND
+            # Rename output elf file
+            ${CMAKE_COMMAND} -E copy
+                $<TARGET_FILE_DIR:${APP_TARGET}>/${APP_TARGET}.elf
+                $<TARGET_FILE_DIR:${APP_TARGET}>/${APP_NAME}.elf
+        COMMAND
+            # Rename output map file
+            ${CMAKE_COMMAND} -E copy
+                $<TARGET_FILE_DIR:${APP_TARGET}>/${APP_TARGET}.map
+                $<TARGET_FILE_DIR:${APP_TARGET}>/${APP_NAME}.map
+        COMMAND rm
+        ARGS -Rf
+            $<TARGET_FILE_DIR:${APP_TARGET}>/${APP_TARGET}.elf
+            $<TARGET_FILE_DIR:${APP_TARGET}>/${APP_TARGET}.map
+        VERBATIM
+    )
 endif() #TFM_SUPPORT
+endfunction()
