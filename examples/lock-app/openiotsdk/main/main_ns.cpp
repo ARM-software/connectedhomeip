@@ -42,6 +42,12 @@ static void app_thread(void * argument)
         goto exit;
     }
 
+    if (openiotsdk_chip_init())
+    {
+        ChipLogError(NotSpecified, "Open IoT SDK CHIP stack initialization failed");
+        goto exit;
+    }
+
     // Init ZCL Data Model and start server
     static chip::CommonCaseDeviceServerInitParams initParams;
     (void) initParams.InitializeStaticResourcesBeforeServerInit();
@@ -82,12 +88,6 @@ int main()
     if (openiotsdk_platform_init())
     {
         ChipLogError(NotSpecified, "Open IoT SDK platform initialization failed");
-        return EXIT_FAILURE;
-    }
-
-    if (openiotsdk_chip_init())
-    {
-        ChipLogError(NotSpecified, "Open IoT SDK CHIP stack initialization failed");
         return EXIT_FAILURE;
     }
 
