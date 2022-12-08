@@ -80,4 +80,9 @@ int openiotsdk_chip_run(void);
  */
 void openiotsdk_chip_shutdown(void);
 
+/**
+ * @brief Retrieve command-line arguments embedded in the binary.
+ */
+extern "C" void openiotsdk_get_cmdline(int * argc, char *** argv);
+
 #endif /* ! OPENIOTSDK_PLATFORM_H */

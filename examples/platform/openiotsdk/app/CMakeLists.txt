@@ -22,13 +22,13 @@ add_library(openiotsdk-app
     ${CHIP_ROOT}/examples/providers/DeviceInfoProviderImpl.cpp
 )
 
-target_include_directories(openiotsdk-app 
+target_include_directories(openiotsdk-app
     PUBLIC
         .
         ${CHIP_ROOT}/examples/providers
 )
 
-target_link_libraries(openiotsdk-app 
+target_link_libraries(openiotsdk-app
     PUBLIC
         openiotsdk-chip
         $<TARGET_OBJECTS:iotsdk-serial-retarget>
@@ -40,3 +40,12 @@ if(TFM_SUPPORT)
             TFM_SUPPORT
     )
 endif()
+
+add_library(openiotsdk-app-cmdline
+    cmdline.c
+)
+
+target_link_libraries(openiotsdk-app-cmdline
+    PUBLIC
+        openiotsdk-app
+)
