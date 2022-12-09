@@ -93,4 +93,4 @@ set(LINKER_SCRIPT ${CMAKE_CURRENT_SOURCE_DIR}/cs300.ld)
 include(linker)
 set_target_link(${APP_TARGET})
 
-tfm_post_build(${APP_TARGET})
+sdk_post_build(${APP_TARGET})
