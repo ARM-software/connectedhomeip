@@ -45,7 +45,7 @@ jobs:
     openiotsdk:
         strategy:
             matrix:
-                socketAPI: ["lwip", "iotsocket"]
+                socketAPI: ["iotsocket"]
         name: Open IoT SDK examples building
         timeout-minutes: 140
 

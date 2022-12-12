@@ -24,6 +24,7 @@
 
 #include <app/server/OnboardingCodesUtil.h>
 #include <app/server/Server.h>
+#include <app/util/af.h>
 #include <credentials/DeviceAttestationCredsProvider.h>
 #include <credentials/examples/DeviceAttestationCredsExample.h>
 
@@ -31,6 +32,8 @@
 
 using namespace ::chip;
 using namespace ::chip::DeviceLayer;
+
+constexpr EndpointId kNetworkCommissioningEndpointSecondary = 0xFFFE;
 
 static void app_thread(void * argument)
 {
@@ -66,6 +69,9 @@ static void app_thread(void * argument)
 
     // Initialize device attestation config
     SetDeviceAttestationCredentialsProvider(Credentials::Examples::GetExampleDACProvider());
+
+    // We only have network commissioning on endpoint 0.
+    emberAfEndpointEnableDisable(kNetworkCommissioningEndpointSecondary, false);
 
     ChipLogProgress(NotSpecified, "Open IoT SDK lock-app example application run");
 
