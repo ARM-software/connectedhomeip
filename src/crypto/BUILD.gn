@@ -121,7 +121,8 @@ if (chip_crypto == "openssl") {
     sources = [ "CHIPCryptoPALPSA.cpp" ]
     public_deps = [ ":public_headers" ]
 
-    external_mbedtls = current_os == "zephyr"
+    external_mbedtls = current_os == "zephyr" || current_os == "cmsis-rtos"
+
 
     if (!external_mbedtls) {
       public_deps += [ "${mbedtls_root}:mbedtls" ]

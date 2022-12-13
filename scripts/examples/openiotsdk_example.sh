@@ -49,13 +49,14 @@ Usage: $0 [options] example [test_name]
 Build, run or test the Open IoT SDK examples and unit-tests.
 
 Options:
-    -h,--help                       Show this help
-    -c,--clean                      Clean target build
-    -s,--scratch                    Remove build directory at all before building
-    -C,--command    <command>       Action to execute <build-run | run | test | build - default>
-    -d,--debug      <debug_enable>  Build in debug mode <true | false - default>
-    -p,--path       <build_path>    Build path <build_path - default is example_dir/build>
-    -n,--network    <network_name>  FVP network interface name <network_name - default is "user" which means user network mode>
+    -h,--help                          Show this help
+    -c,--clean                         Clean target build
+    -s,--scratch                       Remove build directory at all before building
+    -C,--command    <command>          Action to execute <build-run | run | test | build - default>
+    -d,--debug      <debug_enable>     Build in debug mode <true | false - default>
+    -a,--algorithm  <crypto algorithm) Select crypto algorith <mbedtls - default | psa>
+    -p,--path       <build_path>       Build path <build_path - default is example_dir/build>
+    -n,--network    <network_name>     FVP network interface name <network_name - default is "user" which means user network mode>
 
 Examples:
     shell
@@ -102,6 +103,10 @@ function build_with_cmake() {
     BUILD_OPTIONS=(-DCMAKE_SYSTEM_PROCESSOR=cortex-m55)
     if "$DEBUG"; then
         BUILD_OPTIONS+=(-DCMAKE_BUILD_TYPE=Debug)
+    fi
+
+    if [[ $CRYPTO == "psa" ]]; then
+        BUILD_OPTIONS+=(-DCONFIG_CHIP_CRYPTO_PSA=true)
     fi
 
     # Remove old artifacts to force linking
@@ -234,8 +239,8 @@ function run_test() {
     fi
 }
 
-SHORT=C:,p:,d:,n:,c,s,h
-LONG=command:,path:,debug:,network:,clean,scratch,help
+SHORT=C:,p:,d:,a:,n:,c,s,h
+LONG=command:,path:,debug:,algorithm:,network:,clean,scratch,help
 OPTS=$(getopt -n build --options "$SHORT" --longoptions "$LONG" -- "$@")
 
 eval set -- "$OPTS"
@@ -260,6 +265,10 @@ while :; do
             ;;
         -d | --debug)
             DEBUG=$2
+            shift 2
+            ;;
+        -a | --algorithm)
+            CRYPTO=$2
             shift 2
             ;;
         -p | --path)
