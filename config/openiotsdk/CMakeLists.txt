@@ -139,7 +139,7 @@ endif()
 # Set up CHIP project configuration file
 
 if (CONFIG_CHIP_PROJECT_CONFIG)
-    get_filename_component(CHIP_PROJECT_CONFIG
+    get_filename_component(CHIP_PROJECT_CONFIG 
         ${CONFIG_CHIP_PROJECT_CONFIG}
         REALPATH
         BASE_DIR ${CMAKE_SOURCE_DIR}
@@ -237,7 +237,7 @@ ExternalProject_Add(
 )
 
 # ==============================================================================
-# Define 'openiotsdk-chip' target that exposes CHIP and Open IoT SDK
+# Define 'openiotsdk-chip' target that exposes CHIP and Open IoT SDK 
 # headers & libraries to the application
 # ==============================================================================
 add_library(openiotsdk-chip INTERFACE)

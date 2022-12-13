@@ -460,7 +460,9 @@ void ServiceEvents(uint32_t aSleepTimeMilliseconds)
         if (sRemainingSystemLayerEventDelay == 0)
         {
 #if defined(CHIP_DEVICE_LAYER_TARGET_OPEN_IOT_SDK)
-            // Terminate event loop after performance single loop
+            // We need to terminate event loop after performance single step.
+            // Event loop processing work items until StopEventLoopTask is called.
+            // Scheduling StopEventLoop task guarantees correct operation of the loop.
             chip::DeviceLayer::PlatformMgr().ScheduleWork(
                 [](intptr_t) -> void { chip::DeviceLayer::PlatformMgr().StopEventLoopTask(); }, (intptr_t) nullptr);
 #endif // CHIP_DEVICE_LAYER_TARGET_OPEN_IOT_SDK

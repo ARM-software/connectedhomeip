@@ -28,10 +28,8 @@ chip_test_suite("tests") {
     test_sources += [ "TestServerCommandDispatch.cpp" ]
     test_sources += [ "TestEventChunking.cpp" ]
     test_sources += [ "TestEventCaching.cpp" ]
-    if (chip_device_platform != "openiotsdk") {
-      test_sources += [ "TestReadChunking.cpp" ]
-      test_sources += [ "TestWriteChunking.cpp" ]
-    }
+    test_sources += [ "TestReadChunking.cpp" ]
+    test_sources += [ "TestWriteChunking.cpp" ]
   }
 
   cflags = [ "-Wconversion" ]

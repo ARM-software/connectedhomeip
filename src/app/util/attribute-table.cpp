@@ -21,8 +21,8 @@
 
 // for pulling in defines dealing with EITHER server or client
 #include "app/util/common.h"
-#include <app-common/zap-generated/callback.h>
 #include <app/util/error-mapping.h>
+#include <app/util/generic-callbacks.h>
 #include <app/util/odd-sized-integers.h>
 
 #include <app/reporting/reporting.h>
@@ -85,7 +85,7 @@ static void emberAfAttributeDecodeAndPrintCluster(ClusterId cluster)
 #endif // defined(EMBER_AF_PRINT_ENABLE) && defined(EMBER_AF_PRINT_ATTRIBUTES)
 }
 
-void emberAfPrintAttributeTable(void)
+void emberAfPrintAttributeTable()
 {
     uint8_t data[ATTRIBUTE_LARGEST];
     decltype(emberAfEndpointCount()) endpointIndex;

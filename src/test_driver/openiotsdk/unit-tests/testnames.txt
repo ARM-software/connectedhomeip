@@ -3,7 +3,6 @@ AppTests
 ASN1Tests
 BDXTests
 ChipCryptoTests
-ControllerTests
 CoreTests
 CredentialsTest
 DataModelTests

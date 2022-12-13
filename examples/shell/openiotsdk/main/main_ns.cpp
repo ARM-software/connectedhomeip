@@ -28,7 +28,6 @@
 
 using namespace ::chip;
 using namespace ::chip::Shell;
-using namespace ::chip::Logging::Platform;
 
 static void app_thread(void * argument)
 {

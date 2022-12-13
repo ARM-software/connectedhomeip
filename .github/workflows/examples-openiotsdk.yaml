@@ -72,14 +72,6 @@ jobs:
             - name: Checkout submodules
               run: scripts/checkout_submodules.py --shallow --recursive --platform openiotsdk
 
-            - name: Detect changed paths
-              uses: dorny/paths-filter@v2
-              id: changed_paths
-              with:
-                  filters: |
-                      openiotsdk:
-                        - '**/openiotsdk/**'
-
             - name: Set up environment for size reports
               if: ${{ !env.ACT }}
               env:
@@ -96,7 +88,6 @@ jobs:
                   scripts/run_in_build_env.sh './scripts/build_python.sh --install_wheel build-env'
 
             - name: Build shell example
-              if: github.event_name == 'push' || steps.changed_paths.outputs.openiotsdk == 'true'
               id: build_shell
               timeout-minutes: 10
               run: |
@@ -107,7 +98,6 @@ jobs:
                     /tmp/bloat_reports/
 
             - name: Build lock-app example
-              if: github.event_name == 'push' || steps.changed_paths.outputs.openiotsdk == 'true'
               id: build_lock_app
               timeout-minutes: 10
               run: |
@@ -118,7 +108,6 @@ jobs:
                     /tmp/bloat_reports/
 
             - name: Build unit tests
-              if: github.event_name == 'push' || steps.changed_paths.outputs.openiotsdk == 'true'
               id: build_unit_tests
               timeout-minutes: 10
               run: |

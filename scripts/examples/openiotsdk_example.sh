@@ -91,7 +91,7 @@ function build_with_cmake() {
         echo "Clean build" >&2
         if compgen -G "$BUILD_PATH/CMake*" >/dev/null; then
             cmake --build "$BUILD_PATH" --target clean
-            rm -rf "$BUILD_PATH"/CMake*
+            find "$BUILD_PATH" -name 'CMakeCache.txt' -delete
         fi
     fi
 
