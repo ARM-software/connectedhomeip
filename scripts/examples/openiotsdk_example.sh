@@ -39,6 +39,7 @@ EXAMPLE_TEST_PATH="$CHIP_ROOT/src/test_driver/openiotsdk/integration-tests"
 TELNET_TERMINAL_PORT=5000
 FAILED_TESTS=0
 FVP_NETWORK="user"
+CRYPTO_TYPE="mbedtls"
 
 readarray -t TEST_NAMES <"$CHIP_ROOT"/src/test_driver/openiotsdk/unit-tests/testnames.txt
 
@@ -49,13 +50,14 @@ Usage: $0 [options] example [test_name]
 Build, run or test the Open IoT SDK examples and unit-tests.
 
 Options:
-    -h,--help                       Show this help
-    -c,--clean                      Clean target build
-    -s,--scratch                    Remove build directory at all before building
-    -C,--command    <command>       Action to execute <build-run | run | test | build - default>
-    -d,--debug      <debug_enable>  Build in debug mode <true | false - default>
-    -p,--path       <build_path>    Build path <build_path - default is example_dir/build>
-    -n,--network    <network_name>  FVP network interface name <network_name - default is "user" which means user network mode>
+    -h,--help                          Show this help
+    -c,--clean                         Clean target build
+    -s,--scratch                       Remove build directory at all before building
+    -C,--command    <command>          Action to execute <build-run | run | test | build - default>
+    -d,--debug      <debug_enable>     Build in debug mode <true | false - default>
+    -a,--algorithm  <crypto algorithm) Select crypto algorithm <psa | mbedtls - default>
+    -p,--path       <build_path>       Build path <build_path - default is example_dir/build>
+    -n,--network    <network_name>     FVP network interface name <network_name - default is "user" which means user network mode>
 
 Examples:
     shell
@@ -103,6 +105,8 @@ function build_with_cmake() {
     if "$DEBUG"; then
         BUILD_OPTIONS+=(-DCMAKE_BUILD_TYPE=Debug)
     fi
+
+    BUILD_OPTIONS+=(-DCONFIG_CHIP_CRYPTO="$CRYPTO_TYPE")
 
     # Remove old artifacts to force linking
     rm -rf "$BUILD_PATH/chip-"*
@@ -234,8 +238,8 @@ function run_test() {
     fi
 }
 
-SHORT=C:,p:,d:,n:,c,s,h
-LONG=command:,path:,debug:,network:,clean,scratch,help
+SHORT=C:,p:,d:,a:,n:,c,s,h
+LONG=command:,path:,debug:,algorithm:,network:,clean,scratch,help
 OPTS=$(getopt -n build --options "$SHORT" --longoptions "$LONG" -- "$@")
 
 eval set -- "$OPTS"
@@ -260,6 +264,10 @@ while :; do
             ;;
         -d | --debug)
             DEBUG=$2
+            shift 2
+            ;;
+        -a | --algorithm)
+            CRYPTO_TYPE=$2
             shift 2
             ;;
         -p | --path)
@@ -325,6 +333,15 @@ case "$COMMAND" in
     build | run | test | build-run) ;;
     *)
         echo "Wrong command definition"
+        show_usage
+        exit 2
+        ;;
+esac
+
+case "$CRYPTO_TYPE" in
+    psa | mbedtls) ;;
+    *)
+        echo "Wrong crypto type definition"
         show_usage
         exit 2
         ;;
