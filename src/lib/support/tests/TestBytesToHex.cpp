@@ -428,7 +428,6 @@ void TestLogBufferAsHex(nlTestSuite * inSuite, void * inContext)
         ValidateTextMatches(inSuite, testCase.expectedText, testCase.numLines, gRedirectedLogLines);
     }
 }
-#endif // CHIP_PROGRESS_LOGGING
 
 #endif
 

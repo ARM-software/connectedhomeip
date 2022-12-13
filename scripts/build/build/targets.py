@@ -541,17 +541,6 @@ def BuildOpenIotSdkTargets():
     return target
 
 
-def BuildOpenIotSdkTargets():
-    target = BuildTarget('openiotsdk', OpenIotSdkBuilder)
-
-    target.AppendFixedTargets([
-        TargetPart('shell', app=OpenIotSdkApp.SHELL),
-        TargetPart('lock', app=OpenIotSdkApp.LOCK),
-    ])
-
-    return target
-
-
 BUILD_TARGETS = [
     BuildAmebaTarget(),
     BuildAndroidTarget(),
