@@ -115,6 +115,12 @@ class TelnetConnection:
         self.telnet.close()
         self.is_open = False
 
+    def set_port(self, port):
+        """
+        set port number of telnet connection
+        """
+        self.port = port
+
     def get_port(self):
         """
         Get port number of telnet connection
