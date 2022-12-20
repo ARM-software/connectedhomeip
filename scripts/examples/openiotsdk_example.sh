@@ -39,6 +39,7 @@ EXAMPLE_TEST_PATH="$CHIP_ROOT/src/test_driver/openiotsdk/integration-tests"
 TELNET_TERMINAL_PORT=5000
 FAILED_TESTS=0
 FVP_NETWORK="user"
+CRYPTO_TYPE="mbedtls"
 
 readarray -t TEST_NAMES <"$CHIP_ROOT"/src/test_driver/openiotsdk/unit-tests/testnames.txt
 
@@ -54,7 +55,7 @@ Options:
     -s,--scratch                       Remove build directory at all before building
     -C,--command    <command>          Action to execute <build-run | run | test | build - default>
     -d,--debug      <debug_enable>     Build in debug mode <true | false - default>
-    -a,--algorithm  <crypto algorithm) Select crypto algorithm <mbedtls - default | psa>
+    -a,--algorithm  <crypto algorithm) Select crypto algorithm <psa | mbedtls - default>
     -p,--path       <build_path>       Build path <build_path - default is example_dir/build>
     -n,--network    <network_name>     FVP network interface name <network_name - default is "user" which means user network mode>
 
@@ -105,9 +106,7 @@ function build_with_cmake() {
         BUILD_OPTIONS+=(-DCMAKE_BUILD_TYPE=Debug)
     fi
 
-    if [[ $CRYPTO == "psa" ]]; then
-        BUILD_OPTIONS+=(-DCONFIG_CHIP_CRYPTO_PSA=true)
-    fi
+    BUILD_OPTIONS+=(-DCONFIG_CHIP_CRYPTO="$CRYPTO_TYPE")
 
     # Remove old artifacts to force linking
     rm -rf "$BUILD_PATH/chip-"*
@@ -268,7 +267,7 @@ while :; do
             shift 2
             ;;
         -a | --algorithm)
-            CRYPTO=$2
+            CRYPTO_TYPE=$2
             shift 2
             ;;
         -p | --path)
@@ -334,6 +333,15 @@ case "$COMMAND" in
     build | run | test | build-run) ;;
     *)
         echo "Wrong command definition"
+        show_usage
+        exit 2
+        ;;
+esac
+
+case "$CRYPTO_TYPE" in
+    psa | mbedtls) ;;
+    *)
+        echo "Wrong crypto type definition"
         show_usage
         exit 2
         ;;
