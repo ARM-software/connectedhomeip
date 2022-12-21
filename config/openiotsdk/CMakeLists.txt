@@ -129,7 +129,7 @@ endif()
 # Set up CHIP project configuration file
 
 if (CONFIG_CHIP_PROJECT_CONFIG)
-    get_filename_component(CHIP_PROJECT_CONFIG 
+    get_filename_component(CHIP_PROJECT_CONFIG
         ${CONFIG_CHIP_PROJECT_CONFIG}
         REALPATH
         BASE_DIR ${CMAKE_SOURCE_DIR}
@@ -192,6 +192,7 @@ chip_gn_arg_bool  ("chip_automation_logging"              CONFIG_CHIP_AUTOMATION
 chip_gn_arg_bool  ("chip_error_logging"                   CONFIG_CHIP_ERROR_LOGGING)
 chip_gn_arg_bool  ("chip_openiotsdk_use_psa_ps"           CONFIG_CHIP_OPEN_IOT_SDK_USE_PSA_PS)
 chip_gn_arg_bool  ("chip_system_config_use_iot_socket"    CONFIG_CHIP_OPEN_IOT_SDK_USE_IOT_SOCKET)
+chip_gn_arg_string("chip_crypto"                          "${CONFIG_CHIP_CRYPTO}")
 if (TARGET cmsis-rtos-api)
     chip_gn_arg_string("target_os"                        "cmsis-rtos")
 endif()
@@ -224,7 +225,7 @@ ExternalProject_Add(
 )
 
 # ==============================================================================
-# Define 'openiotsdk-chip' target that exposes CHIP and Open IoT SDK 
+# Define 'openiotsdk-chip' target that exposes CHIP and Open IoT SDK
 # headers & libraries to the application
 # ==============================================================================
 add_library(openiotsdk-chip INTERFACE)
