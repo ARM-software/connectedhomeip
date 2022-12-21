@@ -250,6 +250,7 @@
             "args": [
                 "-Cbuild",
                 "-d${input:openiotsdkDebugMode}",
+                "-b${input:openiotsdkCryptoBackend}",
                 "${input:openiotsdkExample}"
             ],
             "group": "build",
@@ -266,7 +267,12 @@
             "label": "Build Open IoT SDK unit-tests",
             "type": "shell",
             "command": "scripts/examples/openiotsdk_example.sh",
-            "args": ["-Cbuild", "-d${input:openiotsdkDebugMode}", "unit-tests"],
+            "args": [
+                "-Cbuild",
+                "-d${input:openiotsdkDebugMode}",
+                "-b${input:openiotsdkCryptoBackend}",
+                "unit-tests"
+            ],
             "group": "build",
             "problemMatcher": {
                 "pattern": {
@@ -453,6 +459,13 @@
             "description": "Do you want to use debug mode?",
             "options": ["false", "true"],
             "default": "false"
+        },
+        {
+            "type": "pickString",
+            "id": "openiotsdkCryptoBackend",
+            "description": "Which Crypto algorithm do you wish to use?",
+            "options": ["mbedtls", "psa"],
+            "default": "mbedtls"
         },
         {
             "type": "pickString",

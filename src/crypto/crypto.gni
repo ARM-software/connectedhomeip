@@ -13,13 +13,10 @@
 # limitations under the License.
 
 declare_args() {
-  # Crypto implementation: mbedtls, openssl, tinycrypt, boringssl, platform.
+  # Crypto implementation: mbedtls, psa, openssl, tinycrypt, boringssl, platform.
   chip_crypto = ""
   chip_with_se05x = 0
 
-  # Compile mbedtls externally. Only used if chip_crypto == "mbedtls"
+  # Compile mbedtls externally.
   chip_external_mbedtls = false
 }
-
-assert(!chip_external_mbedtls || chip_crypto == "mbedtls",
-       "Use of external mbedtls requires the mbedtls crypto impl")
