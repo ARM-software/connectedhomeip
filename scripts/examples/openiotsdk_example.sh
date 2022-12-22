@@ -36,6 +36,7 @@ OIS_CONFIG="$CHIP_ROOT/config/openiotsdk"
 FVP_CONFIG_FILE="$OIS_CONFIG/fvp/cs300.conf"
 EXAMPLE_TEST_PATH="$CHIP_ROOT/src/test_driver/openiotsdk/integration-tests"
 TELNET_TERMINAL_PORT=5000
+TELNET_CONNECTION_PORT=""
 FAILED_TESTS=0
 IS_UNIT_TEST=0
 FVP_NETWORK="user"
@@ -107,8 +108,6 @@ function build_with_cmake() {
     # Remove old artifacts to force linking
     rm -rf "$BUILD_PATH/chip-"*
 
-    # Activate Matter environment
-    source "$CHIP_ROOT"/scripts/activate.sh
     # Remove access to ARM GCC toolchain from Matter environment, use higher version from OIS environment
     PATH=$(echo "$PATH" | sed 's/:/\n/g' | grep -v "$PW_ARM_CIPD_INSTALL_DIR" | xargs | tr ' ' ':')
 
@@ -152,15 +151,41 @@ function run_fvp() {
     echo "Running $EXAMPLE_EXE_PATH with options: ${RUN_OPTIONS[@]}"
 
     # Run the FVP
-    "$FVP_BIN" "${RUN_OPTIONS[@]}" -f "$FVP_CONFIG_FILE" --application "$EXAMPLE_EXE_PATH" >/dev/null 2>&1 &
+    "$FVP_BIN" "${RUN_OPTIONS[@]}" -f "$FVP_CONFIG_FILE" --application "$EXAMPLE_EXE_PATH" 2>&1 >/tmp/FVP_run_$$ &
     FVP_PID=$!
-    sleep 1
-    # Connect FVP via telnet client
-    telnet localhost "$TELNET_TERMINAL_PORT"
+
+    # Wait for FVP to start and exist the output file
+    timeout=0
+    while [ ! -e /tmp/FVP_run_$$ ]; do
+        timeout=$((timeout + 1))
+        if [ $timeout -ge 5 ]; then
+            echo "Error: FVP start failed" >&2
+            break
+        fi
+        sleep 1
+    done
+
+    while IFS= read -t 5 -r line; do
+        if [[ $line == *"Listening for serial connection on port"* ]]; then
+            TELNET_CONNECTION_PORT="${line##* }"
+            break
+        fi
+    done </tmp/FVP_run_$$
+
+    if [ -n "$TELNET_CONNECTION_PORT" ]; then
+        # Connect FVP via telnet client
+        telnet localhost "$TELNET_CONNECTION_PORT"
+    else
+        echo "Error: FVP start failed" >&2
+    fi
 
     # Stop the FVP
     kill -9 "$FVP_PID"
-    sleep 1
+    # Wait for the FVP stop
+    while kill -0 "$FVP_PID"; do
+        sleep 1
+    done
+    rm -rf /tmp/FVP_run_$$
 }
 
 function run_test() {
@@ -176,9 +201,6 @@ function run_test() {
         echo "Error: $FVP_BIN not installed." >&2
         exit 1
     fi
-
-    # Activate Matter environment with pytest
-    source "$CHIP_ROOT"/scripts/activate.sh
 
     # Check if pytest exists
     if ! [ -x "$(command -v pytest)" ]; then
@@ -316,6 +338,9 @@ else
     EXAMPLE_EXE_PATH="$BUILD_PATH/$EXAMPLE.elf"
     EXAMPLE_TEST_PATH+="/unit-tests"
 fi
+
+# Activate Matter environment
+source "$CHIP_ROOT"/scripts/activate.sh
 
 if [[ "$COMMAND" == *"build"* ]]; then
     build_with_cmake
