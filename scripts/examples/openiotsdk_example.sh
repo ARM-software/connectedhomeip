@@ -118,8 +118,8 @@ function build_with_cmake() {
     PATH=$(echo "$PATH" | sed 's/:/\n/g' | grep -v "$PW_ARM_CIPD_INSTALL_DIR" | xargs | tr ' ' ':')
 
     cmake -G Ninja -S "$EXAMPLE_PATH" -B "$BUILD_PATH" --toolchain="$TOOLCHAIN_PATH" "${BUILD_OPTIONS[@]}"
-    if [ -f "$BUILD_PATH"/_deps/tf-m-src/tools/requirements.txt ]; then
-        pip3 install -r "$BUILD_PATH"/_deps/tf-m-src/tools/requirements.txt
+    if [ -f "$BUILD_PATH"/_deps/trusted-firmware-m-src/tools/requirements.txt ]; then
+        pip3 install -r "$BUILD_PATH"/_deps/trusted-firmware-m-src/tools/requirements.txt
     fi
 
     cmake --build "$BUILD_PATH"
@@ -164,7 +164,7 @@ function run_fvp() {
     timeout=0
     while [ ! -e /tmp/FVP_run_$$ ]; do
         timeout=$((timeout + 1))
-        if [ $timeout -ge 5 ]; then
+        if [ "$timeout" -ge 5 ]; then
             echo "Error: FVP start failed" >&2
             break
         fi
@@ -245,47 +245,47 @@ eval set -- "$OPTS"
 
 while :; do
     case "$1" in
-    -h | --help)
-        show_usage
-        exit 0
-        ;;
-    -c | --clean)
-        CLEAN=1
-        shift
-        ;;
-    -s | --scratch)
-        SCRATCH=1
-        shift
-        ;;
-    -C | --command)
-        COMMAND=$2
-        shift 2
-        ;;
-    -d | --debug)
-        DEBUG=$2
-        shift 2
-        ;;
-    -S | --socket)
-        SOCKET_API=$2
-        shift 2
-        ;;
-    -p | --path)
-        BUILD_PATH=$CHIP_ROOT/$2
-        shift 2
-        ;;
-    -n | --network)
-        FVP_NETWORK=$2
-        shift 2
-        ;;
-    -* | --*)
-        shift
-        break
-        ;;
-    *)
-        echo "Unexpected option: $1"
-        show_usage
-        exit 2
-        ;;
+        -h | --help)
+            show_usage
+            exit 0
+            ;;
+        -c | --clean)
+            CLEAN=1
+            shift
+            ;;
+        -s | --scratch)
+            SCRATCH=1
+            shift
+            ;;
+        -C | --command)
+            COMMAND=$2
+            shift 2
+            ;;
+        -d | --debug)
+            DEBUG=$2
+            shift 2
+            ;;
+        -S | --socket)
+            SOCKET_API=$2
+            shift 2
+            ;;
+        -p | --path)
+            BUILD_PATH=$CHIP_ROOT/$2
+            shift 2
+            ;;
+        -n | --network)
+            FVP_NETWORK=$2
+            shift 2
+            ;;
+        -* | --*)
+            shift
+            break
+            ;;
+        *)
+            echo "Unexpected option: $1"
+            show_usage
+            exit 2
+            ;;
     esac
 done
 
@@ -295,23 +295,23 @@ if [[ $# -lt 1 ]]; then
 fi
 
 case "$1" in
-shell | unit-tests | lock-app)
-    EXAMPLE=$1
-    ;;
-*)
-    echo "Wrong example name"
-    show_usage
-    exit 2
-    ;;
+    shell | unit-tests | lock-app)
+        EXAMPLE=$1
+        ;;
+    *)
+        echo "Wrong example name"
+        show_usage
+        exit 2
+        ;;
 esac
 
 case "$COMMAND" in
-build | run | test | build-run) ;;
-*)
-    echo "Wrong command definition"
-    show_usage
-    exit 2
-    ;;
+    build | run | test | build-run) ;;
+    *)
+        echo "Wrong command definition"
+        show_usage
+        exit 2
+        ;;
 esac
 
 if [[ "$EXAMPLE" == "unit-tests" ]]; then
@@ -336,12 +336,12 @@ else
 fi
 
 case "$SOCKET_API" in
-lwip | iotsocket) ;;
-*)
-    echo "Wrong socket API definition"
-    show_usage
-    exit 2
-    ;;
+    lwip | iotsocket) ;;
+    *)
+        echo "Wrong socket API definition"
+        show_usage
+        exit 2
+        ;;
 esac
 
 TOOLCHAIN_PATH="toolchains/toolchain-$TOOLCHAIN.cmake"

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009-2021 Arm Limited. All rights reserved.
+ * Copyright (c) 2022 Arm Limited. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -17,30 +17,20 @@
  */
 
 /*
- * This file is derivative of CMSIS V5.6.0 startup_ARMv81MML.c
- * Git SHA: b5f0603d6a584d1724d952fd8b0737458b90d62b
+ * This file is derivative of CMSIS V5.9.0 startup_ARMCM55.c
+ * Git SHA: 2b7495b8535bdcb306dac29b9ded4cfb679d7e5c
  */
 
 #include "cmsis.h"
-#include "region.h"
-
-/*----------------------------------------------------------------------------
-  Exception / Interrupt Handler Function Prototype
- *----------------------------------------------------------------------------*/
-typedef void (*pFunc)(void);
 
 /*----------------------------------------------------------------------------
   External References
  *----------------------------------------------------------------------------*/
-
-#define __MSP_INITIAL_SP REGION_NAME(Image$$, ARM_LIB_STACK_MSP, $$ZI$$Limit)
-#define __MSP_STACK_LIMIT REGION_NAME(Image$$, ARM_LIB_STACK_MSP, $$ZI$$Base)
-
-extern uint32_t __MSP_INITIAL_SP;
-extern uint32_t __MSP_STACK_LIMIT;
-
 extern uint32_t __INITIAL_SP;
 extern uint32_t __STACK_LIMIT;
+#if defined(__ARM_FEATURE_CMSE) && (__ARM_FEATURE_CMSE == 3U)
+extern uint32_t __STACK_SEAL;
+#endif
 
 extern void __PROGRAM_START(void) __NO_RETURN;
 
@@ -184,24 +174,24 @@ DEFAULT_IRQ_HANDLER(UART5_Handler)
 #pragma GCC diagnostic ignored "-Wpedantic"
 #endif
 
-extern const pFunc __VECTOR_TABLE[];
-const pFunc __VECTOR_TABLE[] __VECTOR_TABLE_ATTRIBUTE = {
-    (pFunc)(&__MSP_INITIAL_SP), /*      Initial Stack Pointer */
-    Reset_Handler,              /*      Reset Handler */
-    NMI_Handler,                /* -14: NMI Handler */
-    HardFault_Handler,          /* -13: Hard Fault Handler */
-    MemManage_Handler,          /* -12: MPU Fault Handler */
-    BusFault_Handler,           /* -11: Bus Fault Handler */
-    UsageFault_Handler,         /* -10: Usage Fault Handler */
-    SecureFault_Handler,        /*  -9: Secure Fault Handler */
-    0,                          /*      Reserved */
-    0,                          /*      Reserved */
-    0,                          /*      Reserved */
-    SVC_Handler,                /*  -5: SVCall Handler */
-    DebugMon_Handler,           /*  -4: Debug Monitor Handler */
-    0,                          /*      Reserved */
-    PendSV_Handler,             /*  -2: PendSV Handler */
-    SysTick_Handler,            /*  -1: SysTick Handler */
+extern const VECTOR_TABLE_Type __VECTOR_TABLE[];
+const VECTOR_TABLE_Type __VECTOR_TABLE[] __VECTOR_TABLE_ATTRIBUTE = {
+    (VECTOR_TABLE_Type)(&__INITIAL_SP), /*      Initial Stack Pointer */
+    Reset_Handler,                      /*      Reset Handler */
+    NMI_Handler,                        /* -14: NMI Handler */
+    HardFault_Handler,                  /* -13: Hard Fault Handler */
+    MemManage_Handler,                  /* -12: MPU Fault Handler */
+    BusFault_Handler,                   /* -11: Bus Fault Handler */
+    UsageFault_Handler,                 /* -10: Usage Fault Handler */
+    SecureFault_Handler,                /*  -9: Secure Fault Handler */
+    0,                                  /*      Reserved */
+    0,                                  /*      Reserved */
+    0,                                  /*      Reserved */
+    SVC_Handler,                        /*  -5: SVCall Handler */
+    DebugMon_Handler,                   /*  -4: Debug Monitor Handler */
+    0,                                  /*      Reserved */
+    PendSV_Handler,                     /*  -2: PendSV Handler */
+    SysTick_Handler,                    /*  -1: SysTick Handler */
 
     NONSEC_WATCHDOG_RESET_REQ_Handler, /*   0: Non-Secure Watchdog Reset Request Handler */
     NONSEC_WATCHDOG_Handler,           /*   1: Non-Secure Watchdog Handler */
@@ -347,16 +337,18 @@ const pFunc __VECTOR_TABLE[] __VECTOR_TABLE_ATTRIBUTE = {
  *----------------------------------------------------------------------------*/
 void Reset_Handler(void)
 {
-    __set_MSPLIM((uint32_t)(&__MSP_STACK_LIMIT));
+#if defined(__ARM_FEATURE_CMSE) && (__ARM_FEATURE_CMSE == 3U)
+    __disable_irq();
+#endif
     __set_PSP((uint32_t)(&__INITIAL_SP));
+
+    __set_MSPLIM((uint32_t)(&__STACK_LIMIT));
     __set_PSPLIM((uint32_t)(&__STACK_LIMIT));
 
-    SystemInit();                          /* CMSIS System Initialization */
-    __ASM volatile("MRS     R0, control\n" /* Get control value */
-                   "ORR     R0, R0, #2\n"  /* Select switch to PSP */
-                   "MSR     control, R0\n" /* Load control register */
-                   :
-                   :
-                   : "r0");
+#if defined(__ARM_FEATURE_CMSE) && (__ARM_FEATURE_CMSE == 3U)
+    __TZ_set_STACKSEAL_S((uint32_t *) (&__STACK_SEAL));
+#endif
+
+    SystemInit();      /* CMSIS System Initialization */
     __PROGRAM_START(); /* Enter PreMain (C library entry point) */
 }
