@@ -62,7 +62,8 @@ static const ARM_DRIVER_VERSION DriverVersion = { ARM_FLASH_API_VERSION, ARM_FLA
 static const ARM_FLASH_CAPABILITIES DriverCapabilities = {
     0, /* event_ready */
     0, /* data_width = 0:8-bit, 1:16-bit, 2:32-bit */
-    1  /* erase_chip */
+    1, /* erase_chip */
+    0  /* reserved */
 };
 
 static ARM_DRIVER_VERSION ARM_Flash_GetVersion(void)
@@ -101,7 +102,6 @@ static int32_t ARM_Flash_PowerControl(ARM_POWER_STATE state)
     case ARM_POWER_FULL:
         /* Nothing to be done */
         return ARM_DRIVER_OK;
-        break;
 
     case ARM_POWER_OFF:
     case ARM_POWER_LOW:
@@ -123,10 +123,11 @@ static ARM_FLASH_INFO ARM_FLASH0_DEV_INFO = { .sector_info  = NULL, /* Uniform s
                                               .erased_value = EMULATED_FLASH_DRV_ERASE_VALUE };
 
 static struct emulated_flash_dev_t ARM_FLASH0_DEV = {
-#if (__DOMAIN_NS == 1)
-    .memory_base = FLASH0_BASE_NS,
+#if (defined(__DOMAIN_NS) && (__DOMAIN_NS == 1))
+    .memory_base_ns = FLASH0_BASE_NS,
 #else
-    .memory_base = FLASH0_BASE_S,
+    .memory_base_ns = FLASH0_BASE_NS,
+    .memory_base_s  = FLASH0_BASE_S,
 #endif /* __DOMAIN_NS == 1 */
     .data = &(ARM_FLASH0_DEV_INFO)
 };
@@ -167,7 +168,7 @@ static int32_t ARM_Flash_FLASH0_ProgramData(uint32_t addr, const void * data, ui
     if (EMULATED_FLASH_ERR_NONE == rc)
     {
         cnt /= data_width_byte[DriverCapabilities.data_width];
-        return cnt;
+        return (int32_t) cnt;
     }
     else if (EMULATED_FLASH_ERR_INVALID_PARAM == rc)
     {

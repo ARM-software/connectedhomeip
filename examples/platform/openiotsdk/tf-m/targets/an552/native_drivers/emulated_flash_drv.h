@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Arm Limited
+ * Copyright (c) 2021-2022 Arm Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,8 +48,9 @@ typedef struct _emulated_flash_sector_t
  */
 struct emulated_flash_dev_t
 {
-    const uint32_t memory_base; /*!< FLASH memory base address */
-    ARM_FLASH_INFO * data;      /*!< FLASH data */
+    const uint32_t memory_base_s;  /*!< FLASH memory base address, secure alias */
+    const uint32_t memory_base_ns; /*!< FLASH memory base address, non-secure alias */
+    ARM_FLASH_INFO * data;         /*!< FLASH data */
 };
 
 enum emulated_flash_error_t
@@ -70,6 +71,8 @@ enum emulated_flash_error_t
  * \return Returns error code as specified in \ref emulated_flash_error_t
  *
  * \note This function doesn't check if dev is NULL.
+ * \note The whole region needs to be set to the same security to use this
+ *       function.
  */
 enum emulated_flash_error_t emulated_flash_read_data(struct emulated_flash_dev_t * dev, uint32_t addr, void * data, uint32_t cnt);
 
@@ -86,6 +89,8 @@ enum emulated_flash_error_t emulated_flash_read_data(struct emulated_flash_dev_t
  * \note Flash area needs to be pre-erased before writing to it
  * \note Addr is expected to be within the [0x0 - Flash size] range
  * \note For better performance, this function doesn't check if dev is NULL
+ * \note The whole region needs to be set to the same security to use this
+ *       function.
  */
 enum emulated_flash_error_t emulated_flash_program_data(struct emulated_flash_dev_t * dev, uint32_t addr, const void * data,
                                                         uint32_t cnt);
@@ -100,6 +105,8 @@ enum emulated_flash_error_t emulated_flash_program_data(struct emulated_flash_de
  *
  * \note For better performance, this function doesn't check if dev is NULL
  * \note Addr is expected to be within the [0x0 - Flash size] range
+ * \note The whole sector needs to be set to the same security to use this
+ *       function.
  */
 enum emulated_flash_error_t emulated_flash_erase_sector(struct emulated_flash_dev_t * dev, uint32_t addr);
 
@@ -109,6 +116,8 @@ enum emulated_flash_error_t emulated_flash_erase_sector(struct emulated_flash_de
  * \param[in] dev      Emulated flash device struct \ref emulated_flash_dev_t
  *
  * \note For better performance, this function doesn't check if dev is NULL
+ * \note The whole memory needs to be set to the same security to use this
+ *       function.
  */
 void emulated_flash_erase_chip(struct emulated_flash_dev_t * dev);
 

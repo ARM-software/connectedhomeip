@@ -46,6 +46,7 @@
 #endif // USE_CHIP_DATA_MODEL
 
 #ifdef TFM_SUPPORT
+#include "psa/fwu_config.h"
 #include "psa/update.h"
 #include "tfm_ns_interface.h"
 #endif // TFM_SUPPORT
@@ -145,30 +146,27 @@ static void network_state_callback(network_state_callback_event_t event)
 static int get_psa_images_details()
 {
     psa_status_t status;
-    psa_image_id_t image_id;
-    psa_image_info_t image_info;
+    psa_fwu_component_info_t image_info;
 
-    image_id = FWU_CALCULATE_IMAGE_ID(FWU_IMAGE_ID_SLOT_ACTIVE, FWU_IMAGE_TYPE_SECURE, 0);
-    status   = psa_fwu_query(image_id, &image_info);
+    status = psa_fwu_query(FWU_COMPONENT_ID_SECURE, &image_info);
     if (status != PSA_SUCCESS)
     {
-        ChipLogError(NotSpecified, "Failed to query secure firmware information. Error %u", status);
+        ChipLogError(NotSpecified, "Failed to query secure firmware information. Error %ld", status);
         return EXIT_FAILURE;
     }
 
-    ChipLogProgress(NotSpecified, "Secure firmware version: %u.%u.%u-%u\r\n", image_info.version.iv_major,
-                    image_info.version.iv_minor, image_info.version.iv_revision, image_info.version.iv_build_num);
+    ChipLogProgress(NotSpecified, "Secure firmware version: %u.%u.%u-%lu\r\n", image_info.version.major, image_info.version.minor,
+                    image_info.version.patch, image_info.version.build);
 
-    image_id = FWU_CALCULATE_IMAGE_ID(FWU_IMAGE_ID_SLOT_ACTIVE, FWU_IMAGE_TYPE_NONSECURE, 0);
-    status   = psa_fwu_query(image_id, &image_info);
+    status = psa_fwu_query(FWU_COMPONENT_ID_NONSECURE, &image_info);
     if (status != PSA_SUCCESS)
     {
-        ChipLogError(NotSpecified, "Failed to query non-secure firmware information. Error %u", status);
+        ChipLogError(NotSpecified, "Failed to query non-secure firmware information. Error %ld", status);
         return EXIT_FAILURE;
     }
 
-    ChipLogProgress(NotSpecified, "Non-secure firmware version: %u.%u.%u-%u\r\n", image_info.version.iv_major,
-                    image_info.version.iv_minor, image_info.version.iv_revision, image_info.version.iv_build_num);
+    ChipLogProgress(NotSpecified, "Non-secure firmware version: %u.%u.%u-%lu\r\n", image_info.version.major,
+                    image_info.version.minor, image_info.version.patch, image_info.version.build);
 
     return EXIT_SUCCESS;
 }
