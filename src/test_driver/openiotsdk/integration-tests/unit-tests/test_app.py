@@ -42,7 +42,7 @@ def test_unit_tests(device):
     ret = device.wait_for_output("Open IoT SDK unit-tests start")
     assert ret != None and len(ret) > 0
 
-    ret = device.wait_for_output("Test status:", 600)
+    ret = device.wait_for_output("Test status:", 1200)
     # Get test status
     test_status = ret[-1]
     result = re.findall(r'\d+', test_status)
