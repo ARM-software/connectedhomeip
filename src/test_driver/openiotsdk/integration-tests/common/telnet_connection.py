@@ -34,6 +34,7 @@ class TelnetConnection:
         self.host = host
         self.port = port
         self.is_open = False
+        self.output_line = bytearray()
 
     def open(self):
         """
@@ -86,11 +87,15 @@ class TelnetConnection:
         if not self.is_open:
             return None
         try:
-            output = self.telnet.read_until(b"\n", 1)
-            return self.__formatline(output)
+            self.output_line.extend(self.telnet.read_until(b"\n", 1)) 
+            if b"\n" in self.output_line:
+                output = self.__formatline(self.output_line)
+                self.output_line.clear()
+                return output
         except Exception as e:
             log.error('Telnet read failed {}'.format(e))
             return None
+        return None
 
     def write(self, data):
         """
