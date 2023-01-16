@@ -66,13 +66,6 @@ foreach(TEST_NAME IN LISTS TEST_NAMES_FROM_FILE)
             main/main.cpp
     )
 
-    if (${TEST_NAME} STREQUAL "TestShell")
-        target_compile_definitions(openiotsdk-app
-            PRIVATE
-                IOT_SDK_APP_SERIAL_BAUDRATE=9600
-        )
-    endif()
-
     target_link_libraries(${TEST_NAME} 
         openiotsdk-app
     )

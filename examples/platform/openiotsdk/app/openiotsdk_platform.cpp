@@ -66,7 +66,7 @@ constexpr EndpointId kNetworkCommissioningEndpointSecondary = 0xFFFE;
 // Consider reducing the baudrate if the serial is used as input and characters are lost
 extern "C" mdh_serial_t * get_example_serial();
 #ifndef IOT_SDK_APP_SERIAL_BAUDRATE
-#define IOT_SDK_APP_SERIAL_BAUDRATE 115200
+#define IOT_SDK_APP_SERIAL_BAUDRATE 921600
 #endif
 
 static osEventFlagsId_t event_flags_id;
