@@ -49,7 +49,7 @@ jobs:
                 socketAPI: ["iotsocket", "lwip"]
                 
         name: Open IoT SDK examples building
-        timeout-minutes: 140
+        timeout-minutes: 60
 
         needs: pre_job
 
@@ -134,6 +134,6 @@ jobs:
             
             - name: "Test: unit-tests"
               if: steps.build_unit_tests.outcome == 'success' && github.event_name == 'pull_request'
-              timeout-minutes: 90
+              timeout-minutes: 30
               run: |
                   scripts/examples/openiotsdk_example.sh -C test unit-tests
