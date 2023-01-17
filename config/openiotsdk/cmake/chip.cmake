@@ -47,10 +47,7 @@ add_subdirectory(${OPEN_IOT_SDK_CONFIG} ./chip_build)
 
 # TF-M support requires the right order of generating targets
 if(TFM_SUPPORT)
-    add_dependencies(openiotsdk-chip tfm-ns-interface)
-    if(CONFIG_CHIP_OPEN_IOT_SDK_USE_PSA_PS)
-        add_dependencies(chip-gn tfm-ns-interface)
-    endif()
+    add_dependencies(chip-gn tfm-ns-interface)
 endif()
 
 if ("${CONFIG_CHIP_CRYPTO}" STREQUAL "psa")
