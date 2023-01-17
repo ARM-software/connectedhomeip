@@ -30,6 +30,7 @@ class Device:
         Base Device runner class containing device handling functions and logging
         :param name: Logging name for the client
         """
+        self.verbose = True
         self.iq = queue.Queue()
         self.oq = queue.Queue()
         if name is None:
@@ -118,3 +119,6 @@ class Device:
 
     def _read_line(self, timeout):
         return self.iq.get(timeout=timeout)
+
+    def set_verbose(self, state: bool):
+        self.verbose = state
