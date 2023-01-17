@@ -51,6 +51,7 @@ declare -a SUPPORTED_APP_NAMES
 SUPPORTED_APP_NAMES+=("shell")
 SUPPORTED_APP_NAMES+=("lock-app")
 SUPPORTED_APP_NAMES+=("unit-tests")
+SUPPORTED_APP_NAMES+=("ota-requestor-app")
 
 function show_usage() {
     cat <<EOF
