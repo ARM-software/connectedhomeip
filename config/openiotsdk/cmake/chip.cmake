@@ -33,6 +33,9 @@ set(CONFIG_CHIP_ERROR_LOGGING YES CACHE BOOL "Enable logging at error level")
 
 set(CONFIG_CHIP_OPEN_IOT_SDK_USE_PSA_PS NO CACHE BOOL "Enable using PSA Protected Storage")
 
+set(CONFIG_CHIP_OPEN_IOT_SDK_SOFTWARE_VERSION "0" CACHE STRING "Software version number")
+set(CONFIG_CHIP_OPEN_IOT_SDK_SOFTWARE_VERSION_STRING ${TFM_NS_APP_VERSION} CACHE STRING "Software version in string format x.x.x")
+
 set(CONFIG_CHIP_OPEN_IOT_SDK_USE_IOT_SOCKET NO CACHE BOOL "Enable using IoT Socket API")
 set(CONFIG_CHIP_CRYPTO "mbedtls" CACHE STRING "Matter crypto backend. Mbedtls as default")
 

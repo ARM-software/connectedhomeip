@@ -42,6 +42,8 @@ FAILED_TESTS=0
 IS_UNIT_TEST=0
 FVP_NETWORK="user"
 CRYPTO_BACKEND="mbedtls"
+APP_VERSION="1"
+APP_VERSION_STR="0.0.1"
 
 readarray -t TEST_NAMES <"$CHIP_ROOT"/src/test_driver/openiotsdk/unit-tests/testnames.txt
 
@@ -61,6 +63,8 @@ Options:
     -b,--backend    <crypto backend)    Select crypto backend <psa | mbedtls - default>
     -p,--path       <build_path>        Build path <build_path - default is example_dir/build>
     -n,--network    <network_name>      FVP network interface name <network_name - default is "user" which means user network mode>
+    -v,--version    <version_number>    Application version number <version_number - default is 1>
+    -V,--versionStr <version_str>      Application version string <version_strr - default is "0.0.1">
 
 Examples:
     shell
@@ -103,6 +107,8 @@ function build_with_cmake() {
     fi
 
     BUILD_OPTIONS=(-DCMAKE_SYSTEM_PROCESSOR=cortex-m55)
+    BUILD_OPTIONS+=(-DCONFIG_CHIP_OPEN_IOT_SDK_SOFTWARE_VERSION="$APP_VERSION")
+    BUILD_OPTIONS+=(-DTFM_NS_APP_VERSION="$APP_VERSION_STR")
     if "$DEBUG"; then
         BUILD_OPTIONS+=(-DCMAKE_BUILD_TYPE=Debug)
     else
@@ -240,8 +246,8 @@ function run_test() {
     fi
 }
 
-SHORT=C:,p:,d:,S:,b:,n:,c,s,h
-LONG=command:,path:,debug:,socket:,backend:,network:,clean,scratch,help
+SHORT=C:,p:,d:,S:,b:,n:,v:,V:,c,s,h
+LONG=command:,path:,debug:,socket:,backend:,network:,version:,versionStr:,clean,scratch,help
 OPTS=$(getopt -n build --options "$SHORT" --longoptions "$LONG" -- "$@")
 
 eval set -- "$OPTS"
@@ -282,6 +288,14 @@ while :; do
             ;;
         -n | --network)
             FVP_NETWORK=$2
+            shift 2
+            ;;
+        -v | --version)
+            APP_VERSION=$2
+            shift 2
+            ;;
+        -V | --versionStr)
+            APP_VERSION_STR=$2
             shift 2
             ;;
         -* | --*)
