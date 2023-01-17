@@ -159,7 +159,7 @@ def send_zcl_command(devCtrl, cluster: str, command: str, nodeId: int, endpoint:
     return (err, res)
 
 
-def write_zcl_attribute(devCtrl, cluster : str, attribute : str, nodeId : int, endpoint : int, value):
+def write_zcl_attribute(devCtrl, cluster: str, attribute: str, nodeId: int, endpoint: int, value):
     """
     Write ZCL attribute to device.
     :param devCtrl: device controller instance
@@ -197,7 +197,7 @@ def write_zcl_attribute(devCtrl, cluster : str, attribute : str, nodeId : int, e
     return (err, res)
 
 
-def read_zcl_attribute(devCtrl, cluster : str, attribute : str, nodeId : int, endpoint : int):
+def read_zcl_attribute(devCtrl, cluster: str, attribute: str, nodeId: int, endpoint: int):
     """
     Read ZCL attribute from device.
     :param devCtrl: device controller instance
@@ -226,7 +226,8 @@ def read_zcl_attribute(devCtrl, cluster : str, attribute : str, nodeId : int, en
         path = ClusterAttribute.AttributePath(
             EndpointId=endpoint, Attribute=attributeObj)
 
-        res = IM.AttributeReadResult(path=IM.AttributePath(nodeId=nodeId, endpointId=path.EndpointId, clusterId=path.ClusterId, attributeId=path.AttributeId), status=0, value=result[endpoint][clusterObj][attributeObj])
+        res = IM.AttributeReadResult(path=IM.AttributePath(nodeId=nodeId, endpointId=path.EndpointId, clusterId=path.ClusterId,
+                                     attributeId=path.AttributeId), status=0, value=result[endpoint][clusterObj][attributeObj])
 
     except exceptions.ChipStackException as ex:
         log.error("An exception occurred during processing ZCL attribute: {}".format(str(ex)))
