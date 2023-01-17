@@ -24,30 +24,30 @@
  *
  * QSPI SRAM S
  * 0x0000_0000 Secure image     primary slot (384 KB)
- * 0x0006_0000 Non-secure image primary slot (2 MB)
- * 0x0026_0000 Secure image     secondary slot (384 KB)
- * 0x002C_0000 Non-secure image secondary slot (2 MB)
- * 0x004C_0000 Scratch area (2 MB)
- * 0x006C_0000 Protected Storage Area (64 KB)
- * 0x006D_0000 Internal Trusted Storage Area (64 KB)
- * 0x006E_0000 OTP / NV counters  area (8 KB)
- * 0x006E_2000 Unused
+ * 0x0006_0000 Non-secure image primary slot (2.25 MB)
+ * 0x002A_0000 Secure image     secondary slot (384 KB)
+ * 0x0030_0000 Non-secure image secondary slot (2.25 MB)
+ * 0x0054_0000 Scratch area (2.25 MB)
+ * 0x0078_0000 Protected Storage Area (64 KB)
+ * 0x0079_0000 Internal Trusted Storage Area (64 KB)
+ * 0x007A_0000 OTP / NV counters  area (8 KB)
+ * 0x007A_2000 Unused
  *
  * Flash layout on AN552 with BL2 (single image boot):
  *
  * QSPI SRAM S (part1)
- * 0x0000_0000 Primary image area (2MB + 384 KB):
+ * 0x0000_0000 Primary image area (2.25MB + 384 KB):
  *    0x0000_0000 Secure     image primary (384 KB)
- *    0x0006_0000 Non-secure image primary (2 MB)
+ *    0x0006_0000 Non-secure image primary (2.25 MB)
  * QSPI SRAM S (part2)
- * 0x0026_0000 Secondary image area (2MB + 384 KB):
- *    0x0026_0000 Secure     image secondary (384 KB)
- *    0x002C_0000 Non-secure image secondary (384 KB)
- * 0x004C_0000 Scratch area (2 MB)
- * 0x006C_0000 Protected Storage Area (64 KB)
- * 0x006D_0000 Internal Trusted Storage Area (64 KB)
- * 0x006E_0000 OTP / NV counters  area (8 KB)
- * 0x006E_2000 Unused
+ * 0x002A_0000 Secondary image area (2.25MB + 384 KB):
+ *    0x002A_0000 Secure     image secondary (384 KB)
+ *    0x0030_0000 Non-secure image secondary (2.25 KB)
+ * 0x0054_0000 Scratch area (2.25 MB)
+ * 0x0078_0000 Protected Storage Area (64 KB)
+ * 0x0079_0000 Internal Trusted Storage Area (64 KB)
+ * 0x007A_0000 OTP / NV counters  area (8 KB)
+ * 0x007A_2000 Unused
  */
 
 /* This header file is included from linker scatter file as well, where only a
@@ -59,7 +59,7 @@
 
 /* Size of a Secure and of a Non-secure image */
 #define FLASH_S_PARTITION_SIZE (0x60000)   /* S  partition: 384 KB */
-#define FLASH_NS_PARTITION_SIZE (0x200000) /* NS partition: 2 MB */
+#define FLASH_NS_PARTITION_SIZE (0x240000) /* NS partition: 2.25 MB */
 #define FLASH_MAX_PARTITION_SIZE                                                                                                   \
     ((FLASH_S_PARTITION_SIZE > FLASH_NS_PARTITION_SIZE) ? FLASH_S_PARTITION_SIZE : FLASH_NS_PARTITION_SIZE)
 
