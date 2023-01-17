@@ -282,6 +282,25 @@ if(TFM_SUPPORT)
     iotsdk_tf_m_sign_image(${APP_TARGET})
     iotsdk_tf_m_merge_images(${APP_TARGET} 0x10000000 0x38000000 0x28060000)
     ExternalProject_Get_Property(trusted-firmware-m-build BINARY_DIR)
+if(CONFIG_CHIP_OPEN_IOT_SDK_OTA_ENABLE)
+    add_custom_command(
+        TARGET
+            ${APP_TARGET}
+        POST_BUILD
+        DEPENDS
+            $<TARGET_FILE_DIR:${APP_TARGET}>/${APP_TARGET}_signed.bin
+        COMMAND
+            # Create OTA udpate file
+            ${CHIP_ROOT}/src/app/ota_image_tool.py
+                create
+                -v 0xfff1 -p 0x8001 
+                -vn ${CONFIG_CHIP_OPEN_IOT_SDK_SOFTWARE_VERSION}
+                -vs "${CONFIG_CHIP_OPEN_IOT_SDK_SOFTWARE_VERSION_STRING}"
+                -da sha256
+                $<TARGET_FILE_DIR:${APP_TARGET}>/${APP_TARGET}_signed.bin
+                $<TARGET_FILE_DIR:${APP_TARGET}>/${APP_NAME}.ota
+    )
+endif()
     # Cleanup
     add_custom_command(
         TARGET
