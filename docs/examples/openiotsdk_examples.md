@@ -140,6 +140,73 @@ Then add the GDB plugin to your development environment:
     arguments with `docker run` command. Remember add GDB plugin path to
     environment variable as FAST_MODEL_PLUGINS_PATH inside container.
 
+## Configuration
+
+### Trusted Firmware-M
+
+To add [TF-M](https://tf-m-user-guide.trustedfirmware.org) support to Matter
+example you need to set `TFM_SUPPORT` variable inside main application
+`CMakeLists.txt` file.
+
+```
+set(TFM_SUPPORT YES)
+```
+
+This causes the Matter example to be built as non-secure application in
+Non-secure Processing Environment (`NSPE`). The bootloader and the secure part
+are also built from `TF-M` sources. All components are merged into a single
+executable file at the end of the building process.
+
+The project-specific configuration of `TF-M` can be provide by defining its own
+header file for `TF-M` config and passing the path to it via
+`TFM_PROJECT_CONFIG_HEADER_FILE` variable.
+
+```
+set(TFM_PROJECT_CONFIG_HEADER_FILE "${CMAKE_CURRENT_SOURCE_DIR}/tf-m-config/TfmProjectConfig.h")
+```
+
+If the project-specific configuration is not provided the base `TF-M` settings
+are used
+[config_base.h](https://git.trustedfirmware.org/TF-M/trusted-firmware-m.git/tree/config/config_base.h).
+It can be used as a pattern for the custom configuration header.
+
+You can also provide the own version of Matter example by setting
+`TFM_NS_APP_VERSION` variable.
+
+```
+set(TFM_NS_APP_VERSION "0.0.1")
+```
+
+### Device Firmware Update
+
+Device Firmware Update (`DFU`) can be enabled in application via setting
+`CONFIG_CHIP_OPEN_IOT_SDK_OTA_ENABLE` variable:
+
+```
+set(CONFIG_CHIP_OPEN_IOT_SDK_OTA_ENABLE YES)
+```
+
+This provides the proper service for Matter's `OTA Requestor` cluster. The
+[TF-M Firmware Update Service](https://arm-software.github.io/psa-api/fwu/1.0/)
+is the backend for all firmware update operations. The `DFU Manager` module is
+attached to the application and allows full usage of `OTA Requestor` cluster.
+
+You can also provide the own version of Matter example to Matter stack via
+setting `CONFIG_CHIP_OPEN_IOT_SDK_SOFTWARE_VERSION` and
+`CONFIG_CHIP_OPEN_IOT_SDK_SOFTWARE_VERSION_STRING` variables.
+
+```
+set(CONFIG_CHIP_OPEN_IOT_SDK_SOFTWARE_VERSION "1")
+set(CONFIG_CHIP_OPEN_IOT_SDK_SOFTWARE_VERSION_STRING "0.0.1")
+```
+
+The default value for `CONFIG_CHIP_OPEN_IOT_SDK_SOFTWARE_VERSION_STRING` is set
+to `TFM_NS_APP_VERSION`.
+
+**NOTE**
+
+The `DFU` option requires enabling [TF-M](#trusted-firmware-m) support.
+
 ## Building
 
 You build using a vscode task or call the script directly from the command line.
