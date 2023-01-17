@@ -10,6 +10,7 @@ The list of currently supported Matter examples:
 ```
 shell
 lock-app
+ota-requestor-app
 ```
 
 You can use these examples as a reference for creating your own applications.
