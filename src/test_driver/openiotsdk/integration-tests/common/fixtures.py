@@ -31,6 +31,7 @@ from chip.ChipStack import *
 
 from .fvp_device import FvpDevice
 from .telnet_connection import TelnetConnection
+from .terminal_device import TerminalDevice
 from .utils import *
 
 log = logging.getLogger(__name__)
@@ -68,6 +69,24 @@ def networkInterface(request):
         return request.config.getoption('networkInterface')
     else:
         return None
+
+
+@pytest.fixture(scope="session")
+def otaProvider(request, rootDir):
+    if request.config.getoption('otaProvider'):
+        return request.config.getoption('otaProvider')
+    else:
+        return os.path.join(rootDir, 'out/chip-ota-provider-app')
+
+
+@pytest.fixture(scope="session")
+def softwareVersion(request):
+    if request.config.getoption('softwareVersion'):
+        version = request.config.getoption('softwareVersion')
+        params = version.split(':')
+        return (params[0], params[1])
+    else:
+        return ("1", "0.0.1")
 
 
 @pytest.fixture(scope="function")
@@ -112,3 +131,22 @@ def controller(controllerConfig):
     certificateAuthorityManager.Shutdown()
     chipStack.Shutdown()
     os.remove(controllerConfig['persistentStoragePath'])
+
+
+@pytest.fixture(scope="session")
+def ota_provider(otaProvider, otaProviderConfig):
+    args = [
+        '--discriminator', otaProviderConfig['discriminator'],
+        '--secured-device-port',  otaProviderConfig['port'],
+        '-c',
+        '--KVS', otaProviderConfig['persistentStoragePath'],
+        '--filepath', otaProviderConfig['filePath'],
+    ]
+
+    device = TerminalDevice(otaProvider, args, "OTAprovider")
+    device.start()
+
+    yield device
+
+    device.stop()
+    os.remove(otaProviderConfig['persistentStoragePath'])
