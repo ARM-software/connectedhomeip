@@ -471,7 +471,7 @@
             "type": "pickString",
             "id": "openiotsdkExample",
             "description": "What Open IoT SDK example application do you want to use?",
-            "options": ["shell", "lock-app"],
+            "options": ["shell", "lock-app", "ota-requestor-app"],
             "default": "shell"
         },
         {

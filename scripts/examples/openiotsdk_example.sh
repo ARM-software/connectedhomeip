@@ -68,6 +68,7 @@ Examples:
     shell
     lock-app
     unit-tests
+    ota-requestor-app
 
 You run or test individual test suites of unit tests by using their names [test_name] with the specified command:
 
@@ -297,7 +298,7 @@ if [[ $# -lt 1 ]]; then
 fi
 
 case "$1" in
-    shell | unit-tests | lock-app)
+    shell | unit-tests | lock-app | ota-requestor-app)
         EXAMPLE=$1
         ;;
     *)
