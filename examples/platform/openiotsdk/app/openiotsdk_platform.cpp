@@ -49,6 +49,10 @@
 #include <credentials/examples/DeviceAttestationCredsExample.h>
 #endif // USE_CHIP_DATA_MODEL
 
+#ifdef CHIP_OPEN_IOT_SDK_OTA_ENABLE
+#include "openiotsdk_dfu_manager.h"
+#endif // CHIP_OPEN_IOT_SDK_OTA_ENABLE
+
 #ifdef TFM_SUPPORT
 #include "psa/fwu_config.h"
 #include "psa/update.h"
@@ -352,6 +356,15 @@ int openiotsdk_chip_run(void)
 
     ChipLogProgress(NotSpecified, "Current software version: [%ld] %s", uint32_t(CHIP_DEVICE_CONFIG_DEVICE_SOFTWARE_VERSION),
                     CHIP_DEVICE_CONFIG_DEVICE_SOFTWARE_VERSION_STRING);
+
+#ifdef CHIP_OPEN_IOT_SDK_OTA_ENABLE
+    err = GetDFUManager().Init();
+    if (err != CHIP_NO_ERROR)
+    {
+        ChipLogError(NotSpecified, "DFU manager initialization failed: %s", err.AsString());
+        return EXIT_FAILURE;
+    }
+#endif
 
     return EXIT_SUCCESS;
 }
