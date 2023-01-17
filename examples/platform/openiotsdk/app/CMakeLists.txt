@@ -48,7 +48,7 @@ if(TFM_SUPPORT)
     )    
 endif()
 
-# Declare Open IoT SDK app interface target
+# Declare Open IoT SDK app target
 add_library(openiotsdk-app
     openiotsdk_platform.cpp
     ${CHIP_ROOT}/examples/providers/DeviceInfoProviderImpl.cpp
@@ -70,4 +70,20 @@ if(TFM_SUPPORT)
         PUBLIC
             TFM_SUPPORT
     )
+    if(CONFIG_CHIP_OPEN_IOT_SDK_OTA_ENABLE)
+        target_include_directories(openiotsdk-app 
+            PUBLIC
+                dfu
+        )
+
+        target_sources(openiotsdk-app 
+            PUBLIC
+                dfu/openiotsdk_dfu_manager.cpp
+        )
+
+        target_compile_definitions(openiotsdk-app
+            PUBLIC
+                CHIP_OPEN_IOT_SDK_OTA_ENABLE
+        )
+    endif()    
 endif()
