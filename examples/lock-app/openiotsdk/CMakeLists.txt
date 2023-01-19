@@ -19,6 +19,7 @@ cmake_minimum_required(VERSION 3.21)
 get_filename_component(CHIP_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/../../.. REALPATH)
 get_filename_component(OPEN_IOT_SDK_CONFIG ${CHIP_ROOT}/config/openiotsdk REALPATH)
 get_filename_component(OPEN_IOT_SDK_EXAMPLE_COMMON ${CHIP_ROOT}/examples/platform/openiotsdk REALPATH)
+get_filename_component(LOCK_APP_COMMON ${CHIP_ROOT}/examples/lock-app/lock-common REALPATH)
 
 list(APPEND CMAKE_MODULE_PATH ${OPEN_IOT_SDK_CONFIG}/cmake)
 
@@ -64,14 +65,15 @@ chip_add_data_model(openiotsdk-app lock)
 target_include_directories(${APP_TARGET} 
     PRIVATE
         main/include
+        ${LOCK_APP_COMMON}/include
 )
 
 target_sources(${APP_TARGET} 
     PRIVATE
         main/main_ns.cpp
-        main/ZclCallbacks.cpp
-        main/LockManager.cpp
-        main/LockEndpoint.cpp
+        ${LOCK_APP_COMMON}/src/ZCLDoorLockCallbacks.cpp
+        ${LOCK_APP_COMMON}/src/LockManager.cpp
+        ${LOCK_APP_COMMON}/src/LockEndpoint.cpp
 )
 
 target_link_libraries(${APP_TARGET}
