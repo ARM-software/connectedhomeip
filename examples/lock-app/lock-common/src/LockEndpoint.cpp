@@ -392,8 +392,8 @@ bool LockEndpoint::setLockState(DlLockState lockState, const Optional<chip::Byte
         // If a pin code is not required
         if (!requirePin)
         {
-            ChipLogDetail(Zcl, "Door Lock App: setting door lock state to \"%s\" [endpointId=%d]", lockStateToString(lockState),
-                          mEndpointId);
+            ChipLogProgress(Zcl, "Door Lock App: setting door lock state to \"%s\" [endpointId=%d]", lockStateToString(lockState),
+                            mEndpointId);
 
             DoorLockServer::Instance().SetLockState(mEndpointId, lockState);
 
@@ -454,7 +454,7 @@ bool LockEndpoint::setLockState(DlLockState lockState, const Optional<chip::Byte
             return false;
         }
     }
-    ChipLogDetail(
+    ChipLogProgress(
         Zcl,
         "Lock App: specified PIN code was found in the database, setting door lock state to \"%s\" [endpointId=%d,userIndex=%u]",
         lockStateToString(lockState), mEndpointId, userIndex);
