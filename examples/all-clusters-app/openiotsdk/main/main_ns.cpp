@@ -18,30 +18,50 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include <lib/core/CHIPConfig.h>
 #include <lib/support/logging/CHIPLogging.h>
-#include <platform/CHIPDeviceLayer.h>
 
-#include <app/server/Server.h>
+#include <binding-handler.h>
 
-#include "AppTask.h"
 #include "openiotsdk_platform.h"
-
-using namespace ::chip;
 
 static void app_thread(void * argument)
 {
-    GetAppTask().StartApp();
+    ChipLogProgress(NotSpecified, "Open IoT SDK all-clusters-app example application start");
 
-    Server::GetInstance().Shutdown();
+    if (openiotsdk_network_init(true))
+    {
+        ChipLogError(NotSpecified, "Network initialization failed");
+        goto exit;
+    }
 
+    if (openiotsdk_chip_run())
+    {
+        ChipLogError(NotSpecified, "CHIP stack run failed");
+        goto exit;
+    }
+
+    if (InitBindingHandlers() != CHIP_NO_ERROR)
+    {
+        ChipLogError(NotSpecified, "InitBindingHandlers failed");
+        goto exit;
+    }
+
+    ChipLogProgress(NotSpecified, "Open IoT SDK all-clusters-app example application run");
+
+    while (true)
+    {
+        // Add forever delay to ensure proper workload for this thread
+        osDelay(osWaitForever);
+    }
+
+    openiotsdk_chip_shutdown();
+
+exit:
     osThreadTerminate(osThreadGetId());
 }
 
 int main()
 {
-    ChipLogProgress(NotSpecified, "Open IoT SDK all-clusters-app example application start");
-
     if (openiotsdk_platform_init())
     {
         ChipLogError(NotSpecified, "Open IoT SDK platform initialization failed");

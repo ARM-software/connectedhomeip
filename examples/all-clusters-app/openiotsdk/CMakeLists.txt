@@ -1,5 +1,5 @@
 #
-#   Copyright (c) 2022 Project CHIP Authors
+#   Copyright (c) 2023 Project CHIP Authors
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
 #   you may not use this file except in compliance with the License.
@@ -20,13 +20,13 @@ get_filename_component(CHIP_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/../../.. REALPATH)
 get_filename_component(OPEN_IOT_SDK_CONFIG ${CHIP_ROOT}/config/openiotsdk REALPATH)
 get_filename_component(OPEN_IOT_SDK_EXAMPLE_COMMON ${CHIP_ROOT}/examples/platform/openiotsdk REALPATH)
 get_filename_component(ALL_CLUSTERS_COMMON ${CHIP_ROOT}/examples/all-clusters-app/all-clusters-common REALPATH)
-get_filename_component(GEN_DIR ${CHIP_ROOT}/zzz_generated/ REALPATH)
 
 list(APPEND CMAKE_MODULE_PATH ${OPEN_IOT_SDK_CONFIG}/cmake)
 
 set(APP_TARGET chip-openiotsdk-all-clusters-app-example_ns)
 
 set(TFM_SUPPORT YES)
+set(TFM_PROJECT_CONFIG_HEADER_FILE "${CMAKE_CURRENT_SOURCE_DIR}/tf-m-config/TfmProjectConfig.h")
 set(TFM_NS_APP_VERSION "0.0.1")
 
 # Toolchain files need to exist before first call to project
@@ -58,38 +58,27 @@ add_executable(${APP_TARGET})
 include(chip)
 
 add_subdirectory(${OPEN_IOT_SDK_EXAMPLE_COMMON}/app ./app_build)
-add_subdirectory(${OPEN_IOT_SDK_EXAMPLE_COMMON}/util ./util_build)
+
+chip_add_data_model(openiotsdk-app all-clusters)
 
 target_include_directories(${APP_TARGET}
     PRIVATE
         main/include
         ${ALL_CLUSTERS_COMMON}/include
-        ${GEN_DIR}/app-common
-        ${GEN_DIR}/all-clusters-app
 )
 
 target_sources(${APP_TARGET}
     PRIVATE
         main/main_ns.cpp
-        main/AppTask.cpp
-        ${GEN_DIR}/all-clusters-app/zap-generated/IMClusterCommandHandler.cpp
         ${ALL_CLUSTERS_COMMON}/src/bridged-actions-stub.cpp
         ${ALL_CLUSTERS_COMMON}/src/static-supported-modes-manager.cpp
+        ${ALL_CLUSTERS_COMMON}/src/binding-handler.cpp
 )
 
 target_link_libraries(${APP_TARGET}
-    openiotsdk-app-cmdline
-    openiotsdk-util
-    mdh-reference-platforms-for-arm
+    openiotsdk-app
 )
 
-include(${CHIP_ROOT}/src/app/chip_data_model.cmake)
-chip_configure_data_model(${APP_TARGET}
-    INCLUDE_SERVER
-    ZAP_FILE ${CMAKE_CURRENT_SOURCE_DIR}/../all-clusters-common/all-clusters-app.zap
-)
-
-set(LINKER_SCRIPT ${CMAKE_CURRENT_SOURCE_DIR}/cs300.ld)
 include(linker)
 set_target_link(${APP_TARGET})
 
