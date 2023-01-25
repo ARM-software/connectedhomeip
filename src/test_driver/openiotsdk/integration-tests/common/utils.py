@@ -41,7 +41,7 @@ def get_setup_payload(device):
     :param device: serial device instance
     :return: setup payload or None
     """
-    ret = device.wait_for_output("SetupQRCode")
+    ret = device.wait_for_output("SetupQRCode", timeout=15)
     if ret == None or len(ret) < 2:
         return None
 
