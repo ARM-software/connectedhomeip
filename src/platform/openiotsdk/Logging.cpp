@@ -27,6 +27,7 @@
 #include <lib/support/logging/CHIPLogging.h>
 #include <lib/support/logging/Constants.h>
 #include <platform/logging/LogV.h>
+#include <system/SystemMutex.h>
 
 #include <stdio.h>
 #include <string.h>
@@ -54,11 +55,14 @@ namespace {
 char logMsgBuffer[CHIP_CONFIG_LOG_MESSAGE_MAX_SIZE];
 }
 
+chip::System::Mutex mLoggingMutex;
+
 /**
  * CHIP log output functions.
  */
 void ENFORCE_FORMAT(3, 0) LogV(const char * module, uint8_t category, const char * msg, va_list v)
 {
+    mLoggingMutex.Lock();
     vsnprintf(logMsgBuffer, sizeof(logMsgBuffer), msg, v);
 
     const char * category_prefix;
@@ -80,9 +84,19 @@ void ENFORCE_FORMAT(3, 0) LogV(const char * module, uint8_t category, const char
     }
 
     printf("%s [%s] %s\r\n", category_prefix, module, logMsgBuffer);
+    mLoggingMutex.Unlock();
 
     // Let the application know that a log message has been emitted.
     DeviceLayer::OnLogOutput();
+}
+
+void ois_logging_init()
+{
+    System::Mutex::Init(mLoggingMutex);
+
+#if defined(NDEBUG) && CHIP_CONFIG_TEST == 0
+    SetLogFilter(LogCategory::kLogCategory_Progress);
+#endif
 }
 
 } // namespace Platform
