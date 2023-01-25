@@ -56,6 +56,7 @@ readarray -t TEST_NAMES <"$CHIP_ROOT"/src/test_driver/openiotsdk/unit-tests/test
 declare -a SUPPORTED_APP_NAMES
 SUPPORTED_APP_NAMES+=("shell")
 SUPPORTED_APP_NAMES+=("lock-app")
+SUPPORTED_APP_NAMES+=("all-clusters-app")
 SUPPORTED_APP_NAMES+=("unit-tests")
 SUPPORTED_APP_NAMES+=("ota-requestor-app")
 
