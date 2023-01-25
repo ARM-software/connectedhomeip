@@ -1,3 +1,4 @@
 shell
 lock-app
 ota-requestor-app
+all-clusters-app
