@@ -32,6 +32,7 @@
 #include <DeviceInfoProviderImpl.h>
 #include <lib/support/CHIPMem.h>
 #include <lib/support/logging/CHIPLogging.h>
+#include <platform/openiotsdk/Logging.h>
 #include <platform/openiotsdk/OpenIoTSDKArchUtils.h>
 
 #include <lib/core/CHIPConfig.h>
@@ -54,6 +55,7 @@
 using namespace ::chip;
 using namespace ::chip::Platform;
 using namespace ::chip::DeviceLayer;
+using namespace ::chip::Logging::Platform;
 
 constexpr EndpointId kNetworkCommissioningEndpointSecondary = 0xFFFE;
 
@@ -179,6 +181,8 @@ int openiotsdk_platform_init(void)
 
     mdh_serial_set_baud(get_example_serial(), IOT_SDK_APP_SERIAL_BAUDRATE);
 
+    ois_logging_init();
+
     ret = mbedtls_platform_setup(NULL);
     if (ret)
     {
@@ -222,10 +226,6 @@ int openiotsdk_platform_init(void)
 int openiotsdk_chip_init(void)
 {
     CHIP_ERROR err;
-
-#if NDEBUG
-    chip::Logging::SetLogFilter(chip::Logging::LogCategory::kLogCategory_Progress);
-#endif
 
     err = MemoryInit();
     if (err != CHIP_NO_ERROR)
