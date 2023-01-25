@@ -52,6 +52,12 @@ declare -A ps_storage_param=([instance]=qspi_sram [memspace]=0 [address]=0x66000
 
 readarray -t TEST_NAMES <"$CHIP_ROOT"/src/test_driver/openiotsdk/unit-tests/testnames.txt
 
+declare -a SUPPORTED_APP_NAMES
+SUPPORTED_APP_NAMES+=("shell")
+SUPPORTED_APP_NAMES+=("lock-app")
+SUPPORTED_APP_NAMES+=("unit-tests")
+SUPPORTED_APP_NAMES+=("ota-requestor-app")
+
 function show_usage() {
     cat <<EOF
 Usage: $0 [options] example [test_name]
@@ -74,18 +80,21 @@ Options:
     -V,--versionStr <version_str>       Application version string <version_strr - default is "0.0.1">
 
 Examples:
-    shell
-    lock-app
-    unit-tests
-    ota-requestor-app
+EOF
+
+    for app in "${SUPPORTED_APP_NAMES[@]}"; do
+        echo "    $app"
+    done
+
+    cat <<EOF
 
 You run or test individual test suites of unit tests by using their names [test_name] with the specified command:
 
 EOF
     cat "$CHIP_ROOT"/src/test_driver/openiotsdk/unit-tests/testnames.txt
-    echo ""
     cat <<EOF
-Use test command without a specific test name, runs all supported unit tests.
+
+Use "test" command without a specific test name, runs all supported unit tests.
 
 EOF
 }
@@ -356,16 +365,13 @@ if [[ $# -lt 1 ]]; then
     exit 1
 fi
 
-case "$1" in
-    shell | unit-tests | lock-app | ota-requestor-app)
-        EXAMPLE=$1
-        ;;
-    *)
-        echo "Wrong example name"
-        show_usage
-        exit 2
-        ;;
-esac
+EXAMPLE=$1
+
+if [[ ! " ${SUPPORTED_APP_NAMES[@]} " =~ " ${EXAMPLE} " ]]; then
+    echo "Wrong example name"
+    show_usage
+    exit 2
+fi
 
 case "$COMMAND" in
     build | run | test | build-run) ;;
