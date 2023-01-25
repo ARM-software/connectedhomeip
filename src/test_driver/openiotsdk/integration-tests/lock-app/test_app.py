@@ -38,7 +38,7 @@ def binaryPath(request, rootDir):
 def test_smoke_test(device):
     ret = device.wait_for_output("Open IoT SDK lock-app example application start")
     assert ret != None and len(ret) > 0
-    ret = device.wait_for_output("Open IoT SDK lock-app example application run")
+    ret = device.wait_for_output("Open IoT SDK lock-app example application run", timeout=15)
     assert ret != None and len(ret) > 0
 
 
