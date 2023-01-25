@@ -26,7 +26,7 @@ concurrency:
 
 env:
     CHIP_NO_LOG_TIMESTAMPS: true
-    
+
 jobs:
     openiotsdk:
         name: Open IoT SDK examples building
@@ -91,6 +91,16 @@ jobs:
                     examples/ota-requestor-app/openiotsdk/build/chip-openiotsdk-ota-requestor-app-example.elf \
                     /tmp/bloat_reports/
 
+            - name: Build all-clusters-app example
+              id: build_all_clusters_app
+              timeout-minutes: 10
+              run: |
+                  scripts/examples/openiotsdk_example.sh all-clusters-app
+                  .environment/pigweed-venv/bin/python3 scripts/tools/memory/gh_sizes.py \
+                    openiotsdk release all-clusters-app \
+                    examples/all-clusters-app/openiotsdk/build/chip-openiotsdk-all-clusters-app-example.elf \
+                    /tmp/bloat_reports/
+
             - name: Build unit tests (mbedtls)
               id: build_unit_tests_mbedtls
               run: |
@@ -128,6 +138,15 @@ jobs:
                   scripts/setup/openiotsdk/network_setup.sh -n $TEST_NETWORK_NAME up
                   scripts/run_in_python_env.sh out/venv \
                     'scripts/run_in_ns.sh ${TEST_NETWORK_NAME}ns scripts/examples/openiotsdk_example.sh --no-activate -p out/binaries -v 2 -V 0.0.2 -C test -n ${TEST_NETWORK_NAME}tap ota-requestor-app'
+                  scripts/setup/openiotsdk/network_setup.sh -n $TEST_NETWORK_NAME down
+
+            - name: "Test: all-clusters-app example"
+              if: steps.build_all_clusters_app.outcome == 'success'
+              timeout-minutes: 5
+              run: |
+                  scripts/setup/openiotsdk/network_setup.sh -n $TEST_NETWORK_NAME up
+                  scripts/run_in_python_env.sh out/venv \
+                    'scripts/run_in_ns.sh ${TEST_NETWORK_NAME}ns scripts/examples/openiotsdk_example.sh --no-activate -C test -n ${TEST_NETWORK_NAME}tap all-clusters-app'
                   scripts/setup/openiotsdk/network_setup.sh -n $TEST_NETWORK_NAME down
 
             - name: "Test: unit-tests (mbedtls)"
