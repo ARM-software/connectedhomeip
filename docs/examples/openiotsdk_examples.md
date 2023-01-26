@@ -145,20 +145,20 @@ Then add the GDB plugin to your development environment:
 ### Trusted Firmware-M
 
 To add [TF-M](https://tf-m-user-guide.trustedfirmware.org) support to Matter
-example you need to set `TFM_SUPPORT` variable inside main application
+example you need to set the `TFM_SUPPORT` variable inside main application
 `CMakeLists.txt` file.
 
 ```
 set(TFM_SUPPORT YES)
 ```
 
-This causes the Matter example to be built as non-secure application in
+This causes the Matter example to be built as non-secure application in a
 Non-secure Processing Environment (`NSPE`). The bootloader and the secure part
 are also built from `TF-M` sources. All components are merged into a single
 executable file at the end of the building process.
 
 The project-specific configuration of `TF-M` can be provide by defining its own
-header file for `TF-M` config and passing the path to it via
+header file for `TF-M` config and passing the path to it via the
 `TFM_PROJECT_CONFIG_HEADER_FILE` variable.
 
 ```
@@ -170,7 +170,7 @@ are used
 [config_base.h](https://git.trustedfirmware.org/TF-M/trusted-firmware-m.git/tree/config/config_base.h).
 It can be used as a pattern for the custom configuration header.
 
-You can also provide the own version of Matter example by setting
+You can also provide your own version of a Matter example by setting the
 `TFM_NS_APP_VERSION` variable.
 
 ```
@@ -179,7 +179,7 @@ set(TFM_NS_APP_VERSION "0.0.1")
 
 ### Device Firmware Update
 
-Device Firmware Update (`DFU`) can be enabled in application via setting
+Device Firmware Update (`DFU`) can be enabled in the application by setting the
 `CONFIG_CHIP_OPEN_IOT_SDK_OTA_ENABLE` variable:
 
 ```
@@ -189,10 +189,11 @@ set(CONFIG_CHIP_OPEN_IOT_SDK_OTA_ENABLE YES)
 This provides the proper service for Matter's `OTA Requestor` cluster. The
 [TF-M Firmware Update Service](https://arm-software.github.io/psa-api/fwu/1.0/)
 is the backend for all firmware update operations. The `DFU Manager` module is
-attached to the application and allows full usage of `OTA Requestor` cluster.
+attached to the application and allows full usage of the `OTA Requestor`
+cluster.
 
-You can also provide the own version of Matter example to Matter stack via
-setting `CONFIG_CHIP_OPEN_IOT_SDK_SOFTWARE_VERSION` and
+You can also provide your own version of the Matter example to the Matter stack
+by setting `CONFIG_CHIP_OPEN_IOT_SDK_SOFTWARE_VERSION` and
 `CONFIG_CHIP_OPEN_IOT_SDK_SOFTWARE_VERSION_STRING` variables.
 
 ```
