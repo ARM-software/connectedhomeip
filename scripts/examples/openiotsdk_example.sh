@@ -53,6 +53,27 @@ SUPPORTED_APP_NAMES+=("unit-tests")
 
 readarray -t TEST_NAMES <"$CHIP_ROOT"/src/test_driver/openiotsdk/unit-tests/test_components.txt
 
+declare -a TMP_FILES_DIR PIDS_LIST
+
+function cleanup {
+    if [[ ${#TMP_FILES_DIR[@]} -gt 0 ]]; then
+        rm -f "${TMP_FILES_DIR[@]}"
+    fi
+
+    if [[ ${#PIDS_LIST[@]} -gt 0 ]]; then
+        for pid in "${PIDS_LIST[@]}"; do
+            # Stop the FVP
+            kill -SIGTERM "$pid" 2>/dev/null
+            # Wait for the FVP stop
+            while kill -0 "$pid" 2>/dev/null; do
+                sleep 1
+            done
+        done
+    fi
+}
+
+trap cleanup EXIT KILL
+
 function show_usage() {
     cat <<EOF
 Usage: $0 [options] example [test_name]
@@ -189,6 +210,9 @@ function run_fvp() {
     # Run the FVP
     "$FVP_BIN" "${RUN_OPTIONS[@]}" -f "$FVP_CONFIG_FILE" --application "$EXAMPLE_EXE_PATH" 2>&1 >/tmp/FVP_run_$$ &
     FVP_PID=$!
+
+    TMP_FILES_DIR+=(/tmp/FVP_run_$$)
+    PIDS_LIST+=($FVP_PID)
 
     # Wait for FVP to start and exist the output file
     timeout=0
