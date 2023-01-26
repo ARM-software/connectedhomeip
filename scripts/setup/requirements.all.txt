@@ -50,3 +50,5 @@ colorama
 # update tornado for pw_watch
 tornado
 
+# scripts/tests/chiptest
+netifaces

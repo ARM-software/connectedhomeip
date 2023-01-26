@@ -17,6 +17,7 @@ import logging
 import os
 import shutil
 import tempfile
+import subprocess
 import threading
 import time
 import typing
@@ -48,9 +49,9 @@ class App:
                 self.options = options
             # Make sure to assign self.process before we do any operations that
             # might fail, so attempts to kill us on failure actually work.
-            self.process, self.outpipe, errpipe = self.__startServer(
+            self.process, self.outpipe, _ = self.__startServer(
                 self.runner, self.command)
-            self.waitForAnyAdvertisement()
+            self.__waitForAnyAdvertisement()
             self.__updateSetUpCode()
             with self.cv_stopped:
                 self.stopped = False
@@ -63,8 +64,12 @@ class App:
             with self.cv_stopped:
                 self.stopped = True
                 self.cv_stopped.notify()
-            self.process.kill()
-            self.process.wait(10)
+            self.process.terminate()
+            try:
+                self.process.wait(10)
+            except subprocess.TimeoutExpired:
+                self.process.kill()
+                self.process.wait()
             self.process = None
             self.outpipe = None
             return True
@@ -76,9 +81,6 @@ class App:
                 os.unlink(kvs)
         return True
 
-    def waitForAnyAdvertisement(self):
-        self.__waitFor("mDNS service published:", self.process, self.outpipe)
-
     def waitForMessage(self, message):
         self.__waitFor(message, self.process, self.outpipe)
         return True
@@ -86,6 +88,7 @@ class App:
     def kill(self):
         if self.process:
             self.process.kill()
+            self.process.wait()
         self.killed = True
 
     def wait(self, timeout=None):
@@ -141,7 +144,11 @@ class App:
 
         logging.debug('Success waiting for: %s' % waitForString)
 
+    def __waitForAnyAdvertisement(self):
+        self.__waitFor("mDNS service published:", self.process, self.outpipe)
+
     def __updateSetUpCode(self):
+        self.__waitFor("SetupQRCode", self.process, self.outpipe)
         qrLine = self.outpipe.FindLastMatchingLine('.*SetupQRCode: *\\[(.*)]')
         if not qrLine:
             raise Exception("Unable to find QR code")
@@ -256,7 +263,7 @@ class TestDefinition:
         return ", ".join([t.to_s() for t in self.tags])
 
     def Run(self, runner, apps_register, paths: ApplicationPaths, pics_file: str,
-            timeout_seconds: typing.Optional[int], dry_run=False, test_runtime: TestRunTime = TestRunTime.CHIP_TOOL_BUILTIN):
+            timeout_seconds: typing.Optional[int], ignore_missing=False, dry_run=False, test_runtime: TestRunTime = TestRunTime.CHIP_TOOL_BUILTIN):
         """
         Executes the given test case using the provided runner for execution.
         """
@@ -278,6 +285,13 @@ class TestDefinition:
             else:
                 raise Exception("Unknown test target - "
                                 "don't know which application to run")
+
+            if not target_app:
+                if ignore_missing:
+                    logging.warning('Skipped test for target {}'.format(self.target))
+                    return
+                else:
+                    raise Exception("Target application not defined")
 
             for path in paths.items():
                 # Do not add chip-tool or chip-repl-yaml-tester-cmd to the register
@@ -347,6 +361,7 @@ class TestDefinition:
             runner.capture_delegate.LogContents()
             raise
         finally:
+            apps_register.stopAll()
             apps_register.killAll()
             apps_register.factoryResetAll()
             apps_register.removeAll()

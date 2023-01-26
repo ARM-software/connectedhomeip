@@ -136,7 +136,10 @@ def main(context, dry_run, log_level, target, target_glob, target_skip_glob,
     log_fmt = '%(asctime)s.%(msecs)03d %(levelname)-7s %(message)s'
     if no_log_timestamps:
         log_fmt = '%(levelname)-7s %(message)s'
-    coloredlogs.install(level=__LOG_LEVELS__[log_level], fmt=log_fmt)
+    if sys.stdout.isatty():
+        coloredlogs.install(level=__LOG_LEVELS__[log_level], fmt=log_fmt)
+    else:
+        logging.basicConfig(level=__LOG_LEVELS__[log_level], format=log_fmt)
 
     runtime = TestRunTime.CHIP_TOOL_BUILTIN
     if runner == 'chip_repl_python':
@@ -228,19 +231,19 @@ def cmd_list(context):
     help='Number of iterations to run')
 @click.option(
     '--all-clusters-app',
-    help='what all clusters app to use')
+    help='what all clusters app to use (separate arguments with comma)')
 @click.option(
     '--lock-app',
-    help='what lock app to use')
+    help='what lock app to use (separate arguments with comma)')
 @click.option(
     '--ota-provider-app',
-    help='what ota provider app to use')
+    help='what ota provider app to use (separate arguments with comma)')
 @click.option(
     '--ota-requestor-app',
-    help='what ota requestor app to use')
+    help='what ota requestor app to use (separate arguments with comma)')
 @click.option(
     '--tv-app',
-    help='what tv app to use')
+    help='what tv app to use (separate arguments with comma)')
 @click.option(
     '--bridge-app',
     help='what bridge app to use')
@@ -267,36 +270,48 @@ def cmd_list(context):
     default=None,
     type=int,
     help='If provided, fail if a test runs for longer than this time')
+@click.option(
+    '--platform',
+    default='linux',
+    type=click.Choice(['linux','openiotsdk']),
+    help='Select the platform to run tests')
+@click.option(
+    '--ignore-missing',
+    is_flag=True,
+    default=False,
+    show_default=True,
+    help='Ignore apps that aren\'t passed on the command-line')
 @click.pass_context
 def cmd_run(context, iterations, all_clusters_app, lock_app, ota_provider_app, ota_requestor_app,
-            tv_app, bridge_app, chip_repl_yaml_tester, chip_tool_with_python, pics_file, keep_going, test_timeout_seconds):
+            tv_app, bridge_app, chip_repl_yaml_tester, chip_tool_with_python, pics_file, keep_going, test_timeout_seconds, platform, ignore_missing):
     runner = chiptest.runner.Runner()
 
-    paths_finder = PathsFinder()
+    if not ignore_missing:
+        paths_finder = PathsFinder()
 
-    if all_clusters_app is None:
-        all_clusters_app = paths_finder.get('chip-all-clusters-app')
+        if all_clusters_app is None:
+            all_clusters_app = paths_finder.get('chip-all-clusters-app')
 
-    if lock_app is None:
-        lock_app = paths_finder.get('chip-lock-app')
+        if lock_app is None:
+            lock_app = paths_finder.get('chip-lock-app')
 
-    if ota_provider_app is None:
-        ota_provider_app = paths_finder.get('chip-ota-provider-app')
+        if ota_provider_app is None:
+            ota_provider_app = paths_finder.get('chip-ota-provider-app')
 
-    if ota_requestor_app is None:
-        ota_requestor_app = paths_finder.get('chip-ota-requestor-app')
+        if ota_requestor_app is None:
+            ota_requestor_app = paths_finder.get('chip-ota-requestor-app')
 
-    if tv_app is None:
-        tv_app = paths_finder.get('chip-tv-app')
+        if tv_app is None:
+            tv_app = paths_finder.get('chip-tv-app')
 
-    if bridge_app is None:
-        bridge_app = paths_finder.get('chip-bridge-app')
+        if bridge_app is None:
+            bridge_app = paths_finder.get('chip-bridge-app')
 
-    if chip_repl_yaml_tester is None:
-        chip_repl_yaml_tester = paths_finder.get('yamltest_with_chip_repl_tester.py')
+        if chip_repl_yaml_tester is None:
+            chip_repl_yaml_tester = paths_finder.get('yamltest_with_chip_repl_tester.py')
 
-    if chip_tool_with_python is None:
-        chip_tool_with_python = paths_finder.get('chiptool.py')
+        if chip_tool_with_python is None:
+            chip_tool_with_python = paths_finder.get('chiptool.py')
 
     # Command execution requires an array
     paths = chiptest.ApplicationPaths(
@@ -312,14 +327,22 @@ def cmd_run(context, iterations, all_clusters_app, lock_app, ota_provider_app, o
     )
 
     if sys.platform == 'linux':
-        chiptest.linux.PrepareNamespacesForTestExecution(
+        testPlatform = None
+        if platform == 'linux':
+            testPlatform = chiptest.linux
+        elif platform == 'openiotsdk':
+            testPlatform = chiptest.openiotsdk
+        else:
+            raise ValueError('Invalid argument to --platform')
+
+        testPlatform.PrepareNamespacesForTestExecution(
             context.obj.in_unshare)
-        paths = chiptest.linux.PathsWithNetworkNamespaces(paths)
+        paths = testPlatform.PathsWithNetworkNamespaces(paths)
 
     logging.info("Each test will be executed %d times" % iterations)
 
     apps_register = AppsRegister()
-    apps_register.init()
+    apps_register.init(ip=testPlatform.GetInterfaceIpAddress())
 
     for i in range(iterations):
         logging.info("Starting iteration %d" % (i+1))
@@ -342,7 +365,7 @@ def cmd_run(context, iterations, all_clusters_app, lock_app, ota_provider_app, o
 
                 logging.info('%-20s - Starting test' % (test.name))
                 test.Run(
-                    runner, apps_register, paths, pics_file, test_timeout_seconds, context.obj.dry_run,
+                    runner, apps_register, paths, pics_file, test_timeout_seconds, ignore_missing, context.obj.dry_run,
                     test_runtime=context.obj.runtime)
                 test_end = time.monotonic()
                 logging.info('%-30s - Completed in %0.2f seconds' %
@@ -357,7 +380,7 @@ def cmd_run(context, iterations, all_clusters_app, lock_app, ota_provider_app, o
 
     apps_register.uninit()
     if sys.platform == 'linux':
-        chiptest.linux.ShutdownNamespaceForTestExecution()
+        testPlatform.ShutdownNamespaceForTestExecution()
 
 
 # On linux, allow an execution shell to be prepared

@@ -23,6 +23,7 @@ import os
 import subprocess
 import sys
 import time
+import netifaces
 
 from .test_definition import ApplicationPaths
 
@@ -185,3 +186,6 @@ def PathsWithNetworkNamespaces(paths: ApplicationPaths) -> ApplicationPaths:
         chip_repl_yaml_tester_cmd='ip netns exec tool'.split() + paths.chip_repl_yaml_tester_cmd,
         chip_tool_with_python_cmd='ip netns exec tool'.split() + paths.chip_tool_with_python_cmd,
     )
+
+def GetInterfaceIpAddress() -> str:
+    return netifaces.ifaddresses('eth-ci')[netifaces.AF_INET][0]['addr']
