@@ -24,19 +24,12 @@ from xmlrpc.server import SimpleXMLRPCServer
 _DEFAULT_CHIP_ROOT = os.path.abspath(
     os.path.join(os.path.dirname(__file__), '..', '..', '..'))
 
-IP = '127.0.0.1'
-PORT = 9000
-
-if sys.platform == 'linux':
-    IP = '10.10.10.5'
-
-
 class AppsRegister:
     _instance = None
     __accessories = {}
 
-    def init(self):
-        self.__startXMLRPCServer()
+    def init(self, ip='127.0.0.1', port=9000):
+        self.__startXMLRPCServer(ip, port)
 
     def uninit(self):
         self.__stopXMLRPCServer()
@@ -82,6 +75,10 @@ class AppsRegister:
             return accessory.stop()
         return False
 
+    def stopAll(self):
+        for accessory in self.__accessories.values():
+            accessory.stop()
+
     def reboot(self, name):
         accessory = self.__accessories[name]
         if accessory:
@@ -126,8 +123,8 @@ class AppsRegister:
             raise Exception('Files %s and %s do not match' % (file1, file2))
         return True
 
-    def __startXMLRPCServer(self):
-        self.server = SimpleXMLRPCServer((IP, PORT))
+    def __startXMLRPCServer(self, ip, port):
+        self.server = SimpleXMLRPCServer((ip, port))
 
         self.server.register_function(self.start, 'start')
         self.server.register_function(self.stop, 'stop')

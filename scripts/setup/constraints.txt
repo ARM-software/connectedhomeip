@@ -173,6 +173,8 @@ mypy-extensions==0.4.3
     # via mypy
 mypy-protobuf==3.2.0
     # via -r requirements.txt
+netifaces==0.11.0
+    # via -r requirements.txt
 numpy==1.23.0
     # via pandas
 packaging==20.9

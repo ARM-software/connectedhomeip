@@ -84,3 +84,6 @@ tornado
 
 # YAML test harness
 diskcache
+
+# scripts/tests/chiptest
+netifaces

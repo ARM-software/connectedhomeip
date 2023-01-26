@@ -21,7 +21,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterator, Set
 
-from . import linux, runner
+from . import linux, openiotsdk, runner
 from .test_definition import ApplicationPaths, TestDefinition, TestRunTime, TestTag, TestTarget
 
 _DEFAULT_CHIP_ROOT = os.path.abspath(
@@ -240,5 +240,6 @@ __all__ = [
     "AllTests",
     "ApplicationPaths",
     "linux",
+    "openiotsdk",
     "runner",
 ]
