@@ -95,6 +95,9 @@ def test_command_check(device):
     ret = device.wait_for_output("Open IoT SDK shell example application run")
     assert ret != None and len(ret) > 0
 
+    # Wait for printing prompt ">", we can't wait for it because it is not terminated by a newline character
+    sleep(1)
+
     # Help
     ret = device.send(command="help", expected_output="Done")
     assert ret != None and len(ret) > 1
