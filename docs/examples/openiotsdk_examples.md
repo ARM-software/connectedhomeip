@@ -61,8 +61,64 @@ the setup easy. In the `scripts/setup/openiotsdk` directory you can find:
     ${MATTER_ROOT}/scripts/setup/openiotsdk/network_setup.sh restart
     ```
 
-    NOTE: Running the above commands without specifying a specific network (-n
-    "network name") will use the default 'ARM' network.
+    The default scripts settings are:
+
+    -   `ARM` - network base name
+    -   `current session user` - network namespace user
+    -   `fe00::1` - host side IPv6 address
+    -   `fe00::2` - namespace side IPv6 address
+    -   `10.200.1.1` - host side IPv4 address
+    -   `10.200.1.2` - namespace side IPv4 address
+    -   no Internet connection support to network namespace
+
+    Example of the `OIS` network environment settings:
+
+    ```
+    ARMns namespace configuration
+    ARMbr: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+            inet 10.200.1.2  netmask 255.255.255.0  broadcast 0.0.0.0
+            inet6 fe00::2  prefixlen 64  scopeid 0x0<global>
+            inet6 fe80::1809:17ff:fe6c:f566  prefixlen 64  scopeid 0x20<link>
+            ether 1a:09:17:6c:f5:66  txqueuelen 1000  (Ethernet)
+            RX packets 1  bytes 72 (72.0 B)
+            RX errors 0  dropped 0  overruns 0  frame 0
+            TX packets 0  bytes 0 (0.0 B)
+            TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+    ARMnveth: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+            ether 46:66:29:a6:91:4b  txqueuelen 1000  (Ethernet)
+            RX packets 2  bytes 216 (216.0 B)
+            RX errors 0  dropped 0  overruns 0  frame 0
+            TX packets 3  bytes 270 (270.0 B)
+            TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+    ARMtap: flags=4419<UP,BROADCAST,RUNNING,PROMISC,MULTICAST>  mtu 1500
+            ether 1a:09:17:6c:f5:66  txqueuelen 1000  (Ethernet)
+            RX packets 0  bytes 0 (0.0 B)
+            RX errors 0  dropped 0  overruns 0  frame 0
+            TX packets 0  bytes 0 (0.0 B)
+            TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+    lo: flags=73<UP,LOOPBACK,RUNNING>  mtu 65536
+            inet 127.0.0.1  netmask 255.0.0.0
+            inet6 ::1  prefixlen 128  scopeid 0x10<host>
+            loop  txqueuelen 1000  (Local Loopback)
+            RX packets 0  bytes 0 (0.0 B)
+            RX errors 0  dropped 0  overruns 0  frame 0
+            TX packets 0  bytes 0 (0.0 B)
+            TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+    Host configuration
+    ARMhveth: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+            inet 10.200.1.1  netmask 255.255.255.0  broadcast 0.0.0.0
+            inet6 fe80::147c:c9ff:fe4a:c6d2  prefixlen 64  scopeid 0x20<link>
+            inet6 fe00::1  prefixlen 64  scopeid 0x0<global>
+            ether 16:7c:c9:4a:c6:d2  txqueuelen 1000  (Ethernet)
+            RX packets 3  bytes 270 (270.0 B)
+            RX errors 0  dropped 0  overruns 0  frame 0
+            TX packets 2  bytes 216 (216.0 B)
+            TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+    ```
 
     Use `--help` to get more information about the script options.
 
