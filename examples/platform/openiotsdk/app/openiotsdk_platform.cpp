@@ -29,6 +29,10 @@
 #include "iotsdk/ip_network_api.h"
 #include "mbedtls/platform.h"
 
+#ifdef CONFIG_CHIP_CRYPTO_PSA
+#include "psa/crypto.h"
+#endif
+
 #include <DeviceInfoProviderImpl.h>
 #include <lib/support/CHIPMem.h>
 #include <lib/support/logging/CHIPLogging.h>
@@ -51,6 +55,10 @@
 #include "psa/update.h"
 #include "tfm_ns_interface.h"
 #endif // TFM_SUPPORT
+
+#if defined(CONFIG_CHIP_CRYPTO_PSA) && !defined(MBEDTLS_PSA_CRYPTO_C)
+#error "PSA Crypto must be enabled in Mbed TLS to support PSA Crypto backend"
+#endif
 
 using namespace ::chip;
 using namespace ::chip::Platform;
@@ -189,6 +197,15 @@ int openiotsdk_platform_init(void)
         ChipLogError(NotSpecified, "Mbed TLS platform initialization failed: %d", ret);
         return EXIT_FAILURE;
     }
+
+#ifdef CONFIG_CHIP_CRYPTO_PSA
+    ret = psa_crypto_init();
+    if (ret)
+    {
+        ChipLogError(NotSpecified, "PSA crypto initialization failed: %d", ret);
+        return EXIT_FAILURE;
+    }
+#endif
 
 #ifdef TFM_SUPPORT
     ret = tfm_ns_interface_init();
