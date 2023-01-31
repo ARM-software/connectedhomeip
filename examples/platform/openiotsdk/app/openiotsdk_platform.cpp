@@ -25,6 +25,7 @@
 #include "openiotsdk_platform.h"
 
 #include "cmsis_os2.h"
+#include "hal/serial_api.h"
 #include "iotsdk/ip_network_api.h"
 #include "mbedtls/platform.h"
 
@@ -61,6 +62,12 @@ constexpr EndpointId kNetworkCommissioningEndpointSecondary = 0xFFFE;
 #define ALL_EVENTS_FLAGS (NETWORK_UP_FLAG | NETWORK_DOWN_FLAG)
 
 #define EVENT_TIMEOUT 5000
+
+// Consider reducing the baudrate if the serial is used as input and characters are lost
+extern "C" mdh_serial_t * get_example_serial();
+#ifndef IOT_SDK_APP_SERIAL_BAUDRATE
+#define IOT_SDK_APP_SERIAL_BAUDRATE 921600
+#endif
 
 static osEventFlagsId_t event_flags_id;
 
@@ -169,6 +176,8 @@ int openiotsdk_platform_init(void)
 {
     int ret;
     osKernelState_t state;
+
+    mdh_serial_set_baud(get_example_serial(), IOT_SDK_APP_SERIAL_BAUDRATE);
 
     ret = mbedtls_platform_setup(NULL);
     if (ret)
