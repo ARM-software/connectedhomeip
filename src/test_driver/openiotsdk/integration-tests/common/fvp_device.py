@@ -17,8 +17,10 @@
 
 import logging
 import os
+import re
 import subprocess
 import threading
+import time
 from time import sleep
 
 from .device import Device
@@ -61,9 +63,30 @@ class FvpDevice(Device):
         """
         log.info('Starting "{}" runner...'.format(self.name))
 
-        self.proc = subprocess.Popen(self.fvp_cmd)
-        sleep(3)
+        self.proc = subprocess.Popen(self.fvp_cmd, stdout=subprocess.PIPE)
+        timeout = time.time() + 10  # 10s timeout
+        # Check if FVP process run properly and wait for the connection port log
+        while True:
+            if time.time() >= timeout:
+                raise Exception("FVP start failed")
+            else:
+                # Readline from process output
+                output = self.proc.stdout.readline()
+
+                # Check if process still running
+                if output == '' and self.proc.poll() is not None:
+                    raise Exception("FVP process has stopped")
+                else:
+                    line = output.decode().strip()
+                    if re.match(".*Listening for serial connection on port .*", line):
+                        connection_port = int(line.split("port", 1)[1])
+                        break
+                    time.sleep(0.5)
+
+        if self.connection_channel.get_port() != connection_port:
+            self.connection_channel.set_port(connection_port)
         self.connection_channel.open()
+
         self.run = True
         self.it.start()
         self.ot.start()
@@ -87,7 +110,8 @@ class FvpDevice(Device):
         while self.run:
             line = self.connection_channel.readline()
             if line:
-                log.info('<--|{}| {}'.format(self.name, line.strip()))
+                if self.verbose:
+                    log.info('<--|{}| {}'.format(self.name, line.strip()))
                 self.iq.put(line)
             else:
                 pass
@@ -96,7 +120,8 @@ class FvpDevice(Device):
         while self.run:
             line = self.oq.get()
             if line:
-                log.info('-->|{}| {}'.format(self.name, line.strip()))
+                if self.verbose:
+                    log.info('-->|{}| {}'.format(self.name, line.strip()))
                 self.connection_channel.write(line)
             else:
                 log.debug('Nothing sent')
