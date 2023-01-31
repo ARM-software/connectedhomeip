@@ -41,6 +41,7 @@ TELNET_CONNECTION_PORT=""
 FAILED_TESTS=0
 IS_UNIT_TEST=0
 FVP_NETWORK="user"
+CRYPTO_BACKEND="mbedtls"
 
 readarray -t TEST_NAMES <"$CHIP_ROOT"/src/test_driver/openiotsdk/unit-tests/testnames.txt
 
@@ -62,6 +63,7 @@ Options:
     -C,--command    <command>           Action to execute <build-run | run | test | build - default>
     -d,--debug      <debug_enable>      Build in debug mode <true | false - default>
     -l,--lwipdebug  <lwip_debug_enable> Build with LwIP debug logs support <true | false - default>
+    -b,--backend    <crypto_backend)    Select crypto backend <psa | mbedtls - default>
     -p,--path       <build_path>        Build path <build_path - default is example_dir/build>
     -n,--network    <network_name>      FVP network interface name <network_name - default is "user" which means user network mode>
 
@@ -118,6 +120,8 @@ function build_with_cmake() {
     if "$LWIP_DEBUG"; then
         BUILD_OPTIONS+=(-DCONFIG_CHIP_OPEN_IOT_SDK_LWIP_DEBUG=YES)
     fi
+
+    BUILD_OPTIONS+=(-DCONFIG_CHIP_CRYPTO="$CRYPTO_BACKEND")
 
     cmake -G Ninja -S "$EXAMPLE_PATH" -B "$BUILD_PATH" --toolchain="$TOOLCHAIN_PATH" "${BUILD_OPTIONS[@]}"
     cmake --build "$BUILD_PATH"
@@ -241,8 +245,8 @@ function run_test() {
     fi
 }
 
-SHORT=C:,p:,d:,l:,n:,c,s,h
-LONG=command:,path:,debug:,lwipdebug:,network:,clean,scratch,help
+SHORT=C:,p:,d:,l:,b:,n:,c,s,h
+LONG=command:,path:,debug:,lwipdebug:,backend:,network:,clean,scratch,help
 OPTS=$(getopt -n build --options "$SHORT" --longoptions "$LONG" -- "$@")
 
 eval set -- "$OPTS"
@@ -271,6 +275,10 @@ while :; do
             ;;
         -l | --lwipdebug)
             LWIP_DEBUG=$2
+            shift 2
+            ;;
+        -b | --backend)
+            CRYPTO_BACKEND=$2
             shift 2
             ;;
         -p | --path)
@@ -335,6 +343,15 @@ if [[ "$EXAMPLE" == "unit-tests" ]]; then
 else
     EXAMPLE_PATH="$CHIP_ROOT/examples/$EXAMPLE/openiotsdk"
 fi
+
+case "$CRYPTO_BACKEND" in
+    psa | mbedtls) ;;
+    *)
+        echo "Wrong crypto type definition"
+        show_usage
+        exit 2
+        ;;
+esac
 
 TOOLCHAIN_PATH="toolchains/toolchain-$TOOLCHAIN.cmake"
 
