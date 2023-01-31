@@ -1,0 +1,3 @@
+
+#define MBEDTLS_SHA1_C
+#define PSA_WANT_ALG_SHA_1
