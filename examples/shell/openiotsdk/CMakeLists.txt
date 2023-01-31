@@ -59,6 +59,11 @@ include(chip)
 
 add_subdirectory(${OPEN_IOT_SDK_EXAMPLE_COMMON}/app ./app_build)
 
+target_compile_definitions(openiotsdk-app
+    PRIVATE
+        IOT_SDK_APP_SERIAL_BAUDRATE=9600
+)
+
 target_include_directories(${APP_TARGET} 
     PRIVATE
         main/include
