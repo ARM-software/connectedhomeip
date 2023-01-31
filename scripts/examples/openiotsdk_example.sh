@@ -37,6 +37,7 @@ OIS_CONFIG="$CHIP_ROOT/config/openiotsdk"
 FVP_CONFIG_FILE="$OIS_CONFIG/fvp/cs300.conf"
 EXAMPLE_TEST_PATH="$CHIP_ROOT/src/test_driver/openiotsdk/integration-tests"
 TELNET_TERMINAL_PORT=5000
+TELNET_CONNECTION_PORT=""
 FAILED_TESTS=0
 FVP_NETWORK="user"
 
@@ -102,10 +103,9 @@ function build_with_cmake() {
     BUILD_OPTIONS=(-DCMAKE_SYSTEM_PROCESSOR=cortex-m55)
     if "$DEBUG"; then
         BUILD_OPTIONS+=(-DCMAKE_BUILD_TYPE=Debug)
+    else
+        BUILD_OPTIONS+=(-DCMAKE_BUILD_TYPE=Release)
     fi
-
-    # Activate Matter environment
-    source "$CHIP_ROOT"/scripts/activate.sh
 
     cmake -G Ninja -S "$EXAMPLE_PATH" -B "$BUILD_PATH" --toolchain="$TOOLCHAIN_PATH" "${BUILD_OPTIONS[@]}"
     cmake --build "$BUILD_PATH"
@@ -148,34 +148,42 @@ function run_fvp() {
 
     echo "Running $EXAMPLE_EXE_PATH with options: ${RUN_OPTIONS[@]}"
 
-    "$FVP_BIN" "${RUN_OPTIONS[@]}" -f "$FVP_CONFIG_FILE" --application "$EXAMPLE_EXE_PATH" >/dev/null 2>&1 &
+    # Run the FVP
+    "$FVP_BIN" "${RUN_OPTIONS[@]}" -f "$FVP_CONFIG_FILE" --application "$EXAMPLE_EXE_PATH" 2>&1 >/tmp/FVP_run_$$ &
     FVP_PID=$!
-    sleep 1
 
-    if [[ $IS_TEST -eq 1 ]]; then
-        set +e
-        expect <<EOF
-        set timeout 1800
-        set retcode -1
-        spawn telnet localhost ${TELNET_TERMINAL_PORT}
-        expect -re {Test status: (-?\d+)} {
-            set retcode \$expect_out(1,string)
-        }
-        expect "Open IoT SDK unit-tests completed"
-        set retcode [expr -1*\$retcode]
-        exit \$retcode
-EOF
-        RETCODE=$?
-        FAILED_TESTS=$(expr "$FAILED_TESTS" + "$RETCODE")
-        echo "$(jq '. += {($testname): {failed: $result}}' --arg testname "$EXAMPLE" --arg result "$RETCODE" "$EXAMPLE_PATH"/test_report.json)" >"$EXAMPLE_PATH"/test_report.json
+    # Wait for FVP to start and exist the output file
+    timeout=0
+    while [ ! -e /tmp/FVP_run_$$ ]; do
+        timeout=$((timeout + 1))
+        if [ "$timeout" -ge 5 ]; then
+            echo "Error: FVP start failed" >&2
+            break
+        fi
+        sleep 1
+    done
+
+    while IFS= read -t 5 -r line; do
+        if [[ $line == *"Listening for serial connection on port"* ]]; then
+            TELNET_CONNECTION_PORT="${line##* }"
+            break
+        fi
+    done </tmp/FVP_run_$$
+
+    if [ -n "$TELNET_CONNECTION_PORT" ]; then
+        # Connect FVP via telnet client
+        telnet localhost "$TELNET_CONNECTION_PORT"
     else
-        telnet localhost "$TELNET_TERMINAL_PORT"
+        echo "Error: FVP start failed" >&2
     fi
 
-    # stop the fvp
-    kill -9 "$FVP_PID" || true
-    set -e
-    sleep 1
+    # Stop the FVP
+    kill -9 "$FVP_PID"
+    # Wait for the FVP stop
+    while kill -0 "$FVP_PID"; do
+        sleep 1
+    done
+    rm -rf /tmp/FVP_run_$$
 }
 
 function run_test() {
@@ -192,9 +200,6 @@ function run_test() {
         echo "Error: $FVP_BIN not installed." >&2
         exit 1
     fi
-
-    # Activate Matter environment with pytest
-    source "$CHIP_ROOT"/scripts/activate.sh
 
     # Check if pytest exists
     if ! [ -x "$(command -v pytest)" ]; then
@@ -336,6 +341,9 @@ fi
 if [ -z "$BUILD_PATH" ]; then
     BUILD_PATH="$EXAMPLE_PATH/build"
 fi
+
+# Activate Matter environment
+source "$CHIP_ROOT"/scripts/activate.sh
 
 if [[ "$COMMAND" == *"build"* ]]; then
     build_with_cmake
