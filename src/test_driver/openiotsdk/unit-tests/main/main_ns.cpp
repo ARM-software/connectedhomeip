@@ -31,36 +31,8 @@ constexpr nl_test_output_logger_t NlTestLogger::nl_test_logger;
 
 using namespace ::chip;
 
-static void test_thread(void * argument)
-{
-    int status;
-    CHIP_ERROR err;
-
-    if (openiotsdk_network_init(true))
-    {
-        ChipLogAutomation("ERROR: Network initialization failed");
-        goto exit;
-    }
-
-    err = DeviceLayer::PlatformMgr().InitChipStack();
-    if (err != CHIP_NO_ERROR)
-    {
-        ChipLogAutomation("Chip stack initialization failed: %s", err.AsString());
-        goto exit;
-    }
-
-    ChipLogAutomation("Open IoT SDK unit-tests run...");
-    status = RunRegisteredUnitTests();
-    ChipLogAutomation("Test status: %d", status);
-    ChipLogAutomation("Open IoT SDK unit-tests completed");
-exit:
-    osThreadTerminate(osThreadGetId());
-}
-
 int main()
 {
-    ChipLogAutomation("Open IoT SDK unit-tests start");
-
     if (openiotsdk_platform_init())
     {
         ChipLogAutomation("ERROR: Open IoT SDK platform initialization failed");
@@ -69,22 +41,25 @@ int main()
 
     nlTestSetLogger(&NlTestLogger::nl_test_logger);
 
-    static const osThreadAttr_t thread_attr = {
-        .stack_size = 20 * 1024 // Allocate enough stack for app thread
-    };
+    ChipLogAutomation("Open IoT SDK unit-tests start");
 
-    osThreadId_t testThread = osThreadNew(test_thread, NULL, &thread_attr);
-    if (testThread == NULL)
+    if (openiotsdk_network_init(true))
     {
-        ChipLogAutomation("ERROR: Failed to create app thread");
+        ChipLogAutomation("ERROR: Network initialization failed");
         return EXIT_FAILURE;
     }
 
-    if (openiotsdk_platform_run())
+    CHIP_ERROR err = DeviceLayer::PlatformMgr().InitChipStack();
+    if (err != CHIP_NO_ERROR)
     {
-        ChipLogAutomation("ERROR: Open IoT SDK platform run failed");
+        ChipLogAutomation("Chip stack initialization failed: %s", err.AsString());
         return EXIT_FAILURE;
     }
+
+    ChipLogAutomation("Open IoT SDK unit-tests run...");
+    int status = RunRegisteredUnitTests();
+    ChipLogAutomation("Test status: %d", status);
+    ChipLogAutomation("Open IoT SDK unit-tests completed");
 
     return EXIT_SUCCESS;
 }
