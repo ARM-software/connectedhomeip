@@ -33,7 +33,7 @@ from builders.k32w import K32WApp, K32WBuilder
 from builders.mbed import MbedApp, MbedBoard, MbedBuilder, MbedProfile
 from builders.mw320 import MW320App, MW320Builder
 from builders.nrf import NrfApp, NrfBoard, NrfConnectBuilder
-from builders.openiotsdk import OpenIotSdkApp, OpenIotSdkBuilder
+from builders.openiotsdk import OpenIotSdkApp, OpenIotSdkBuilder, OpenIotSdkCryptoBackend
 from builders.qpg import QpgApp, QpgBoard, QpgBuilder
 from builders.telink import TelinkApp, TelinkBoard, TelinkBuilder
 from builders.tizen import TizenApp, TizenBoard, TizenBuilder
@@ -559,6 +559,10 @@ def BuildOpenIotSdkTargets():
         TargetPart('shell', app=OpenIotSdkApp.SHELL),
         TargetPart('lock', app=OpenIotSdkApp.LOCK),
     ])
+
+    # Modifiers
+    target.AppendModifier('mbedtls', crypto=OpenIotSdkCryptoBackend.MBEDTLS).ExceptIfRe('-(psa)')
+    target.AppendModifier('psa', crypto=OpenIotSdkCryptoBackend.PSA).ExceptIfRe('-(mbedtls)')
 
     return target
 

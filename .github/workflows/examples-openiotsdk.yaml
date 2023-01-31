@@ -26,6 +26,11 @@ concurrency:
 
 jobs:
     openiotsdk:
+        strategy:
+            fail-fast: false
+            matrix:
+                cryptoBackend: ["psa", "mbedtls"]
+
         name: Open IoT SDK examples building
         timeout-minutes: 90
 
@@ -79,7 +84,7 @@ jobs:
               id: build_shell
               timeout-minutes: 10
               run: |
-                  scripts/examples/openiotsdk_example.sh shell
+                  scripts/examples/openiotsdk_example.sh -b ${{ matrix.cryptoBackend }} shell
                   .environment/pigweed-venv/bin/python3 scripts/tools/memory/gh_sizes.py \
                     openiotsdk release shell \
                     examples/shell/openiotsdk/build/chip-openiotsdk-shell-example.elf \
@@ -89,7 +94,7 @@ jobs:
               id: build_lock_app
               timeout-minutes: 10
               run: |
-                  scripts/examples/openiotsdk_example.sh lock-app
+                  scripts/examples/openiotsdk_example.sh -b ${{ matrix.cryptoBackend }} lock-app
                   .environment/pigweed-venv/bin/python3 scripts/tools/memory/gh_sizes.py \
                     openiotsdk release lock-app \
                     examples/lock-app/openiotsdk/build/chip-openiotsdk-lock-app-example.elf \
@@ -99,7 +104,7 @@ jobs:
               id: build_unit_tests
               timeout-minutes: 10
               run: |
-                  scripts/examples/openiotsdk_example.sh unit-tests
+                  scripts/examples/openiotsdk_example.sh -b ${{ matrix.cryptoBackend }} unit-tests
 
             - name: "Test: shell example"
               if: steps.build_shell.outcome == 'success'
@@ -114,7 +119,7 @@ jobs:
                   scripts/setup/openiotsdk/network_setup.sh -n $TEST_NETWORK_NAME up
                   scripts/run_in_ns.sh ${TEST_NETWORK_NAME}ns scripts/examples/openiotsdk_example.sh -C test -n ${TEST_NETWORK_NAME}tap lock-app
                   scripts/setup/openiotsdk/network_setup.sh -n $TEST_NETWORK_NAME down
-            
+
             - name: "Test: unit-tests"
               if: steps.build_unit_tests.outcome == 'success'
               timeout-minutes: 30

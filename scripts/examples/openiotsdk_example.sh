@@ -40,6 +40,7 @@ TELNET_CONNECTION_PORT=""
 FAILED_TESTS=0
 IS_UNIT_TEST=0
 FVP_NETWORK="user"
+CRYPTO_BACKEND="mbedtls"
 
 readarray -t TEST_NAMES <"$CHIP_ROOT"/src/test_driver/openiotsdk/unit-tests/testnames.txt
 
@@ -55,13 +56,14 @@ Usage: $0 [options] example [test_name]
 Build, run or test the Open IoT SDK examples and unit-tests.
 
 Options:
-    -h,--help                       Show this help
-    -c,--clean                      Clean target build
-    -s,--scratch                    Remove build directory at all before building
-    -C,--command    <command>       Action to execute <build-run | run | test | build - default>
-    -d,--debug      <debug_enable>  Build in debug mode <true | false - default>
-    -p,--path       <build_path>    Build path <build_path - default is example_dir/build>
-    -n,--network    <network_name>  FVP network interface name <network_name - default is "user" which means user network mode>
+    -h,--help                           Show this help
+    -c,--clean                          Clean target build
+    -s,--scratch                        Remove build directory at all before building
+    -C,--command    <command>           Action to execute <build-run | run | test | build - default>
+    -d,--debug      <debug_enable>      Build in debug mode <true | false - default>
+    -b,--backend    <crypto_backend)    Select crypto backend <psa | mbedtls - default>
+    -p,--path       <build_path>        Build path <build_path - default is example_dir/build>
+    -n,--network    <network_name>      FVP network interface name <network_name - default is "user" which means user network mode>
 
 Examples:
 EOF
@@ -112,6 +114,8 @@ function build_with_cmake() {
     else
         BUILD_OPTIONS+=(-DCMAKE_BUILD_TYPE=Release)
     fi
+
+    BUILD_OPTIONS+=(-DCONFIG_CHIP_CRYPTO="$CRYPTO_BACKEND")
 
     cmake -G Ninja -S "$EXAMPLE_PATH" -B "$BUILD_PATH" --toolchain="$TOOLCHAIN_PATH" "${BUILD_OPTIONS[@]}"
     cmake --build "$BUILD_PATH"
@@ -235,8 +239,8 @@ function run_test() {
     fi
 }
 
-SHORT=C:,p:,d:,n:,c,s,h
-LONG=command:,path:,debug:,network:,clean,scratch,help
+SHORT=C:,p:,d:,b:,n:,c,s,h
+LONG=command:,path:,debug:,backend:,network:,clean,scratch,help
 OPTS=$(getopt -n build --options "$SHORT" --longoptions "$LONG" -- "$@")
 
 eval set -- "$OPTS"
@@ -261,6 +265,10 @@ while :; do
             ;;
         -d | --debug)
             DEBUG=$2
+            shift 2
+            ;;
+        -b | --backend)
+            CRYPTO_BACKEND=$2
             shift 2
             ;;
         -p | --path)
@@ -325,6 +333,15 @@ if [[ "$EXAMPLE" == "unit-tests" ]]; then
 else
     EXAMPLE_PATH="$CHIP_ROOT/examples/$EXAMPLE/openiotsdk"
 fi
+
+case "$CRYPTO_BACKEND" in
+    psa | mbedtls) ;;
+    *)
+        echo "Wrong crypto type definition"
+        show_usage
+        exit 2
+        ;;
+esac
 
 TOOLCHAIN_PATH="toolchains/toolchain-$TOOLCHAIN.cmake"
 
