@@ -42,6 +42,14 @@ FetchContent_Declare(
     GIT_PROGRESS   ON
 )
 
+FetchContent_Declare(
+    lwip
+    GIT_REPOSITORY  https://github.com/lwip-tcpip/lwip.git
+    GIT_TAG         STABLE-2_1_3_RELEASE
+    GIT_PROGRESS    ON
+    PATCH_COMMAND   git apply --ignore-space-change --ignore-whitespace ${CHIP_ROOT}/config/openiotsdk/lwip/lwip.patch || true
+)
+
 # Open IoT SDK configuration
 set(IOTSDK_FETCH_LIST
     mcu-driver-reference-platforms-for-arm
