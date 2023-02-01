@@ -49,9 +49,24 @@
  */
 #define LWIP_RAW (1)
 
-#ifdef LWIP_DEBUG
+/**
+ * LWIP_NETIF_API: Support netif api (in netifapi.c)
+ */
+#define LWIP_NETIF_API (1)
+
+/**
+ * IP_SOF_BROADCAST: Use the SOF_BROADCAST field to enable broadcast
+ * filter per pcb on udp and raw send operations.
+ */
+#define IP_SOF_BROADCAST (1)
+
+/**
+ * IP_SOF_BROADCAST_RECV: Enable the broadcast filter on recv operations.
+ */
+#define IP_SOF_BROADCAST_RECV (1)
 
 // Debug Options
+#ifdef LWIP_DEBUG
 #define NETIF_DEBUG LWIP_DBG_ON
 #define IP_DEBUG LWIP_DBG_ON
 #define TCP_DEBUG LWIP_DBG_ON
@@ -60,7 +75,7 @@
 
 #define LWIP_DBG_TYPES_ON LWIP_DBG_ON
 #define LWIP_DBG_MIN_LEVEL LWIP_DBG_LEVEL_ALL
-#endif
+#endif // LWIP_DEBUG
 
 #ifndef LWIP_PLATFORM_DIAG
 #define LWIP_PLATFORM_DIAG(x)                                                                                                      \
