@@ -495,6 +495,7 @@ the build script from the command line.
 -   Decide on debug mode support
 -   Decide on LwIP debug logs support
 -   Choose crypto algorithm
+-   Choose socket API
 -   Choose example name
 
 This will call the script with the selected parameters.
@@ -677,12 +678,12 @@ telnet> close
 
 ## Specific examples
 
-### Build lock-app example with PSA crypto backend support and run it in the network namespace
+### Build lock-app example with PSA crypto backend and IoT Socket support and run it in the network namespace
 
 **Using CLI**
 
 ```
-${MATTER_ROOT}/scripts/examples/openiotsdk_example.sh -b psa lock-app
+${MATTER_ROOT}/scripts/examples/openiotsdk_example.sh -b psa -S iotsocket lock-app
 
 export TEST_NETWORK_NAME=OIStest
 
@@ -703,6 +704,7 @@ Build example:
 -   Deny debug mode support `false`
 -   Deny LwIP debug logs support `false`
 -   Choose crypto algorithm `psa`
+-   Choose socket API `iotsocket`
 -   Choose example name `lock-app`
 
 Setup network environment:
@@ -724,12 +726,12 @@ Run example:
 
 The example output should be seen in the terminal window.
 
-### Build lock-app example with mbedtls crypto backend support and execute its test in the network namespace
+### Build lock-app example with mbedtls crypto backend and lwip support and execute its test in the network namespace
 
 **Using CLI**
 
 ```
-${MATTER_ROOT}/scripts/examples/openiotsdk_example.sh -b mbedtls lock-app
+${MATTER_ROOT}/scripts/examples/openiotsdk_example.sh -b mbedtls -S lwip lock-app
 
 export TEST_NETWORK_NAME=OIStest
 
@@ -750,6 +752,7 @@ Build example:
 -   Deny debug mode support `false`
 -   Deny LwIP debug logs support `false`
 -   Choose crypto algorithm `mbedtls`
+-   Choose socket API `lwip`
 -   Choose example name `lock-app`
 
 Setup network environment:
@@ -769,7 +772,7 @@ Test example:
 -   Enter network interface `OIStesttap`
 -   Choose example name `lock-app`
 
-### Build lock-app example with mbedtls crypto backend support in debug mode and debug it in the network namespace using the VSCode task
+### Build lock-app example with mbedtls crypto backend and lwip support in debug mode and debug it in the network namespace using the VSCode task
 
 Build example:
 
@@ -779,6 +782,7 @@ Build example:
 -   Confirm debug mode support `true`
 -   Deny LwIP debug logs support `false`
 -   Choose crypto algorithm `mbedtls`
+-   Choose socket API `lwip`
 -   Choose example name `lock-app`
 
 Setup network environment:
@@ -869,7 +873,7 @@ Example:
     id: build_new_example
     timeout-minutes: 10
     run: |
-        scripts/examples/openiotsdk_example.sh -b ${{ matrix.cryptoBackend }} new-example
+        scripts/examples/openiotsdk_example.sh -b ${{ matrix.cryptoBackend }} -S ${{ matrix.socketAPI }} new-example
         .environment/pigweed-venv/bin/python3 scripts/tools/memory/gh_sizes.py \
         openiotsdk release new-example \
         examples/new-example/openiotsdk/build/chip-openiotsdk-new-example-example.elf \

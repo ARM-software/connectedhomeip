@@ -252,6 +252,7 @@
                 "-d${input:openiotsdkDebugMode}",
                 "-l${input:openiotsdkLwipDebug}",
                 "-b${input:openiotsdkCryptoBackend}",
+                "-S${input:openiotsdkSocketAPI}",
                 "${input:openiotsdkExample}"
             ],
             "group": "build",
@@ -273,6 +274,7 @@
                 "-d${input:openiotsdkDebugMode}",
                 "-l${input:openiotsdkLwipDebug}",
                 "-b${input:openiotsdkCryptoBackend}",
+                "-S${input:openiotsdkSocketAPI}",
                 "unit-tests"
             ],
             "group": "build",
