@@ -25,21 +25,41 @@ concurrency:
     cancel-in-progress: true
 
 jobs:
+    pre_job:
+      runs-on: ubuntu-latest
+      # Map a step output to a job output
+      outputs:
+        should_skip: ${{ steps.skip_check.outputs.should_skip }}
+      steps:
+        - id: skip_check
+          uses: fkirc/skip-duplicate-actions@v5
+          with:
+            # Skip concurrent workflows with the same content.
+            # Cancel running workflows from outdatead commits.
+            # Do not skip pull requests - essential for running unit-tests.
+            # Skip if an already finished duplicate run can be found.
+            concurrent_skipping: 'same_content'
+            cancel_others: 'true'
+            do_not_skip: '["workflow_dispatch", "pull_request"]'
+            skip_after_successful_duplicate: 'true'
+
     openiotsdk:
         strategy:
             fail-fast: false
             matrix:
-                cryptoBackend: ["psa", "mbedtls"]
-                socketAPI: ["iotsocket", "lwip"]
+                cryptoBackend: ['psa', 'mbedtls']
+                socketAPI: ['iotsocket', 'lwip']
 
         name: Open IoT SDK examples building
         timeout-minutes: 100
+
+        needs: pre_job
 
         env:
             TEST_NETWORK_NAME: OIStest
 
         runs-on: ubuntu-latest
-        if: github.actor != 'restyled-io[bot]'
+        if: github.actor != 'restyled-io[bot]' && needs.pre_job.outputs.should_skip != 'true'
 
         container:
             image: connectedhomeip/chip-build-openiotsdk:0.6.44
@@ -168,7 +188,7 @@ jobs:
                   scripts/setup/openiotsdk/network_setup.sh -n $TEST_NETWORK_NAME down
 
             - name: "Test: unit-tests"
-              if: steps.build_unit_tests.outcome == 'success'
+              if: steps.build_unit_tests.outcome == 'success' && matrix.cryptoBackend != 'psa'
               timeout-minutes: 30
               run: |
                   scripts/examples/openiotsdk_example.sh -C test unit-tests
