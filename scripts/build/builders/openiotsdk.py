@@ -56,15 +56,31 @@ class OpenIotSdkCryptoBackend(Enum):
             raise Exception('Unknown crypto backend type: %r' % self)
 
 
+class OpenIotSdkSocketApi(Enum):
+    LWIP = auto()
+    IOT_SOCKET = auto()
+
+    @property
+    def SocketApiName(self):
+        if self == OpenIotSdkSocketApi.LWIP:
+            return 'lwip'
+        elif self == OpenIotSdkSocketApi.IOT_SOCKET:
+            return 'iotsocket'
+        else:
+            raise Exception('Unknown socket API type: %r' % self)
+
+
 class OpenIotSdkBuilder(Builder):
     def __init__(self,
                  root,
                  runner,
                  app: OpenIotSdkApp = OpenIotSdkApp.SHELL,
-                 crypto: OpenIotSdkCryptoBackend = OpenIotSdkCryptoBackend.MBEDTLS):
+                 crypto: OpenIotSdkCryptoBackend = OpenIotSdkCryptoBackend.MBEDTLS,
+                 socketApi: OpenIotSdkSocketApi = OpenIotSdkSocketApi.IOT_SOCKET):
         super(OpenIotSdkBuilder, self).__init__(root, runner)
         self.app = app
         self.crypto = crypto
+        self.socket_api = socketApi
         self.toolchain_path = os.path.join(
             'toolchains', 'toolchain-arm-none-eabi-gcc.cmake')
         self.system_processor = 'cortex-m55'
@@ -83,6 +99,8 @@ class OpenIotSdkBuilder(Builder):
                            '-DCMAKE_BUILD_TYPE=Release',
                            '-DCONFIG_CHIP_CRYPTO={}'.format(
                                self.crypto.CryptoBackendName),
+                           '-DCONFIG_CHIP_OPEN_IOT_SDK_USE_IOT_SOCKET={enable}'.format(
+                               enable="YES" if self.socket_api == OpenIotSdkSocketApi.IOT_SOCKET else "NO"),
                            ], title='Generating ' + self.identifier)
 
     def _build(self):

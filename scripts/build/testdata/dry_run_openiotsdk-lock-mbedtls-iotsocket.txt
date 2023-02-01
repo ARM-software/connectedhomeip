@@ -1,0 +1,8 @@
+# Commands will be run in CHIP project root.
+cd "{root}"
+
+# Generating openiotsdk-lock-mbedtls-iotsocket
+cmake -GNinja -S {root}/examples/lock-app/openiotsdk -B {out}/openiotsdk-lock-mbedtls-iotsocket --toolchain=toolchains/toolchain-arm-none-eabi-gcc.cmake -DCMAKE_SYSTEM_PROCESSOR=cortex-m55 -DCMAKE_BUILD_TYPE=Release -DCONFIG_CHIP_CRYPTO=mbedtls -DCONFIG_CHIP_OPEN_IOT_SDK_USE_IOT_SOCKET=YES
+
+# Building openiotsdk-lock-mbedtls-iotsocket
+cmake --build {out}/openiotsdk-lock-mbedtls-iotsocket
