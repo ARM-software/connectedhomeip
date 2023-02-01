@@ -36,6 +36,7 @@ set(CONFIG_CHIP_CRYPTO "mbedtls" CACHE STRING "Matter crypto backend. Mbedtls as
 set(CONFIG_CHIP_OPEN_IOT_SDK_SOFTWARE_VERSION "0" CACHE STRING "Software version number")
 set(CONFIG_CHIP_OPEN_IOT_SDK_SOFTWARE_VERSION_STRING ${TFM_NS_APP_VERSION} CACHE STRING "Software version in string format x.x.x")
 set(CONFIG_CHIP_OPEN_IOT_SDK_OTA_ENABLE NO CACHE BOOL "Enable OTA support")
+set(CONFIG_CHIP_OPEN_IOT_SDK_USE_IOT_SOCKET NO CACHE BOOL "Enable using IoT Socket API")
 
 if(CONFIG_CHIP_OPEN_IOT_SDK_USE_PSA_PS AND NOT TFM_SUPPORT)
     message( FATAL_ERROR "You can not use PSA Protected Storage without TF-M support" )
