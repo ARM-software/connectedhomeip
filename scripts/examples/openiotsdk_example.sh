@@ -29,6 +29,7 @@ EXAMPLE_PATH=""
 BUILD_PATH=""
 TOOLCHAIN=arm-none-eabi-gcc
 DEBUG=false
+SOCKET_API="iotsocket"
 EXAMPLE=""
 FVP_BIN=FVP_Corstone_SSE-300_Ethos-U55
 GDB_PLUGIN="$FAST_MODEL_PLUGINS_PATH/GDBRemoteConnection.so"
@@ -59,6 +60,7 @@ Options:
     -C,--command    <command>           Action to execute <build-run | run | test | build - default>
     -d,--debug      <debug_enable>      Build in debug mode <true | false - default>
     -b,--backend    <crypto_backend)    Select crypto backend <psa | mbedtls - default>
+    -S,--socket     <socket_api>        Select socket API <lwip | iotsocket - default)
     -p,--path       <build_path>        Build path <build_path - default is example_dir/build>
     -n,--network    <network_name>      FVP network interface name <network_name - default is "user" which means user network mode>
     -v,--version    <version_number>    Application version number <version_number - default is 1>
@@ -115,6 +117,10 @@ function build_with_cmake() {
     fi
 
     BUILD_OPTIONS+=(-DCONFIG_CHIP_CRYPTO="$CRYPTO_BACKEND")
+
+    if [[ $SOCKET_API == "iotsocket" ]]; then
+        BUILD_OPTIONS+=(-DCONFIG_CHIP_OPEN_IOT_SDK_USE_IOT_SOCKET=YES)
+    fi
 
     cmake -G Ninja -S "$EXAMPLE_PATH" -B "$BUILD_PATH" --toolchain="$TOOLCHAIN_PATH" "${BUILD_OPTIONS[@]}"
     cmake --build "$BUILD_PATH"
@@ -244,8 +250,8 @@ function run_test() {
     fi
 }
 
-SHORT=C:,p:,d:,b:,n:,v:,V:,c,s,h
-LONG=command:,path:,debug:,backend:,network:,version:,versionStr:,clean,scratch,help
+SHORT=C:,p:,d:,b:,S:,n:,v:,V:,c,s,h
+LONG=command:,path:,debug:,backend:,socket:,network:,version:,versionStr:,clean,scratch,help
 OPTS=$(getopt -n build --options "$SHORT" --longoptions "$LONG" -- "$@")
 
 eval set -- "$OPTS"
@@ -274,6 +280,10 @@ while :; do
             ;;
         -b | --backend)
             CRYPTO_BACKEND=$2
+            shift 2
+            ;;
+        -S | --socket)
+            SOCKET_API=$2
             shift 2
             ;;
         -p | --path)
@@ -354,6 +364,15 @@ case "$CRYPTO_BACKEND" in
     psa | mbedtls) ;;
     *)
         echo "Wrong crypto type definition"
+        show_usage
+        exit 2
+        ;;
+esac
+
+case "$SOCKET_API" in
+    lwip | iotsocket) ;;
+    *)
+        echo "Wrong socket API definition"
         show_usage
         exit 2
         ;;
