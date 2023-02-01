@@ -144,6 +144,9 @@ CHIP_ERROR PlatformManagerImpl::_PostEvent(const ChipDeviceEvent * eventPtr)
 
     osStatus_t status = osMessageQueuePut(mQueue, eventPtr, 0, 0);
     osEventFlagsSet(mPlatformFlags, kPostEventFlag);
+#if CHIP_SYSTEM_CONFIG_USE_IOT_SOCKET
+    SystemLayerImpl().Signal();
+#endif // CHIP_SYSTEM_CONFIG_USE_IOT_SOCKET
     return (status == osOK) ? CHIP_NO_ERROR : CHIP_ERROR_INTERNAL;
 }
 
@@ -160,17 +163,25 @@ void PlatformManagerImpl::HandlePostEvent()
         }
 
         DispatchEvent(&event);
+#if CHIP_SYSTEM_CONFIG_USE_IOT_SOCKET
+        count = osMessageQueueGetCount(mQueue);
+#else
         count--;
+#endif
     }
 }
 
 void PlatformManagerImpl::HandleTimerEvent(void)
 {
+#if CHIP_SYSTEM_CONFIG_USE_IOT_SOCKET
+    SystemLayerImpl().Signal();
+#else
     CHIP_ERROR err = SystemLayerImpl().HandlePlatformTimer();
     if (err != CHIP_NO_ERROR)
     {
         ChipLogError(DeviceLayer, "HandlePlatformTimer %ld", err.AsInteger());
     }
+#endif
 }
 
 void PlatformManagerImpl::_RunEventLoop()
@@ -210,10 +221,20 @@ void PlatformManagerImpl::_RunEventLoop()
 
     while (mRunEventLoop.load())
     {
+#if CHIP_SYSTEM_CONFIG_USE_IOT_SOCKET
+        SystemLayerImpl().PrepareEvents();
+
+        UnlockChipStack();
+        SystemLayerImpl().WaitForEvents();
+        LockChipStack();
+
+        SystemLayerImpl().HandleEvents();
+        flags = osEventFlagsGet(mPlatformFlags);
+#else
         UnlockChipStack();
         flags = osEventFlagsWait(mPlatformFlags, kPostEventFlag | kTimerEventFlag, osFlagsWaitAny, osWaitForever);
         LockChipStack();
-
+#endif
         // In case of error we still need to know the value of flags we're not waiting for
         if (flags & osFlagsError)
         {
@@ -294,7 +315,11 @@ CHIP_ERROR PlatformManagerImpl::_StopEventLoopTask()
         mRunEventLoop.store(false);
     }
 
+#if CHIP_SYSTEM_CONFIG_USE_IOT_SOCKET
+    SystemLayerImpl().Signal();
+#else
     osEventFlagsSet(mPlatformFlags, kPostEventFlag);
+#endif // CHIP_SYSTEM_CONFIG_USE_IOT_SOCKET
 
     // If the thread running the event loop is different from the caller
     // then wait it to finish
@@ -318,6 +343,10 @@ void PlatformManagerImpl::SetEventFlags(uint32_t flags)
 void PlatformManagerImpl::TimerCallback(void * arg)
 {
     PlatformMgrImpl().SetEventFlags(kTimerEventFlag);
+
+#if CHIP_SYSTEM_CONFIG_USE_IOT_SOCKET
+    SystemLayerImpl().Signal();
+#endif // CHIP_SYSTEM_CONFIG_USE_IOT_SOCKET
 }
 
 CHIP_ERROR PlatformManagerImpl::PlatformTimerInit()

@@ -456,13 +456,13 @@ void ServiceEvents(uint32_t aSleepTimeMilliseconds)
     gSystemLayer.StartTimer(
         System::Clock::Milliseconds32(aSleepTimeMilliseconds), [](System::Layer *, void *) -> void {}, nullptr);
 
-#if CHIP_SYSTEM_CONFIG_USE_SOCKETS
+#if CHIP_SYSTEM_CONFIG_USE_SOCKETS || CHIP_SYSTEM_CONFIG_USE_IOT_SOCKET
     gSystemLayer.PrepareEvents();
     gSystemLayer.WaitForEvents();
     gSystemLayer.HandleEvents();
 #endif
 
-#if CHIP_SYSTEM_CONFIG_USE_LWIP
+#if CHIP_SYSTEM_CONFIG_USE_LWIP && !CHIP_SYSTEM_CONFIG_USE_IOT_SOCKET
     if (gSystemLayer.IsInitialized())
     {
         static uint32_t sRemainingSystemLayerEventDelay = 0;

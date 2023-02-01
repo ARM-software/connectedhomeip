@@ -490,6 +490,13 @@
             "default": "mbedtls"
         },
         {
+            "type": "pickString",
+            "id": "openiotsdkSocketAPI",
+            "description": "Which socket API do you wish to use?",
+            "options": ["iotsocket", "lwip"],
+            "default": "iotsocket"
+        },
+        {
             "type": "command",
             "id": "openiotsdkExample",
             "command": "shellCommand.execute",
