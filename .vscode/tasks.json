@@ -252,6 +252,7 @@
                 "-d${input:openiotsdkDebugMode}",
                 "-l${input:openiotsdkLwipDebug}",
                 "-b${input:openiotsdkCryptoBackend}",
+                "-S${input:openiotsdkSocketAPI}",
                 "${input:openiotsdkExample}"
             ],
             "group": "build",
@@ -273,6 +274,7 @@
                 "-d${input:openiotsdkDebugMode}",
                 "-l${input:openiotsdkLwipDebug}",
                 "-b${input:openiotsdkCryptoBackend}",
+                "-S${input:openiotsdkSocketAPI}",
                 "unit-tests"
             ],
             "group": "build",
@@ -475,6 +477,13 @@
             "description": "Which Crypto algorithm do you wish to use?",
             "options": ["mbedtls", "psa"],
             "default": "mbedtls"
+        },
+        {
+            "type": "pickString",
+            "id": "openiotsdkSocketAPI",
+            "description": "Which socket API do you wish to use?",
+            "options": ["iotsocket", "lwip"],
+            "default": "iotsocket"
         },
         {
             "type": "pickString",

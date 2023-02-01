@@ -236,7 +236,13 @@ You build using a vscode task or call the script directly from the command line.
 ### Building using vscode task
 
 ```
-Command Palette (F1) => Run Task... => Build Open IoT SDK example => (debug on/off) => <example name>
+Command Palette (F1)
+=> Run Task...
+=> Build Open IoT SDK example
+=> Use debug mode (True/False)
+=> Choose crypto algorithm (mbedtls/psa)
+=> Choose socket API (iotsocket/lwip)
+=> <example name>
 ```
 
 This will call the scripts with the selected parameters.
