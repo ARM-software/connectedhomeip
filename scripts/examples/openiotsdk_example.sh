@@ -42,6 +42,7 @@ FAILED_TESTS=0
 IS_UNIT_TEST=0
 FVP_NETWORK="user"
 CRYPTO_BACKEND="mbedtls"
+KVS_STORAGE_TYPE="tdb"
 APP_VERSION="1"
 APP_VERSION_STR="0.0.1"
 
@@ -67,6 +68,7 @@ Options:
     -d,--debug      <debug_enable>      Build in debug mode <true | false - default>
     -b,--backend    <crypto_backend)    Select crypto backend <psa | mbedtls - default>
     -S,--socket     <socket_api>        Select socket API <lwip | iotsocket - default)
+    -k,--kvsstore   <kvs_storage_type>  Select KVS storage type <ps | tdb - default>
     -p,--path       <build_path>        Build path <build_path - default is example_dir/build>
     -n,--network    <network_name>      FVP network interface name <network_name - default is "user" which means user network mode>
     -v,--version    <version_number>    Application version number <version_number - default is 1>
@@ -128,6 +130,10 @@ function build_with_cmake() {
 
     if [[ $SOCKET_API == "iotsocket" ]]; then
         BUILD_OPTIONS+=(-DCONFIG_CHIP_OPEN_IOT_SDK_USE_IOT_SOCKET=YES)
+    fi
+
+    if [[ $KVS_STORAGE_TYPE == "ps" ]]; then
+        BUILD_OPTIONS+=(-DCONFIG_CHIP_OPEN_IOT_SDK_USE_PSA_PS=YES)
     fi
 
     cmake -G Ninja -S "$EXAMPLE_PATH" -B "$BUILD_PATH" --toolchain="$TOOLCHAIN_PATH" "${BUILD_OPTIONS[@]}"
@@ -264,8 +270,8 @@ function run_test() {
     fi
 }
 
-SHORT=C:,p:,d:,b:,S:,n:,v:,V:,c,s,h
-LONG=command:,path:,debug:,backend:,socket:,network:,version:,versionStr:,clean,scratch,help
+SHORT=C:,p:,d:,b:,S:,k:,n:,v:,V:,c,s,h
+LONG=command:,path:,debug:,backend:,socket:,network:,kvsstore:,version:,versionStr:,clean,scratch,help
 OPTS=$(getopt -n build --options "$SHORT" --longoptions "$LONG" -- "$@")
 
 eval set -- "$OPTS"
@@ -298,6 +304,10 @@ while :; do
             ;;
         -S | --socket)
             SOCKET_API=$2
+            shift 2
+            ;;
+        -k | --kvsstore)
+            KVS_STORAGE_TYPE=$2
             shift 2
             ;;
         -p | --path)
@@ -384,6 +394,15 @@ case "$SOCKET_API" in
     lwip | iotsocket) ;;
     *)
         echo "Wrong socket API definition"
+        show_usage
+        exit 2
+        ;;
+esac
+
+case "$KVS_STORAGE_TYPE" in
+    ps | tdb) ;;
+    *)
+        echo "Wrong KVS storage type definition"
         show_usage
         exit 2
         ;;
