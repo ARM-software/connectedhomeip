@@ -26,7 +26,6 @@ set(APP_TARGET chip-openiotsdk-ota-requestor-app-example_ns)
 
 set(TFM_SUPPORT YES)
 set(TFM_PROJECT_CONFIG_HEADER_FILE "${CMAKE_CURRENT_SOURCE_DIR}/tf-m-config/TfmProjectConfig.h")
-set(CONFIG_CHIP_OPEN_IOT_SDK_USE_PSA_PS YES)
 set(CONFIG_CHIP_OPEN_IOT_SDK_OTA_ENABLE YES)
 
 # Toolchain files need to exist before first call to project
