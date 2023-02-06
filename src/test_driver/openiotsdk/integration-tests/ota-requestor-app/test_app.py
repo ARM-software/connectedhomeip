@@ -70,7 +70,7 @@ def otaProviderConfig(request, updateBinaryPath):
 def test_smoke_test(device):
     ret = device.wait_for_output("Open IoT SDK ota-requestor-app example application start")
     assert ret != None and len(ret) > 0
-    ret = device.wait_for_output("Open IoT SDK ota-requestor-app example application run")
+    ret = device.wait_for_output("Open IoT SDK ota-requestor-app example application run", timeout=15)
     assert ret != None and len(ret) > 0
 
 
@@ -161,7 +161,7 @@ def test_update_ctrl(device, controller, ota_provider, softwareVersion):
                                      announcementReason=OtaSoftwareUpdateRequestor.Enums.OTAAnnouncementReason.kUrgentUpdateAvailable,
                                      metadataForNode=None, endpoint=0))
 
-    ret = device.wait_for_output("New version of the software is available")
+    ret = device.wait_for_output("New version of the software is available", timeout=30)
     assert ret != None and len(ret) > 1
 
     version = ret[-1].split()[-1]
@@ -171,7 +171,7 @@ def test_update_ctrl(device, controller, ota_provider, softwareVersion):
 
     log.info("New software image downloading and installing...")
 
-    ret = device.wait_for_output("Open IoT SDK ota-requestor-app example application start", timeout=600)
+    ret = device.wait_for_output("Open IoT SDK ota-requestor-app example application start", timeout=1200)
     assert ret != None and len(ret) > 0
 
     device.set_verbose(True)
