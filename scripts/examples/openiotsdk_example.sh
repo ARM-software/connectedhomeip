@@ -43,8 +43,12 @@ IS_UNIT_TEST=0
 FVP_NETWORK="user"
 CRYPTO_BACKEND="mbedtls"
 KVS_STORAGE_TYPE="tdb"
+KVS_STORAGE_FILE=""
 APP_VERSION="1"
 APP_VERSION_STR="0.0.1"
+
+declare -A tdb_storage_param=([instance]=sram [memspace]=0 [address]=0x0 [size]=0x100000)
+declare -A ps_storage_param=([instance]=qspi_sram [memspace]=0 [address]=0x660000 [size]=0x12000)
 
 readarray -t TEST_NAMES <"$CHIP_ROOT"/src/test_driver/openiotsdk/unit-tests/testnames.txt
 
@@ -64,6 +68,7 @@ Options:
     -S,--socket     <socket_api>        Select socket API <lwip | iotsocket - default)
     -k,--kvsstore   <kvs_storage_type>  Select KVS storage type <ps | tdb - default>
     -p,--path       <build_path>        Build path <build_path - default is example_dir/build>
+    -K,--kvsfile    <kvs_storage_file>  Path to KVS storage file which will be used to ensure persistence <kvs_storage_file - default is empty which means disable persistence>
     -n,--network    <network_name>      FVP network interface name <network_name - default is "user" which means user network mode>
     -v,--version    <version_number>    Application version number <version_number - default is 1>
     -V,--versionStr <version_str>       Application version string <version_strr - default is "0.0.1">
@@ -167,6 +172,18 @@ function run_fvp() {
         RUN_OPTIONS+=(-C mps3_board.hostbridge.interfaceName="$FVP_NETWORK")
     fi
 
+    if [ -n "$KVS_STORAGE_FILE" ]; then
+        if [[ $KVS_STORAGE_TYPE == "ps" ]]; then
+            declare -n storage_param=ps_storage_param
+        else
+            declare -n storage_param=tdb_storage_param
+        fi
+        if [ -f "$KVS_STORAGE_FILE" ]; then
+            RUN_OPTIONS+=(--data mps3_board."${storage_param[instance]}"="$KVS_STORAGE_FILE"@"${storage_param[memspace]}":"${storage_param[address]}")
+        fi
+        RUN_OPTIONS+=(--dump mps3_board."${storage_param[instance]}"="$KVS_STORAGE_FILE"@"${storage_param[memspace]}":"${storage_param[address]}","${storage_param[size]}")
+    fi
+
     echo "Running $EXAMPLE_EXE_PATH with options: ${RUN_OPTIONS[@]}"
 
     # Run the FVP
@@ -262,8 +279,8 @@ function run_test() {
     fi
 }
 
-SHORT=C:,p:,d:,b:,S:,k:,n:,v:,V:,c,s,h
-LONG=command:,path:,debug:,backend:,socket:,network:,kvsstore:,version:,versionStr:,clean,scratch,help
+SHORT=C:,p:,d:,b:,S:,k:,K:,n:,v:,V:,c,s,h
+LONG=command:,path:,debug:,backend:,socket:,network:,kvsstore:,kvsfile:,version:,versionStr:,clean,scratch,help
 OPTS=$(getopt -n build --options "$SHORT" --longoptions "$LONG" -- "$@")
 
 eval set -- "$OPTS"
@@ -300,6 +317,10 @@ while :; do
             ;;
         -k | --kvsstore)
             KVS_STORAGE_TYPE=$2
+            shift 2
+            ;;
+        -K | --kvsfile)
+            KVS_STORAGE_FILE=$2
             shift 2
             ;;
         -p | --path)
