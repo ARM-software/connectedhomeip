@@ -199,7 +199,7 @@ function run_fvp() {
     fi
 
     # Stop the FVP
-    kill -9 "$FVP_PID"
+    kill -SIGTERM "$FVP_PID"
     # Wait for the FVP stop
     while kill -0 "$FVP_PID"; do
         sleep 1
