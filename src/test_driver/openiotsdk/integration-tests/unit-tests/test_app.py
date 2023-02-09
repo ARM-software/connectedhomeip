@@ -34,7 +34,7 @@ def binaryPath(request, rootDir):
 def test_unit_tests(device):
     ret = device.wait_for_output("Open IoT SDK unit-tests start")
     assert ret is not None and len(ret) > 0
-    ret = device.wait_for_output("Open IoT SDK unit-tests run")
+    ret = device.wait_for_output("Open IoT SDK unit-tests run", timeout=30)
     assert ret is not None and len(ret) > 0
 
     ret = device.wait_for_output("Test status:", 1200)
