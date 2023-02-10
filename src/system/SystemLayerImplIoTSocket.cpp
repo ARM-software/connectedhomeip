@@ -50,7 +50,8 @@ constexpr uint16_t SIGNAL_SOCKET_PORT = 1;
 
 std::atomic<int32_t> LayerImplOpenIoTSDK::mSignalSocket{ EndPointStateIoTSocket::kInvalidSocketFd };
 Mutex LayerImplOpenIoTSDK::mSelectMutex{};
-size_t LayerImplOpenIoTSDK::mMaskSize = 0;
+size_t LayerImplOpenIoTSDK::mMaskSize                            = 0;
+LayerImplOpenIoTSDK::SelectMask LayerImplOpenIoTSDK::mMaskMemory = nullptr;
 
 LayerImplOpenIoTSDK::LayerImplOpenIoTSDK() : mHandlingTimerComplete(false) {}
 

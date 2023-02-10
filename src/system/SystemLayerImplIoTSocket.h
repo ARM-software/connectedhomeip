@@ -69,8 +69,9 @@ public:
     CHIP_ERROR WaitForEvents() override;
     void HandleEvents() override;
 
-private:
     typedef void * SelectMask;
+
+private:
     enum SelectMaskType
     {
         ReadMask = 0,     // used to store the user requested set
@@ -107,7 +108,7 @@ private:
         (INET_CONFIG_ENABLE_UDP_ENDPOINT ? INET_CONFIG_NUM_UDP_ENDPOINTS : 0);
 
     chip::Inet::EndPointStateIoTSocket * mSelectEndpoints[kSocketMax];
-    SelectMask mMaskMemory        = nullptr;
+    static SelectMask mMaskMemory;
     size_t mSelectEndpointsNumber = 0;
 
     static std::atomic<int32_t> mSignalSocket;
