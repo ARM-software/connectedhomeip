@@ -188,8 +188,8 @@ jobs:
                   scripts/setup/openiotsdk/network_setup.sh -n $TEST_NETWORK_NAME down
 
             - name: "Test: unit-tests"
-              if: steps.build_unit_tests.outcome == 'success' && matrix.cryptoBackend != 'psa'
-              timeout-minutes: 30
+              if: steps.build_unit_tests.outcome == 'success'
+              timeout-minutes: 50
               run: |
                   scripts/examples/openiotsdk_example.sh -C test unit-tests
 
