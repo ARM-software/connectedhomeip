@@ -179,7 +179,7 @@ void ShutdownSystemLayer()
 #endif // CHIP_SYSTEM_CONFIG_USE_LWIP
 }
 
-#if CHIP_SYSTEM_CONFIG_USE_LWIP
+#if CHIP_SYSTEM_CONFIG_USE_LWIP && !defined(CHIP_DEVICE_LAYER_TARGET_OPEN_IOT_SDK)
 static void PrintNetworkState()
 {
     char intfName[chip::Inet::InterfaceId::kMaxIfNameLength];
@@ -228,7 +228,7 @@ static void PrintNetworkState()
 
 void InitNetwork()
 {
-#if CHIP_SYSTEM_CONFIG_USE_LWIP
+#if CHIP_SYSTEM_CONFIG_USE_LWIP && !defined(CHIP_DEVICE_LAYER_TARGET_OPEN_IOT_SDK)
 
     // If an tap device name hasn't been specified, derive one from the IPv6 interface id.
 
@@ -289,9 +289,7 @@ void InitNetwork()
         }
     }
 #endif // CHIP_TARGET_STYLE_UNIX
-#if !defined(CHIP_DEVICE_LAYER_TARGET_OPEN_IOT_SDK)
     tcpip_init(OnLwIPInitComplete, NULL);
-#endif // !defined(CHIP_DEVICE_LAYER_TARGET_OPEN_IOT_SDK)
 
     // Lock LwIP stack
     LOCK_TCPIP_CORE();
