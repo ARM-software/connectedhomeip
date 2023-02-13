@@ -142,6 +142,12 @@ function run_fvp() {
         exit 1
     fi
 
+    # Check if gdb plugin exist file exists
+    if ! [ -f "$GDB_PLUGIN" ]; then
+        echo "Error: $GDB_PLUGIN does not exist. Ensure Fast Model extensions are mounted." >&2
+        exit 1
+    fi
+
     RUN_OPTIONS=(-C mps3_board.telnetterminal0.start_port="$TELNET_TERMINAL_PORT")
     RUN_OPTIONS+=(--quantum=25)
 
