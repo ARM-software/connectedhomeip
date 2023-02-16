@@ -1165,7 +1165,9 @@ int CASE_TestSecurePairing_Setup(void * inContext)
 {
     chip::Platform::MemoryInit();
 
+#if !defined(CHIP_DEVICE_LAYER_TARGET_OPEN_IOT_SDK)
     chip::DeviceLayer::PlatformMgr().InitChipStack();
+#endif // !defined(CHIP_DEVICE_LAYER_TARGET_OPEN_IOT_SDK)
 
     CHIP_ERROR err = CASETestSecurePairingSetup(inContext);
     if (err != CHIP_NO_ERROR)
@@ -1193,7 +1195,9 @@ int CASE_TestSecurePairing_Teardown(void * inContext)
     gCommissionerFabrics.DeleteAllFabrics();
     gDeviceFabrics.DeleteAllFabrics();
     static_cast<TestContext *>(inContext)->Shutdown();
+#if !defined(CHIP_DEVICE_LAYER_TARGET_OPEN_IOT_SDK)
     chip::DeviceLayer::PlatformMgr().Shutdown();
+#endif // !defined(CHIP_DEVICE_LAYER_TARGET_OPEN_IOT_SDK)
     return SUCCESS;
 }
 
