@@ -1,5 +1,5 @@
 #
-#   Copyright (c) 2022 Project CHIP Authors
+#   Copyright (c) 2022-2023 Project CHIP Authors
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
 #   you may not use this file except in compliance with the License.
@@ -22,23 +22,6 @@ get_filename_component(OPEN_IOT_SDK_EXAMPLE_COMMON ${CHIP_ROOT}/examples/platfor
 
 list(APPEND CMAKE_MODULE_PATH ${OPEN_IOT_SDK_CONFIG}/cmake)
 
-# Toolchain files need to exist before first call to project
-include(toolchain)
-
-project(chip-open-iot-sdk-unit-tests LANGUAGES C CXX ASM)
-
-include(sdk)
-include(linker)
-
-# LwIP configuration
-if(TARGET lwip-cmsis-port)
-    # lwip requires user_lwipopts.h, we use the custom settings
-    target_include_directories(lwipopts
-        INTERFACE
-            lwip-config
-    )
-endif()
-
 # Application CHIP build configuration 
 set(CONFIG_CHIP_LIB_TESTS YES)
 set(CONFIG_CHIP_DETAIL_LOGGING NO)
@@ -46,6 +29,13 @@ set(CONFIG_CHIP_PROGRESS_LOGGING NO)
 set(CONFIG_CHIP_AUTOMATION_LOGGING YES)
 set(CONFIG_CHIP_ERROR_LOGGING NO)
 
+# Toolchain files need to exist before first call to project
+include(toolchain)
+
+project(chip-open-iot-sdk-unit-tests LANGUAGES C CXX ASM)
+
+include(sdk)
+include(linker)
 include(chip)
 
 add_subdirectory(${OPEN_IOT_SDK_EXAMPLE_COMMON}/app ./app_build)

@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #
-#    Copyright (c) 2020 Project CHIP Authors
+#    Copyright (c) 2022-2023 Project CHIP Authors
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ EXAMPLE_PATH=""
 BUILD_PATH=""
 TOOLCHAIN=arm-none-eabi-gcc
 DEBUG=false
+LWIP_DEBUG=false
 SOCKET_API="iotsocket"
 EXAMPLE=""
 FVP_BIN=FVP_Corstone_SSE-300_Ethos-U55
@@ -71,6 +72,7 @@ Options:
     -s,--scratch                        Remove build directory at all before building
     -C,--command    <command>           Action to execute <build-run | run | test | build - default>
     -d,--debug      <debug_enable>      Build in debug mode <true | false - default>
+    -l,--lwipdebug  <lwip_debug_enable> Build with LwIP debug logs support <true | false - default>
     -b,--backend    <crypto_backend)    Select crypto backend <psa | mbedtls - default>
     -S,--socket     <socket_api>        Select socket API <lwip | iotsocket - default)
     -k,--kvsstore   <kvs_storage_type>  Select KVS storage type <ps | tdb - default>
@@ -130,6 +132,10 @@ function build_with_cmake() {
         BUILD_OPTIONS+=(-DCMAKE_BUILD_TYPE=Debug)
     else
         BUILD_OPTIONS+=(-DCMAKE_BUILD_TYPE=Release)
+    fi
+
+    if "$LWIP_DEBUG"; then
+        BUILD_OPTIONS+=(-DCONFIG_CHIP_OPEN_IOT_SDK_LWIP_DEBUG=YES)
     fi
 
     BUILD_OPTIONS+=(-DCONFIG_CHIP_CRYPTO="$CRYPTO_BACKEND")
@@ -288,8 +294,8 @@ function run_test() {
     fi
 }
 
-SHORT=C:,p:,d:,b:,S:,k:,K:,n:,v:,V:,c,s,h
-LONG=command:,path:,debug:,backend:,socket:,network:,kvsstore:,kvsfile:,version:,versionStr:,clean,scratch,help
+SHORT=C:,p:,d:,l:,b:,S:,k:,K:,n:,v:,V:,c,s,h
+LONG=command:,path:,debug:,lwipdebug:,backend:,socket:,network:,kvsstore:,kvsfile:,version:,versionStr:,clean,scratch,help
 OPTS=$(getopt -n build --options "$SHORT" --longoptions "$LONG" -- "$@")
 
 eval set -- "$OPTS"
@@ -314,6 +320,10 @@ while :; do
             ;;
         -d | --debug)
             DEBUG=$2
+            shift 2
+            ;;
+        -l | --lwipdebug)
+            LWIP_DEBUG=$2
             shift 2
             ;;
         -b | --backend)
