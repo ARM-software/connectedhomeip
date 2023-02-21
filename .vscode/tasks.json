@@ -250,6 +250,7 @@
             "args": [
                 "-Cbuild",
                 "-d${input:openiotsdkDebugMode}",
+                "-l${input:openiotsdkLwipDebug}",
                 "-b${input:openiotsdkCryptoBackend}",
                 "-S${input:openiotsdkSocketAPI}",
                 "${input:openiotsdkExample}"
@@ -271,6 +272,7 @@
             "args": [
                 "-Cbuild",
                 "-d${input:openiotsdkDebugMode}",
+                "-l${input:openiotsdkLwipDebug}",
                 "-b${input:openiotsdkCryptoBackend}",
                 "-S${input:openiotsdkSocketAPI}",
                 "unit-tests"
@@ -459,6 +461,13 @@
             "type": "pickString",
             "id": "openiotsdkDebugMode",
             "description": "Do you want to use debug mode?",
+            "options": ["false", "true"],
+            "default": "false"
+        },
+        {
+            "type": "pickString",
+            "id": "openiotsdkLwipDebug",
+            "description": "Do you want to use LwIP debug logs?",
             "options": ["false", "true"],
             "default": "false"
         },

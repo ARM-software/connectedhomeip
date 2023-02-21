@@ -36,22 +36,6 @@ project(${APP_TARGET} LANGUAGES C CXX ASM)
 
 include(sdk)
 
-# LwIP configuration
-if(TARGET lwip-cmsis-port)
-    # lwip requires user_lwipopts.h, we use the custom settings
-    target_include_directories(lwipopts
-        INTERFACE
-            ${OPEN_IOT_SDK_CONFIG}/lwip
-    )
-
-    if (${CMAKE_BUILD_TYPE} STREQUAL "Debug")
-        target_compile_definitions(lwipopts
-            INTERFACE
-                LWIP_DEBUG
-        )
-    endif()
-endif()
-
 add_executable(${APP_TARGET})
 
 # Application CHIP build configuration
