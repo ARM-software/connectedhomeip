@@ -25,7 +25,7 @@ get_filename_component(OPEN_IOT_SDK_SOURCE ${CHIP_ROOT}/third_party/open-iot-sdk
 get_filename_component(OPEN_IOT_SDK_STORAGE_SOURCE ${CHIP_ROOT}/third_party/open-iot-sdk/storage REALPATH)
 
 # Open IoT SDK targets passed to CHIP build
-list(APPEND EXTERNAL_TARGETS)
+list(APPEND CONFIG_CHIP_EXTERNAL_TARGETS)
 
 # Additional Open IoT SDK build configuration 
 set(TFM_SUPPORT NO CACHE BOOL "Add Trusted Firmware-M (TF-M) support to application")
@@ -161,7 +161,7 @@ if(TARGET lwip-cmsis-port)
         INTERFACE
             DEBUG_PRINT=printf
             $<$<BOOL:${CONFIG_CHIP_OPEN_IOT_SDK_LWIP_DEBUG}>:LWIP_DEBUG>
-            $<$<BOOL:${CONFIG_CHIP_LIB_TESTS}>:CHIP_LIB_TESTS>
+            $<$<BOOL:${CONFIG_CHIP_BUILD_TESTS}>:CHIP_LIB_TESTS>
     )
 
     target_include_directories(lwipopts
@@ -212,7 +212,7 @@ if(TARGET mbedtls-config)
 endif()
 
 if("mcu-driver-reference-platforms-for-arm" IN_LIST IOTSDK_FETCH_LIST)
-    list(APPEND EXTERNAL_TARGETS
+    list(APPEND CONFIG_CHIP_EXTERNAL_TARGETS
         mcu-driver-bootstrap
         mcu-driver-hal
         mdh-arm-corstone-300-common
@@ -221,7 +221,7 @@ if("mcu-driver-reference-platforms-for-arm" IN_LIST IOTSDK_FETCH_LIST)
 endif()
 
 if("cmsis-5" IN_LIST IOTSDK_FETCH_LIST)
-    list(APPEND EXTERNAL_TARGETS
+    list(APPEND CONFIG_CHIP_EXTERNAL_TARGETS
         cmsis-core
         cmsis-rtos-api
         iotsdk-ip-network-api
@@ -229,13 +229,13 @@ if("cmsis-5" IN_LIST IOTSDK_FETCH_LIST)
 endif()
 
 if("cmsis-freertos" IN_LIST IOTSDK_FETCH_LIST)
-    list(APPEND EXTERNAL_TARGETS
+    list(APPEND CONFIG_CHIP_EXTERNAL_TARGETS
         freertos-cmsis-rtos
     )
 endif()
 
 if("mbedtls" IN_LIST IOTSDK_FETCH_LIST)
-    list(APPEND EXTERNAL_TARGETS
+    list(APPEND CONFIG_CHIP_EXTERNAL_TARGETS
         mbedtls
         mbedtls-config
         mbedtls-threading-cmsis-rtos 
@@ -243,7 +243,7 @@ if("mbedtls" IN_LIST IOTSDK_FETCH_LIST)
 endif()
 
 if("lwip" IN_LIST IOTSDK_FETCH_LIST)
-    list(APPEND EXTERNAL_TARGETS
+    list(APPEND CONFIG_CHIP_EXTERNAL_TARGETS
         lwipcore
         lwip-cmsis-port
         lwip-cmsis-sys
@@ -253,14 +253,14 @@ if("lwip" IN_LIST IOTSDK_FETCH_LIST)
 endif()
 
 if("cmsis-sockets-api" IN_LIST IOTSDK_FETCH_LIST)
-    list(APPEND EXTERNAL_TARGETS
+    list(APPEND CONFIG_CHIP_EXTERNAL_TARGETS
         cmsis-sockets-api
         lwip-sockets
     )
 endif()
 
 if("trusted-firmware-m" IN_LIST IOTSDK_FETCH_LIST)
-    list(APPEND EXTERNAL_TARGETS
+    list(APPEND CONFIG_CHIP_EXTERNAL_TARGETS
         tfm-ns-interface
         tfm-ns-interface-cmsis-rtos
     )
@@ -270,14 +270,14 @@ endif()
 
 # Add Open IoT SDK storage source
 add_subdirectory(${OPEN_IOT_SDK_STORAGE_SOURCE} ./sdk_storage_build)
-list(APPEND EXTERNAL_TARGETS
+list(APPEND CONFIG_CHIP_EXTERNAL_TARGETS
     iotsdk-blockdevice
     iotsdk-tdbstore
 )
 
 # Add custom storage library
 add_subdirectory(${OPEN_IOT_SDK_CONFIG}/storage storage_build)
-list(APPEND EXTERNAL_TARGETS
+list(APPEND CONFIG_CHIP_EXTERNAL_TARGETS
     openiotsdk-storage
 )
 
