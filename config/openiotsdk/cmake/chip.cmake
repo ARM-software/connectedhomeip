@@ -23,7 +23,7 @@ get_filename_component(GEN_DIR ${CHIP_ROOT}/zzz_generated/ REALPATH)
 
 # Default CHIP build configuration
 set(CONFIG_CHIP_PROJECT_CONFIG "main/include/CHIPProjectConfig.h" CACHE STRING "")
-set(CONFIG_CHIP_LIB_TESTS NO CACHE BOOL "")
+set(CONFIG_CHIP_BUILD_TESTS NO CACHE BOOL "")
 set(CONFIG_CHIP_LIB_SHELL NO CACHE BOOL "")
 
 set(CONFIG_CHIP_DETAIL_LOGGING YES CACHE BOOL "Enable logging at detail level")
@@ -46,10 +46,14 @@ if(CONFIG_CHIP_OPEN_IOT_SDK_OTA_ENABLE AND NOT TFM_SUPPORT)
     message( FATAL_ERROR "You can not use OTA without TF-M support" )
 endif()
 
+if (${CMAKE_BUILD_TYPE} STREQUAL "Debug")
+    set(CONFIG_CHIP_DEBUG YES)
+endif()
+
 # Add CHIP sources
 add_subdirectory(${OPEN_IOT_SDK_CONFIG} ./chip_build)
 
-# Additional openiotsdk-chip target configuration
+# Additional chip target configuration
 
 # TF-M support requires the right order of generating targets
 if(TFM_SUPPORT)
@@ -57,7 +61,7 @@ if(TFM_SUPPORT)
 endif()
 
 if ("${CONFIG_CHIP_CRYPTO}" STREQUAL "psa")
-    target_compile_definitions(openiotsdk-chip
+    target_compile_definitions(chip
         INTERFACE
             CONFIG_CHIP_CRYPTO_PSA)
 endif()
