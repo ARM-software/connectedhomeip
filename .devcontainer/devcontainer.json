@@ -15,12 +15,8 @@
         // Provide a path to your local FastModelsPortfolio_11.16
         //"source=/path/to/FastModelsPortfolio_11.16,target=/opt/FastModelsPortfolio_11.16,type=bind,consistency=cached"
     ],
-    "build": {
-        "dockerfile": "Dockerfile",
-        "args": {
-            "BUILD_VERSION": "0.6.35"
-        }
-    },
+    "image": "matter-dev-environment:local",
+    "initializeCommand": ".devcontainer/build.sh",
     "remoteUser": "vscode",
     // Add the IDs of extensions you want installed when the container is created in the array below.
     "extensions": [
