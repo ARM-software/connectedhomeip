@@ -121,7 +121,9 @@ static std::vector<TapInterface> sTapIFs;
 static std::vector<struct netif> sNetIFs; // interface to filter
 
 static bool NetworkIsReady();
+#if !defined(CHIP_DEVICE_LAYER_TARGET_OPEN_IOT_SDK)
 static void OnLwIPInitComplete(void * arg);
+#endif // !defined(CHIP_DEVICE_LAYER_TARGET_OPEN_IOT_SDK)
 #endif // CHIP_SYSTEM_CONFIG_USE_LWIP
 
 char gDefaultTapDeviceName[32];
@@ -513,10 +515,12 @@ static bool NetworkIsReady()
     return ready;
 }
 
+#if !defined(CHIP_DEVICE_LAYER_TARGET_OPEN_IOT_SDK)
 static void OnLwIPInitComplete(void * arg)
 {
     printf("Waiting for addresses assignment...\n");
 }
+#endif // !defined(CHIP_DEVICE_LAYER_TARGET_OPEN_IOT_SDK)
 
 #endif // CHIP_SYSTEM_CONFIG_USE_LWIP
 
