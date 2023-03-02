@@ -192,3 +192,15 @@ jobs:
               timeout-minutes: 30
               run: |
                   scripts/examples/openiotsdk_example.sh -C test unit-tests
+
+            - name: Archive Map files
+              if: ${{ failure() }}
+              uses: actions/upload-artifact@v3
+              with:
+                name: map-files-${{ matrix.cryptoBackend }}-${{ matrix.socketAPI }} 
+                path: |
+                  examples/all-clusters-app/openiotsdk/build/*.map
+                  examples/lock-app/openiotsdk/build/*.map
+                  examples/lock-app/ota-requestor-app/build/*.map
+                  examples/lock-app/shell/build/*.map
+                  src/test_driver/openiotsdk/unit-tests/build/*.map
