@@ -1,5 +1,4 @@
 /*
- *
  *    Copyright (c) 2022 Project CHIP Authors
  *    All rights reserved.
  *
@@ -23,6 +22,7 @@
  */
 
 #include "openiotsdk_platform.h"
+#include <errno.h>
 
 #include "cmsis_os2.h"
 #include "hal/serial_api.h"
@@ -76,12 +76,6 @@ constexpr EndpointId kNetworkCommissioningEndpointSecondary = 0xFFFE;
 #define ALL_EVENTS_FLAGS (NETWORK_UP_FLAG | NETWORK_DOWN_FLAG)
 
 #define EVENT_TIMEOUT 5000
-
-// Consider reducing the baudrate if the serial is used as input and characters are lost
-extern "C" mdh_serial_t * get_example_serial();
-#ifndef IOT_SDK_APP_SERIAL_BAUDRATE
-#define IOT_SDK_APP_SERIAL_BAUDRATE 921600
-#endif
 
 static osEventFlagsId_t event_flags_id;
 
@@ -189,9 +183,6 @@ static int get_psa_images_details()
 int openiotsdk_platform_init(void)
 {
     int ret;
-    osKernelState_t state;
-
-    mdh_serial_set_baud(get_example_serial(), IOT_SDK_APP_SERIAL_BAUDRATE);
 
     ois_logging_init();
 
@@ -212,13 +203,6 @@ int openiotsdk_platform_init(void)
 #endif
 
 #ifdef TFM_SUPPORT
-    ret = tfm_ns_interface_init();
-    if (ret != 0)
-    {
-        ChipLogError(NotSpecified, "TF-M initialization failed: %d", ret);
-        return EXIT_FAILURE;
-    }
-
     ret = get_psa_images_details();
     if (ret != 0)
     {
@@ -226,20 +210,6 @@ int openiotsdk_platform_init(void)
         return EXIT_FAILURE;
     }
 #endif // TFM_SUPPORT
-
-    ret = osKernelInitialize();
-    if (ret != osOK)
-    {
-        ChipLogError(NotSpecified, "osKernelInitialize failed: %d", ret);
-        return EXIT_FAILURE;
-    }
-
-    state = osKernelGetState();
-    if (state != osKernelReady)
-    {
-        ChipLogError(NotSpecified, "Kernel not ready: %d", state);
-        return EXIT_FAILURE;
-    }
 
     return EXIT_SUCCESS;
 }
@@ -270,18 +240,6 @@ int openiotsdk_chip_init(void)
     }
 
     DeviceLayer::SetDeviceInfoProvider(&gDeviceInfoProvider);
-
-    return EXIT_SUCCESS;
-}
-
-int openiotsdk_platform_run(void)
-{
-    int ret = osKernelStart();
-    if (ret != osOK)
-    {
-        ChipLogError(NotSpecified, "Failed to start kernel: %d", ret);
-        return EXIT_FAILURE;
-    }
 
     return EXIT_SUCCESS;
 }
@@ -319,12 +277,10 @@ int openiotsdk_network_init(bool wait)
 
 int openiotsdk_chip_run(void)
 {
-    CHIP_ERROR err;
-
 #ifdef USE_CHIP_DATA_MODEL
     // Init ZCL Data Model and start server
     static chip::CommonCaseDeviceServerInitParams initParams;
-    err = initParams.InitializeStaticResourcesBeforeServerInit();
+    CHIP_ERROR err = initParams.InitializeStaticResourcesBeforeServerInit();
     if (err != CHIP_NO_ERROR)
     {
         ChipLogError(NotSpecified, "Initialize static resources before server init failed: %s", err.AsString());
