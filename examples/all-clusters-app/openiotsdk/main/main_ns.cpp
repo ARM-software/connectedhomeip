@@ -24,42 +24,6 @@
 
 #include "openiotsdk_platform.h"
 
-static void app_thread(void * argument)
-{
-    ChipLogProgress(NotSpecified, "Open IoT SDK all-clusters-app example application start");
-
-    if (openiotsdk_network_init(true))
-    {
-        ChipLogError(NotSpecified, "Network initialization failed");
-        goto exit;
-    }
-
-    if (openiotsdk_chip_run())
-    {
-        ChipLogError(NotSpecified, "CHIP stack run failed");
-        goto exit;
-    }
-
-    if (InitBindingHandlers() != CHIP_NO_ERROR)
-    {
-        ChipLogError(NotSpecified, "InitBindingHandlers failed");
-        goto exit;
-    }
-
-    ChipLogProgress(NotSpecified, "Open IoT SDK all-clusters-app example application run");
-
-    while (true)
-    {
-        // Add forever delay to ensure proper workload for this thread
-        osDelay(osWaitForever);
-    }
-
-    openiotsdk_chip_shutdown();
-
-exit:
-    osThreadTerminate(osThreadGetId());
-}
-
 int main()
 {
     if (openiotsdk_platform_init())
@@ -74,22 +38,35 @@ int main()
         return EXIT_FAILURE;
     }
 
-    static const osThreadAttr_t thread_attr = {
-        .stack_size = 16 * 1024 // Allocate enough stack for app thread
-    };
+    ChipLogProgress(NotSpecified, "Open IoT SDK all-clusters-app example application start");
 
-    osThreadId_t appThread = osThreadNew(app_thread, NULL, &thread_attr);
-    if (appThread == NULL)
+    if (openiotsdk_network_init(true))
     {
-        ChipLogError(NotSpecified, "Failed to create app thread");
+        ChipLogError(NotSpecified, "Network initialization failed");
         return EXIT_FAILURE;
     }
 
-    if (openiotsdk_platform_run())
+    if (openiotsdk_chip_run())
     {
-        ChipLogError(NotSpecified, "Open IoT SDK platform run failed");
+        ChipLogError(NotSpecified, "CHIP stack run failed");
         return EXIT_FAILURE;
     }
+
+    if (InitBindingHandlers() != CHIP_NO_ERROR)
+    {
+        ChipLogError(NotSpecified, "InitBindingHandlers failed");
+        return EXIT_FAILURE;
+    }
+
+    ChipLogProgress(NotSpecified, "Open IoT SDK all-clusters-app example application run");
+
+    while (true)
+    {
+        // Add forever delay to ensure proper workload for this thread
+        osDelay(osWaitForever);
+    }
+
+    openiotsdk_chip_shutdown();
 
     return EXIT_SUCCESS;
 }
