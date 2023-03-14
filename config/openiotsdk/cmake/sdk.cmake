@@ -295,7 +295,19 @@ if(CONFIG_CHIP_OPEN_IOT_SDK_OTA_ENABLE)
             ${APP_TARGET}
         POST_BUILD
         DEPENDS
-            $<TARGET_FILE_DIR:${APP_TARGET}>/${APP_TARGET}_signed.bin
+            $<TARGET_FILE_DIR:${APP_TARGET}>/${APP_TARGET}.bin
+        COMMAND
+            # Sign the update image
+            python3 ${BINARY_DIR}/install/image_signing/scripts/wrapper/wrapper.py
+                --layout ${BINARY_DIR}/install/image_signing/layout_files/signing_layout_ns.o
+                -v ${MCUBOOT_IMAGE_VERSION_NS}
+                -k ${BINARY_DIR}/install/image_signing/keys/root-RSA-3072_1.pem
+                --public-key-format full
+                --align 1 --pad-header -H 0x400 -s auto -d "(0, 0.0.0+0)"
+                $<TARGET_FILE_DIR:${APP_TARGET}>/${APP_TARGET}.bin
+                --overwrite-only
+                --measured-boot-record
+                $<TARGET_FILE_DIR:${APP_TARGET}>/${APP_TARGET}_signed.ota
         COMMAND
             # Create OTA udpate file
             ${CHIP_ROOT}/src/app/ota_image_tool.py
@@ -304,8 +316,13 @@ if(CONFIG_CHIP_OPEN_IOT_SDK_OTA_ENABLE)
                 -vn ${CONFIG_CHIP_OPEN_IOT_SDK_SOFTWARE_VERSION}
                 -vs "${CONFIG_CHIP_OPEN_IOT_SDK_SOFTWARE_VERSION_STRING}"
                 -da sha256
-                $<TARGET_FILE_DIR:${APP_TARGET}>/${APP_TARGET}_signed.bin
+                $<TARGET_FILE_DIR:${APP_TARGET}>/${APP_TARGET}_signed.ota
                 $<TARGET_FILE_DIR:${APP_TARGET}>/${APP_NAME}.ota
+        # Cleanup
+        COMMAND rm
+        ARGS -Rf
+                $<TARGET_FILE_DIR:${APP_TARGET}>/${APP_TARGET}_signed.ota
+        VERBATIM
     )
 endif()
     # Cleanup
