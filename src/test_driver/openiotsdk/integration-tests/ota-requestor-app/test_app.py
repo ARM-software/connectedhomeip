@@ -178,7 +178,7 @@ def test_update_ctrl(device, controller, ota_provider, softwareVersion):
 
     device.set_verbose(True)
 
-    ret = device.wait_for_output("Current software version")
+    ret = device.wait_for_output("Current software version", timeout=30)
     assert ret is not None and len(ret) > 1
 
     version_app = ret[-1].split()[-2:]
