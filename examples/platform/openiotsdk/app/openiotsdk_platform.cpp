@@ -60,10 +60,6 @@
 #include "tfm_ns_interface.h"
 #endif // TFM_SUPPORT
 
-#if defined(CONFIG_CHIP_CRYPTO_PSA) && !defined(MBEDTLS_PSA_CRYPTO_C)
-#error "PSA Crypto must be enabled in Mbed TLS to support PSA Crypto backend"
-#endif
-
 using namespace ::chip;
 using namespace ::chip::Platform;
 using namespace ::chip::DeviceLayer;

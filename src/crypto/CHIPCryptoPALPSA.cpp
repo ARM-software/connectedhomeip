@@ -47,10 +47,6 @@
 #include <string.h>
 #include <type_traits>
 
-#if !defined(MBEDTLS_PSA_CRYPTO_C)
-#error "PSA crypto API not enabled in mbedTLS config"
-#endif
-
 constexpr size_t kMaxErrorStrLen = 128;
 
 // In mbedTLS 3.0.0 direct access to structure fields was replaced with using MBEDTLS_PRIVATE macro.
