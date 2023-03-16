@@ -3,6 +3,29 @@ FROM ubuntu:focal
 
 VOLUME "/var/source"
 
+ARG TARGETPLATFORM
+
+# Ensure TARGETPLATFORM is set
+RUN case ${TARGETPLATFORM} in \
+        "linux/amd64") \
+            echo "Building for linux/amd64" \
+        ;; \
+        "linux/arm64") \
+            echo "Building for linux/arm64" \
+        ;; \
+        *) \
+        if [ -z "$TARGETPLATFORM" ] ;\
+        then \
+            echo "TARGETPLATFORM not defined! Please run from buildkit (buildx)." \
+            && return 1 ;\
+        else \
+            echo "Unsupported platform ${TARGETPLATFORM}." \
+            && return 1 ;\
+        fi \
+        ;; \
+    esac
+
+
 # base build and check tools and libraries layer
 RUN set -x \
     && apt-get update \
@@ -75,13 +98,29 @@ RUN set -x \
     && : # last line
 
 # Cmake v3.23.1
-RUN set -x \
-    && (cd /tmp \
-    && wget --progress=dot:giga https://github.com/Kitware/CMake/releases/download/v3.23.1/cmake-3.23.1-Linux-x86_64.sh \
-    && sh cmake-3.23.1-Linux-x86_64.sh --exclude-subdir --prefix=/usr/local \
-    && rm -rf cmake-3.23.1-Linux-x86_64.sh) \
-    && exec bash \
-    && : # last line
+RUN case ${TARGETPLATFORM} in \
+        "linux/amd64") \
+            set -x \
+            && (cd /tmp \
+            && wget --progress=dot:giga https://github.com/Kitware/CMake/releases/download/v3.23.1/cmake-3.23.1-Linux-x86_64.sh \
+            && sh cmake-3.23.1-Linux-x86_64.sh --exclude-subdir --prefix=/usr/local \
+            && rm -rf cmake-3.23.1-Linux-x86_64.sh) \
+            && exec bash \
+            ;; \
+        "linux/arm64") \
+            set -x \
+            && (cd /tmp \
+            && wget --progress=dot:giga https://github.com/Kitware/CMake/releases/download/v3.23.1/cmake-3.23.1-Linux-aarch64.sh \
+            && sh cmake-3.23.1-Linux-aarch64.sh --exclude-subdir --prefix=/usr/local \
+            && rm -rf cmake-3.23.1-Linux-aarch64.sh) \
+            && exec bash \
+            ;; \
+        *) \
+            test -n "$TARGETPLATFORM" \
+            echo "Unsupported platform ${TARGETPLATFORM}" \
+            ;; \
+    esac
+
 
 # Python 3.9 and PIP
 RUN set -x \
@@ -165,16 +204,25 @@ RUN set -x \
 # report false positives. This case is most prominent with glib-2.0, which has
 # a lot of threads-related APIs.
 ENV LD_LIBRARY_PATH_TSAN=/usr/lib/x86_64-linux-gnu-tsan
-RUN set -x \
-    && mkdir -p $LD_LIBRARY_PATH_TSAN \
-    && export CCACHE_DISABLE=1 PYTHONDONTWRITEBYTECODE=1 \
-    && GLIB_VERSION=$(pkg-config --modversion glib-2.0) \
-    && git clone --depth=1 --branch=$GLIB_VERSION https://github.com/GNOME/glib.git \
-    && CFLAGS="-O2 -g -fsanitize=thread" meson glib/build glib \
-    && DESTDIR=../build-image ninja -C glib/build install \
-    && mv glib/build-image/usr/local/lib/x86_64-linux-gnu/lib* $LD_LIBRARY_PATH_TSAN \
-    && rm -rf glib \
-    && : # last line
+RUN case ${TARGETPLATFORM} in \
+        "linux/amd64") \
+            set -x \
+            && mkdir -p $LD_LIBRARY_PATH_TSAN \
+            && export CCACHE_DISABLE=1 PYTHONDONTWRITEBYTECODE=1 \
+            && GLIB_VERSION=$(pkg-config --modversion glib-2.0) \
+            && git clone --depth=1 --branch=$GLIB_VERSION https://github.com/GNOME/glib.git \
+            && CFLAGS="-O2 -g -fsanitize=thread" meson glib/build glib \
+            && DESTDIR=../build-image ninja -C glib/build install \
+            && mv glib/build-image/usr/local/lib/x86_64-linux-gnu/lib* $LD_LIBRARY_PATH_TSAN \
+            && rm -rf glib \
+            ;; \
+        "linux/arm64") \
+            echo "ARM64 unsupported with TSAN" \
+            ;; \
+        *) \
+            echo "Unsupported platform ${TARGETPLATFORM}" \
+            ;; \
+    esac
 
 # NodeJS: install a newer version than what apt-get would read
 # This installs the latest LTS version of nodejs
@@ -184,14 +232,30 @@ RUN set -x \
 #
 # This is not a CHIP dependency directly, but used by CI
 ENV CHIP_NODE_VERSION=v16.13.2
-RUN set -x \
-    && mkdir node_js \
-    && cd node_js \
-    && wget https://nodejs.org/dist/$CHIP_NODE_VERSION/node-$CHIP_NODE_VERSION-linux-x64.tar.xz \
-    && tar xfvJ node-$CHIP_NODE_VERSION-linux-x64.tar.xz \
-    && mv node-$CHIP_NODE_VERSION-linux-x64 /opt/ \
-    && ln -s /opt/node-$CHIP_NODE_VERSION-linux-x64 /opt/node \
-    && ln -s /opt/node/bin/* /usr/bin \
-    && cd .. \
-    && rm -rf node_js \
-    && : # last line
+RUN case ${TARGETPLATFORM} in \
+        "linux/amd64") \
+            set -x \
+            && mkdir node_js \
+            && cd node_js \
+            && wget https://nodejs.org/dist/$CHIP_NODE_VERSION/node-$CHIP_NODE_VERSION-linux-x64.tar.xz \
+            && tar xfvJ node-$CHIP_NODE_VERSION-linux-x64.tar.xz \
+            && mv node-$CHIP_NODE_VERSION-linux-x64 /opt/node-$CHIP_NODE_VERSION \
+            && ln -s /opt/node-$CHIP_NODE_VERSION /opt/node \
+            && ln -s /opt/node/bin/* /usr/bin \
+            && cd .. \
+            && rm -rf node_js \
+            ;; \
+        "linux/arm64")\
+            set -x \
+            && mkdir node_js \
+            && cd node_js \
+            && wget https://nodejs.org/dist/$CHIP_NODE_VERSION/node-$CHIP_NODE_VERSION-linux-arm64.tar.xz \
+            && tar xfvJ node-$CHIP_NODE_VERSION-linux-arm64.tar.xz \
+            && mv node-$CHIP_NODE_VERSION-linux-arm64 /opt/node-$CHIP_NODE_VERSION \
+            && ln -s /opt/node-$CHIP_NODE_VERSION /opt/node \
+            && ln -s /opt/node/bin/* /usr/bin \
+            && cd .. \
+            && rm -rf node_js \
+            ;; \
+        *) ;; \
+    esac
