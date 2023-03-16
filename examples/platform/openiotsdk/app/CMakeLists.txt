@@ -24,7 +24,8 @@ add_library(openiotsdk-startup
 
 target_link_libraries(openiotsdk-startup
     PUBLIC
-        $<TARGET_OBJECTS:iotsdk-serial-retarget>
+        # iotsdk-serial-retarget contains the UART but we don't need the retarget part 
+        $<FILTER:$<TARGET_OBJECTS:iotsdk-serial-retarget>,EXCLUDE,.*gcc_retarget.*>
         cmsis-rtos-api
         mcu-driver-hal
 )
@@ -62,7 +63,6 @@ target_include_directories(openiotsdk-app
 target_link_libraries(openiotsdk-app 
     PUBLIC
         chip
-        $<TARGET_OBJECTS:iotsdk-serial-retarget>
 )
 
 if(TFM_SUPPORT)
