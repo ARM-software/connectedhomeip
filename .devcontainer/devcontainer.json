@@ -12,8 +12,8 @@
     ],
     "mounts": [
         "source=/var/run/docker.sock,target=/var/run/docker.sock,type=bind"
-        // Provide a path to your local FastModelsPortfolio_11.16
-        //"source=/path/to/FastModelsPortfolio_11.16,target=/opt/FastModelsPortfolio_11.16,type=bind,consistency=cached"
+        // Provide a path to your local FastModels_ThirdParty_IP_11-16_b16_Linux64
+        //"source=/local/path/to/FastModels_ThirdParty_IP_11-16_b16_Linux64,target=/opt/FastModels_ThirdParty_IP_11-16_b16_Linux64,type=bind,consistency=cached"
     ],
     "image": "matter-dev-environment:local",
     "initializeCommand": ".devcontainer/build.sh --tag matter-dev-environment:local --version 0.6.47",
