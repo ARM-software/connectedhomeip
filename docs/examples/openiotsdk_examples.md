@@ -362,6 +362,42 @@ _Note_: The `file-path` must exist to use the `--data` option.
 [Open IoT SDK build script](../../scripts/examples/openiotsdk_example.sh)
 provides the `-K,--kvsfile` option to use the persistence options listed above.
 
+### Crypto backend
+
+Open IoT SDK port supports two crypto backend implementations:
+
+-   [Mbed TLS](../guides/openiotsdk_platform_overview.md#mbed-tls) - it's the
+    default option
+-   [PSA crypto service](https://tf-m-user-guide.trustedfirmware.org/integration_guide/services/tfm_crypto_integration_guide.html)
+    from the
+    [TrustedFirmware-M (TF-M)](../guides/openiotsdk_platform_overview.md#trusted-firmware-m)
+    component
+
+The CMake variable `CONFIG_CHIP_CRYPTO` controls how cryptographic operations
+are implemented in Matter. It accepts two values:
+
+-   `mbedtls`: use Mbed TLS for crypto operations.
+-   `psa`: use
+    [PSA Cryptography API](https://armmbed.github.io/mbed-crypto/html/) for
+    crypto operations.
+
+This variable can be set in the main application `CMakeLists.txt`:
+
+```
+set(CONFIG_CHIP_CRYPTO <mbedtls | psa>)
+```
+
+The variable can also be defined with CMake CLI:
+
+```
+cmake -G <...> -DCONFIG_CHIP_CRYPTO=<mbedtls | psa> <...>
+```
+
+> 💡 **Notes**:
+>
+> The `TF-M PSA crypto` option requires enabling [TF-M](#trusted-firmware-m)
+> support.
+
 ### IoT Socket API
 
 By default, the [LwIP](../guides/openiotsdk_platform_overview.md#lwip) is used
