@@ -362,6 +362,33 @@ _Note_: The `file-path` must exist to use the `--data` option.
 [Open IoT SDK build script](../../scripts/examples/openiotsdk_example.sh)
 provides the `-K,--kvsfile` option to use the persistence options listed above.
 
+### IoT Socket API
+
+By default, the [LwIP](../guides/openiotsdk_platform_overview.md#lwip) is used
+as a system layer and communication endpoints implementation.
+
+There is an option to switch to
+[IoT Socket](../guides/openiotsdk_platform_overview.md#iot-socket) usage for
+these Matter components. Set the variable
+`CONFIG_CHIP_OPEN_IOT_SDK_USE_IOT_SOCKET` to `YES` to add the `IoT Socket API`
+support in your application. You can put it inside the main application
+`CMakeLists.txt` file:
+
+```
+set(CONFIG_CHIP_OPEN_IOT_SDK_USE_IOT_SOCKET YES)
+```
+
+or add as a Cmake command-line parameter:
+
+```
+cmake -G <...> -DCONFIG_CHIP_OPEN_IOT_SDK_USE_IOT_SOCKET=YES <...>
+```
+
+This option is set to use the `IoT Socket` version of a system layer and
+communication endpoints in the application. The
+[CMSIS-RTOS2 API](../guides/openiotsdk_platform_overview.md#rtos) is required in
+this type of system layer. It's supported by default in `Open IoT SDK` port.
+
 ## Building
 
 You can build by using a VSCode task or by calling the script directly from the

@@ -55,8 +55,20 @@ This is limited by current support for network interfaces in Open IoT SDK.
 This means that commissioning is simplified since no provisioning is required to
 provide the device with network credentials.
 
-LWIP is used in the implementation of endpoints as the IP stack. LWIP library is
-provided through the Open IoT SDK.
+### LwIP
+
+[LwIP](https://savannah.nongnu.org/projects/lwip/) is used in the implementation
+of endpoints as the IP stack. It's provided through the Open IoT SDK and fully
+integrated for Open IoT SDK port as an external source.
+
+### IoT Socket
+
+[IoT Socket](https://mdk-packs.github.io/IoT_Socket/html/index.html) is a
+BSD-like IP socket interface that provides the API layer between the application
+and the underlying communication stack. It's also provided through the Open IoT
+SDK. Currently the only supported stack is [LwIP](#lwip). The IoT Socket API is
+integrated with the Matter project as an optional system layer and communication
+endpoints implementation.
 
 ## Mbed TLS
 
