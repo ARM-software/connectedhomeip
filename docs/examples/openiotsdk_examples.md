@@ -5,21 +5,47 @@ These examples are built using
 emulated target through the
 [Arm FVP model for the Corstone-300 MPS3](https://developer.arm.com/downloads/-/arm-ecosystem-fvps).
 
+The list of currently supported Matter examples:
+
+```
+shell
+lock-app
+ota-requestor-app
+all-clusters-app
+```
+
 You can use these examples as a reference for creating your own applications.
 
 ## Environment setup
 
-Before building the examples, check out the Matter repository and sync
-submodules using the following command:
+The VSCode devcontainer has all the dependencies pre-installed. It is the
+recommended way to build, run and develop with the Open IoT SDK port of the
+Matter Project. Please read this
+[VSCode development guide](../VSCODE_DEVELOPMENT.md) for more information.
+
+Before building the examples, check out the Matter repository and sync Open IoT
+SDK submodules using the following command:
 
 ```
-$ git submodule update --init
+scripts/checkout_submodules.py --shallow --recursive --platform openiotsdk
 ```
 
-The VSCode devcontainer has all the dependencies pre-installed. Using the VSCode
-devcontainer is the recommended way to interact with the Open IoT SDK port of
-the Matter Project. Please read this
-[README.md](../../..//docs/VSCODE_DEVELOPMENT.md) for more information.
+Next, bootstrap the source tree to install Pigweed (CIPD and Python packages)
+components inside your environment (only once).
+
+To bootstrap:
+
+**using CLI**
+
+```
+$ bash scripts/bootstrap.sh
+```
+
+**using VSCode tasks**
+
+-   Open the Command Palette: <kbd>F1</kbd>
+-   Select `Tasks: Run Task`
+-   Select `Bootstrap`
 
 ### Networking setup
 
@@ -113,6 +139,16 @@ the setup easy. In the `scripts/setup/openiotsdk` directory you can find:
 
     Use `--help` to get more information about the script options.
 
+    Open IoT SDK network setup is also supported via `VScode tasks`:
+
+    -   Open the Command Palette: <kbd>F1</kbd>
+    -   Select `Tasks: Run Task`
+    -   Select `Setup Open IoT SDK network`
+    -   Enter the network namespace name
+    -   Choose command
+
+    The VSCode task invokes `network_setup.sh` with the selected parameters.
+
 -   **connect_if.sh** - script that connects specified network interfaces with
     the default route interface. It creates a bridge and links all interfaces to
     it. The bridge becomes the default interface.
@@ -144,12 +180,12 @@ ${MATTER_ROOT}/scripts/run_in_ns.sh ARMns <command to run>
 
 Use `--help` to get more information about the script options.
 
-**NOTE**
-
-For Docker environment users it's recommended to use the
-[default bridge network](https://docs.docker.com/network/bridge/#use-the-default-bridge-network)
-for a running container. This guarantees full isolation of the Open IoT SDK
-network from host settings.
+> 💡 **Notes**:
+>
+> For Docker environment users it's recommended to use the
+> [default bridge network](https://docs.docker.com/network/bridge/>#use-the-default-bridge-network)
+> for a running container. This guarantees full isolation of the Open IoT SDK
+> network from host settings.
 
 ### Debugging setup
 
@@ -289,7 +325,7 @@ There is an option to add
 [TF-M Protected Storage Service](https://tf-m-user-guide.trustedfirmware.org/integration_guide/services/tfm_ps_integration_guide.html)
 support for `key-value` storage component in the Matter examples. Set the
 variable `CONFIG_CHIP_OPEN_IOT_SDK_USE_PSA_PS` to `YES` to add
-`TF-M Protected Storage` support to you application. You can put it inside the
+`TF-M Protected Storage` support to your application. You can put it inside the
 main application `CMakeLists.txt` file:
 
 ```
@@ -306,15 +342,15 @@ This option causes `key-value` objects will be stored in a secure part of flash
 memory and the Protected Storage Service takes care of their encryption and
 authentication.
 
-**NOTE**
-
-The `TF-M Protected Storage` option requires enabling
-[TF-M](#trusted-firmware-m) support.
-
-The `-k/--kvsstore` option in
-[Open IoT SDK build script](../../scripts/examples/openiotsdk_example.sh)
-selects key-value storage implementation for the Matter's examples. It
-demonstrates how to use the `CONFIG_CHIP_OPEN_IOT_SDK_USE_PSA_PS` variable.
+> 💡 **Notes**:
+>
+> The `TF-M Protected Storage` option requires enabling
+> [TF-M](#trusted-firmware-m) support.
+>
+> The `-k/--kvsstore` option in
+> [Open IoT SDK build script](../../scripts/examples/openiotsdk_example.sh)
+> selects key-value storage implementation for the Matter's examples. It
+> demonstrates how to use the `CONFIG_CHIP_OPEN_IOT_SDK_USE_PSA_PS` variable.
 
 ### Device Firmware Update
 
@@ -343,9 +379,9 @@ set(CONFIG_CHIP_OPEN_IOT_SDK_SOFTWARE_VERSION_STRING "0.0.1")
 The default value for `CONFIG_CHIP_OPEN_IOT_SDK_SOFTWARE_VERSION_STRING` is set
 to `TFM_NS_APP_VERSION`.
 
-**NOTE**
-
-The `DFU` option requires enabling [TF-M](#trusted-firmware-m) support.
+> 💡 **Notes**:
+>
+> The `DFU` option requires enabling [TF-M](#trusted-firmware-m) support.
 
 ### Storing persistent memory block in external files
 
@@ -378,7 +414,9 @@ For `TF-M` protected storage use:
 --data mps3_board.qspi_sram=<file-path>@0:0x660000
 ```
 
-_Note_: The `file-path` must exist to use the `--data` option.
+> 💡 **Notes**:
+>
+> The `file-path` must exist to use the `--data` option.
 
 [Open IoT SDK build script](../../scripts/examples/openiotsdk_example.sh)
 provides the `-K,--kvsfile` option to use the persistence options listed above.
@@ -448,20 +486,19 @@ this type of system layer. It's supported by default in `Open IoT SDK` port.
 
 ## Building
 
-You can build by using a VSCode task or by calling the script directly from the
-command line.
+You can build examples using the dedicated VSCode task or by calling directly
+the build script from the command line.
 
 ### Building using the VSCode task
 
-```
-Command Palette (F1)
-=> Run Task...
-=> Build Open IoT SDK example
-=> Use debug mode (True/False)
-=> Choose crypto algorithm (mbedtls/psa)
-=> Choose socket API (iotsocket/lwip)
-=> <example name>
-```
+-   Open the Command Palette: <kbd>F1</kbd>
+-   Select `Tasks: Run Task`
+-   Select `Build Open IoT SDK example`
+-   Decide on debug mode support
+-   Decide on LwIP debug logs support
+-   Choose crypto algorithm
+-   Choose socket API
+-   Choose example name
 
 This will call the script with the selected parameters.
 
@@ -477,23 +514,34 @@ Use `--help` to get more information about the script options.
 
 ## Running
 
-The application runs in the background and opens a telnet session. The script
-will open telnet for you and connect to the port used by the `FVP`. When the
-telnet process is terminated it will also terminate the `FVP` instance.
+The application runs in the background and opens a telnet session. The telnet
+client connects to the port used by the `FVP`. When the telnet process is
+terminated it also terminates the `FVP` instance.
 
-You can run the application script from a VSCode task or call the script
-directly.
+To exit the telnet session, type <kbd>CTRL + ]</kbd>. This changes the command
+prompt to show as:
+
+```
+telnet>
+```
+
+Back in the terminal, type in the word 'close' to terminate the session.
+
+```
+telnet> close
+```
+
+You can run an example by using a VSCode task or by calling the run script
+directly from the command line.
 
 ### Running using the VSCode task
 
-```
-Command Palette (F1)
-=> Run Task...
-=> Run Open IoT SDK example
-=> (network namespace)
-=> (network interface)
-=> <example name>
-```
+-   Open the Command Palette: <kbd>F1</kbd>
+-   Select `Tasks: Run Task`
+-   Select `Run Open IoT SDK example`
+-   Enter network namespace
+-   Enter network interface
+-   Choose example name
 
 This will call the script with the selected example name.
 
@@ -511,12 +559,6 @@ Run example in specific network namespace with TAP device mode:
 ${MATTER_ROOT}/scripts/run_in_ns.sh ARMns ${MATTER_ROOT}/scripts/examples/openiotsdk_example.sh -C run -n ARMtap <example name>
 ```
 
-### Commissioning
-
-Once booted the application can be commissioned, please refer to
-[docs/guides/openiotsdk_commissioning.md](../guides/openiotsdk_commissioning.md)
-for further instructions.
-
 ## Testing
 
 Run the Pytest integration test for the specific application.
@@ -525,19 +567,17 @@ The test result can be found in the
 `src/test_driver/openiotsdk/integration-tests/<example name>/test_report.json`
 file.
 
-You can run the tests using a VSCode task or call the script directly from the
-command line.
+You can test an example by using a VSCode task or by calling the test script
+directly from the command line.
 
 ### Testing using the VSCode task
 
-```
-Command Palette (F1)
-=> Run Task...
-=> Test Open IoT SDK example
-=> (network namespace)
-=> (network interface)
-=> <example name>
-```
+-   Open the Command Palette: <kbd>F1</kbd>
+-   Select `Tasks: Run Task`
+-   Select `Test Open IoT SDK example`
+-   Enter network namespace
+-   Enter network interface
+-   Choose example name
 
 This will call the scripts with the selected example name.
 
@@ -559,194 +599,286 @@ ${MATTER_ROOT}/scripts/run_in_ns.sh ARMns ${MATTER_ROOT}/scripts/examples/openio
 
 Before debugging ensure the following:
 
-1. You have set up the debug environment correctly [Debugging setup](#debugging
-   -setup).
+1. The debug environment is correctly setup:
+   [debugging setup](#debugging-setup).
 
-2. The example you wish to debug has been compiled with debug symbols enabled:
+2. The example is compiled with debug symbols enabled:
 
     For CLI:
 
-```
-   `${MATTER_ROOT}/scripts/examples/openiotsdk_example.sh -d true <example name>`
-```
+    ```
+    ${MATTER_ROOT}/scripts/examples/openiotsdk_example.sh -d true <example name>
+    ```
 
-For the VSCode task:
+    For the VSCode task:
 
-```
-    `=> Use debug mode (True)`
-```
+    ```
+    => Use debug mode (true)
+    ```
 
-3. You have set up the test network (if required) correctly
-   [Networking setup](#networking-setup).
+3. The test network is correctly setup (if required): see
+   [networking setup](#networking-setup).
 
 ### General instructions
 
-```
-1. Click 'Run and Debug' from the primary side menu or press (Ctrl+Shift+D)
-2. Select 'Debug Open IoT SDK example application' from the drop down list
-3. Click 'Start Debugging'(green triangle) or press (F5)
-4. Enter:
-=> <example name>
-=> (GDB target address)
-=> (network namespace)
-=> (network interface)
-=> <example name>
-```
+-   Click `Run and Debug` from the primary side menu or press
+    <kbd>Ctrl+Shift+D</kbd>
+-   Select `Debug Open IoT SDK example application` from the drop down list
+-   Click `Start Debugging`(green triangle) or press <kbd>F5</kbd>
+-   Choose example name
+-   Enter GDB target address
+-   Enter network namespace
+-   Enter network interface
+-   Choose example name
+
+As soon as a debugging session starts, the `DEBUG CONSOLE` panel is displayed
+and shows the debugging output. Use debug controls to debug the current
+application.
 
 For debugging remote targets (i.e. run in other network namespaces) you need to
 pass the hostname/IP address of the external GDB target that you want to connect
-to (_GDB target address_). In the case of using the
-[Open IoT SDK network environment](#networking-setup) the GDB server runs inside
-a namespace and has the same IP address as the bridge interface.
+to (_GDB target address_).
+
+In the case of using the [Open IoT SDK network environment](#networking-setup)
+the GDB server runs inside a namespace and has the same IP address as the bridge
+interface.
 
 ```
 ${MATTER_ROOT}/scripts/run_in_ns.sh <namespace_name> ifconfig <bridge_name>
 ```
 
-**NOTES**
+The network namespace name and TAP interface name are also required then.
 
-As you can see above, you will need to select the name of the example twice.
-This is because the debug task needs to launch the run task and currently VS
-code has no way of passing parameters between tasks.
+The application with GDB Remote Connection Plugin runs in the background and
+opens a telnet session in terminal. The telnet client connects to the port used
+by the `FVP`. When the telnet process is terminated it will also terminate the
+`FVP` instance.
 
-There are issues with debugging examples if you happen to be using
-"--network=host" in your docker container configuration and you are trying to
-debug while connected to a VPN. The easiest solution is just to come off the VPN
-while debugging.
+To exit the telnet session, type <kbd>CTRL + ]</kbd>. This changes the command
+prompt to show as:
+
+```
+telnet>
+```
+
+Back in the terminal, type in the word 'close' to terminate the session.
+
+```
+telnet> close
+```
+
+> 💡 **Notes**:
+>
+> As you can see above, you will need to select the name of the example twice.
+> This is because the debug task needs to launch the run task and currently VS
+> code has no way of passing parameters between tasks.
+>
+> There are issues with debugging examples when the Docker container use the
+> [network host](https://docs.docker.com/network/host/) and VPN connection is
+> established. Changing routing negatively affects debugging process. It is
+> recommended not to use VPN connections while debugging.
 
 ## Specific examples
 
-### Build and run the lock-app example using the CLI
+### Build lock-app example with PSA crypto backend and IoT Socket support and run it in the network namespace
+
+**Using CLI**
 
 ```
-${MATTER_ROOT}/scripts/examples/openiotsdk_example.sh -s -b psa -S lwip lock-app
-```
+${MATTER_ROOT}/scripts/examples/openiotsdk_example.sh -b psa -S iotsocket lock-app
 
-```
 export TEST_NETWORK_NAME=OIStest
-```
 
-```
 sudo ${MATTER_ROOT}/scripts/setup/openiotsdk/network_setup.sh -n $TEST_NETWORK_NAME restart
-```
 
-```
 ${MATTER_ROOT}/scripts/examples/scripts/run_in_ns.sh ${TEST_NETWORK_NAME}ns
 ${MATTER_ROOT}/scripts/examples/openiotsdk_example.sh -C run -n ${TEST_NETWORK_NAME}tap
 lock-app
 ```
 
-### Build and run the lock-app example using the VSCode task
+**Using the VSCode task**
 
-```
-Command Palette (F1), type: tasks <return>
-=> Build Open IoT SDK example
-=> Use debug mode (False)
-=> Crypto algorithm to use (psa)
-=> Socket API to use (iotsocket)
-=> Example application to use (lock-app)
-```
+Build example:
 
-In CLI:
+-   Open the Command Palette: <kbd>F1</kbd>
+-   Select `Tasks: Run Task`
+-   Select `Build Open IoT SDK example`
+-   Deny debug mode support `false`
+-   Deny LwIP debug logs support `false`
+-   Choose crypto algorithm `psa`
+-   Choose socket API `iotsocket`
+-   Choose example name `lock-app`
 
-```
-export TEST_NETWORK_NAME=OIStest
-```
+Setup network environment:
 
-```
-sudo ${MATTER_ROOT}/scripts/setup/openiotsdk/network_setup.sh -n $TEST_NETWORK_NAME restart
-```
+-   Open the Command Palette: <kbd>F1</kbd>
+-   Select `Tasks: Run Task`
+-   Select `Setup Open IoT SDK network`
+-   Enter the network namespace name `OIStest`
+-   Choose command `restart`
 
-```
-Command Palette (F1), type: tasks <return>
-=> Run Open IoT SDK example
-=> Network namespace:  OIStestns
-=> Network interface name: OIStesttap
-=> Example application to use (lock-app)
-```
+Run example:
+
+-   Open the Command Palette: <kbd>F1</kbd>
+-   Select `Tasks: Run Task`
+-   Select `Run Open IoT SDK example`
+-   Enter network namespace `OIStestns`
+-   Enter network interface `OIStesttap`
+-   Choose example name `lock-app`
 
 The example output should be seen in the terminal window.
 
-### Build and test the lock-app example using the VSCode task
+### Build lock-app example with mbedtls crypto backend and lwip support and execute its test in the network namespace
+
+**Using CLI**
 
 ```
-Command Palette (F1), type: tasks <return>
-=> Build Open IoT SDK example
-=> Use debug mode (True)
-=> Crypto algorithm to use (psa)
-=> Socket API to use (iotsocket)
-=> Example application to use (lock-app)
-```
+${MATTER_ROOT}/scripts/examples/openiotsdk_example.sh -b mbedtls -S lwip lock-app
 
-In CLI:
-
-```
 export TEST_NETWORK_NAME=OIStest
-```
 
-```
 sudo ${MATTER_ROOT}/scripts/setup/openiotsdk/network_setup.sh -n $TEST_NETWORK_NAME restart
+
+${MATTER_ROOT}/scripts/examples/scripts/run_in_ns.sh ${TEST_NETWORK_NAME}ns
+${MATTER_ROOT}/scripts/examples/openiotsdk_example.sh -C test -n ${TEST_NETWORK_NAME}tap
+lock-app
 ```
 
+**Using the VSCode task**
+
+Build example:
+
+-   Open the Command Palette: <kbd>F1</kbd>
+-   Select `Tasks: Run Task`
+-   Select `Build Open IoT SDK example`
+-   Deny debug mode support `false`
+-   Deny LwIP debug logs support `false`
+-   Choose crypto algorithm `mbedtls`
+-   Choose socket API `lwip`
+-   Choose example name `lock-app`
+
+Setup network environment:
+
+-   Open the Command Palette: <kbd>F1</kbd>
+-   Select `Tasks: Run Task`
+-   Select `Setup Open IoT SDK network`
+-   Enter the network namespace name `OIStest`
+-   Choose command `restart`
+
+Test example:
+
+-   Open the Command Palette: <kbd>F1</kbd>
+-   Select `Tasks: Run Task`
+-   Select `Test Open IoT SDK example`
+-   Enter network namespace `OIStestns`
+-   Enter network interface `OIStesttap`
+-   Choose example name `lock-app`
+
+### Build lock-app example with mbedtls crypto backend and lwip support in debug mode and debug it in the network namespace using the VSCode task
+
+Build example:
+
+-   Open the Command Palette: <kbd>F1</kbd>
+-   Select `Tasks: Run Task`
+-   Select `Build Open IoT SDK example`
+-   Confirm debug mode support `true`
+-   Deny LwIP debug logs support `false`
+-   Choose crypto algorithm `mbedtls`
+-   Choose socket API `lwip`
+-   Choose example name `lock-app`
+
+Setup network environment:
+
+-   Open the Command Palette: <kbd>F1</kbd>
+-   Select `Tasks: Run Task`
+-   Select `Setup Open IoT SDK network`
+-   Enter the network namespace name `OIStest`
+-   Choose command `restart`
+
+Debug example:
+
+-   Click `Run and Debug` from the primary side menu or press
+    <kbd>Ctrl+Shift+D</kbd>
+-   Select `Debug Open IoT SDK example application` from the drop down list
+-   Click `Start Debugging`(green triangle) or press <kbd>F5</kbd>
+-   Choose example name `lock-app`
+-   Enter GDB target address `10.200.1.2`
+-   Enter network namespace `OIStestns`
+-   Enter network interface `OIStesttap`
+-   Choose example name `lock-app`
+
+Use debug controls to debug the application.
+
+## Add new example
+
+This chapter describes how to add a new Matter example based on Open IoT SDK
+platform.
+
+In the description below we use the placeholder `example_name` as the name of
+the example to create. Replace it with the name of your example.
+
+> 💡 **Notes**:
+>
+> Remember to update the list of currently supported Matter examples at the top
+> of this document.
+
+### Files structure
+
+A new example should be put into `examples/<example_name>/openiotsdk` directory.
+It should contain:
+
+-   application source files and headers in the `main` sub-directory
+-   application `CMakeLists.txt` file
+-   `.gitignore` file with with all sources to skip
+-   `README.md` file with example description
+-   additional directories with required configuration for used components. Use
+    `component_name-config` pattern, e.g `freertos-config`
+
+### Target name
+
+A new application target name should be created with
+`chip-openiotsdk-<example_name>-example(_ns)` pattern. The `_ns` suffix is
+required for [TF-M applications](#trusted-firmware-m).
+
+Example:
+
 ```
-Command Palette (F1), type: tasks <return>
-=> Test Open IoT SDK example
-=> Network namespace:  OIStestns
-=> Network interface name: OIStesttap
-=> Example application to use (lock-app)
+set(APP_TARGET chip-openiotsdk-new-example-example_ns)
 ```
 
-### Build and test the lock-app example using the CLI
+### Example tools
 
-In CLI:
+Add a new example name to the list in the
+`examples/platform/openiotsdk/supported_examples.txt` file. After that the new
+example is available in all necessary tools such as helper script
+`scripts/examples/openiotsdk_example.sh` or VSCode tasks.
 
-```
-${MATTER_ROOT}/scripts/examples/openiotsdk_example.sh -s -b psa -S lwip lock-app
-```
-
-```
-export TEST_NETWORK_NAME=OIStest
-```
+Example:
 
 ```
-sudo ${MATTER_ROOT}/scripts/setup/openiotsdk/network_setup.sh -n $TEST_NETWORK_NAME restart
+...
+example_name
+...
 ```
 
-```
-${MATTER_ROOT}/scripts/examples/scripts/run_in_ns.sh ${TEST_NETWORK_NAME}ns ${MATTER_ROOT}/scripts/examples/openiotsdk_example.sh -C test -n ${TEST_NETWORK_NAME}tap lock-app
-```
+### CI
 
-### Build and debug the lock-app example using the VSCode task
+To add a new example to the Matter CI edit the
+`.github/workflows/examples-openiotsdk.yaml` file and add the next step for
+`openiotsdk` job step that build this example.
 
-```
-Command Palette (F1), type: tasks <return>
-=> Build Open IoT SDK example
-=> Use debug mode (True)
-=> Crypto algorithm to use (psa)
-=> Socket API to use (iotsocket)
-=> Example application to use (lock-app)
-```
-
-In CLI:
+Example:
 
 ```
-export TEST_NETWORK_NAME=OIStest
-```
-
-```
-sudo ${MATTER_ROOT}/scripts/setup/openiotsdk/network_setup.sh -n $TEST_NETWORK_NAME restart
-```
-
-```
-Click 'Run and Debug' from the primary side menu or press (Ctrl+Shift+D)
-Select 'Debug Open IoT SDK example application' from the drop down list
-Click 'Start Debugging'(green triangle) or press (F5)
-Enter:
-=> lock-app
-=> GDB target address: 10.200.1.2
-=> Network namespace: OIStestns
-=> Network interface name: OIStesttap
-=> Example application to use (lock-app)
-
-Use debug controls
+...
+- name: Build new-example example
+    id: build_new_example
+    timeout-minutes: 10
+    run: |
+        scripts/examples/openiotsdk_example.sh -b ${{ matrix.cryptoBackend }} -S ${{ matrix.socketAPI }} new-example
+        .environment/pigweed-venv/bin/python3 scripts/tools/memory/gh_sizes.py \
+        openiotsdk release new-example \
+        examples/new-example/openiotsdk/build/chip-openiotsdk-new-example-example.elf \
+        /tmp/bloat_reports/
+...
 ```

@@ -107,17 +107,17 @@ List of `OIS` examples that currently support the `DFU` over Matter:
     ...
     ```
 
-    **NOTE**
-
-    Set the custom Key Value Store path for `OTA provider`.
-
-    The `OTA provider` discriminator must be different from the value used by
-    the example application. `OIS` examples use the default discriminator value
-    `3840`.
-
-    The `OTA provider` UDP port must be different from the value used by the
-    example application. `OIS` examples use the default discriminator value
-    `5540`.
+    > 💡 **Notes**:
+    >
+    > Set the custom Key Value Store path for `OTA provider`.
+    >
+    > The `OTA provider` discriminator must be different from the value used by
+    > the example application. `OIS` examples use the default discriminator
+    > value `3840`.
+    >
+    > The `OTA provider` UDP port must be different from the value used by the
+    > example application. `OIS` examples use the default discriminator value
+    > `5540`.
 
 8.  In `terminal 2`: run the `OIS` example application in the network
     environment:
