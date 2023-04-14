@@ -51,7 +51,7 @@ APP_VERSION_STR="0.0.1"
 declare -A tdb_storage_param=([instance]=sram [memspace]=0 [address]=0x0 [size]=0x100000)
 declare -A ps_storage_param=([instance]=qspi_sram [memspace]=0 [address]=0x660000 [size]=0x12000)
 
-readarray -t TEST_NAMES <"$CHIP_ROOT"/src/test_driver/openiotsdk/unit-tests/testnames.txt
+readarray -t TEST_NAMES <"$CHIP_ROOT"/src/test_driver/openiotsdk/unit-tests/test_components.txt
 
 declare -a SUPPORTED_APP_NAMES
 SUPPORTED_APP_NAMES+=("shell")
@@ -94,8 +94,13 @@ EOF
 You run or test individual test suites of unit tests by using their names [test_name] with the specified command:
 
 EOF
-    cat "$CHIP_ROOT"/src/test_driver/openiotsdk/unit-tests/testnames.txt
+
+    for test in "${TEST_NAMES[@]}"; do
+        echo "    $test"
+    done
+
     cat <<EOF
+
 Use "test" command without a specific test name, runs all supported unit tests.
 
 EOF
