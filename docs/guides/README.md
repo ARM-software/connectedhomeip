@@ -22,6 +22,11 @@
 -   [Silicon Labs - Building](./silabs_efr32_building.md)
 -   [Silicon Labs - Software Update](./silabs_efr32_software_update.md)
 -   [TI - Platform Overview](./ti_platform_overview.md)
+-   [Open IoT SDK - Platform Overview](./openiotsdk_platform_overview.md)
+-   [Open IoT SDK - Examples](../examples/openiotsdk_examples.md)
+-   [Open IoT SDK - Unit Tests](./openiotsdk_unit_tests.md)
+-   [Open IoT SDK - Commissioning](./openiotsdk_commissioning.md)
+-   [Open IoT SDK - Software Update](../examples/openiotsdk_examples_software_update.md)
 
 ## Development Guides
 
