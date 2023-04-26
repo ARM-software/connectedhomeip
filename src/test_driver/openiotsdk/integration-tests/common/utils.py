@@ -139,7 +139,10 @@ def send_zcl_command(devCtrl, cluster: str, command: str, nodeId: int, endpoint:
 
         clusterObj = getattr(GeneratedObjects, cluster)
         commandObj = getattr(clusterObj.Commands, command)
-        req = commandObj(**args)
+        if args is not None:
+            req = commandObj(**args)
+        else:
+            req = commandObj()
 
         res = asyncio.run(devCtrl.SendCommand(int(nodeId), int(endpoint), req, timedRequestTimeoutMs=requestTimeoutMs))
 
@@ -232,3 +235,21 @@ def read_zcl_attribute(devCtrl, cluster: str, attribute: str, nodeId: int, endpo
         err = -1
 
     return (err, res)
+
+
+def get_shell_commands_from_help_response(response):
+    """
+    Parse shell help command response to get the list of supported commands
+    :param response: help command response
+    :return: list of supported commands
+    """
+    return [line.split()[0].strip() for line in response]
+
+
+def get_log_messages_from_response(response):
+    """
+    Parse shell help command response to get the list of supported commands
+    :param response: device response
+    :return: raw log messages
+    """
+    return [' '.join(line.split()[2:]) for line in response]
