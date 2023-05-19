@@ -26,6 +26,7 @@
 
 #include "cmsis_os2.h"
 #include "mbedtls/platform.h"
+#include <atomic>
 #include <platform/CHIPDeviceConfig.h>
 #include <platform/PlatformManager.h>
 #include <platform/internal/GenericPlatformManagerImpl.h>
@@ -53,10 +54,10 @@ public:
     /* none so far */
 
 private:
-    static constexpr uint32_t kTaskRunningEventFlag = 1 << 0;
-    static constexpr uint32_t kTaskStopEventFlag    = 1 << 1;
-    static constexpr uint32_t kPostEventFlag        = 1 << 2;
-    static constexpr uint32_t kTimerEventFlag       = 1 << 3;
+    static constexpr uint32_t kTaskHasEventLoopRunFlag  = 1 << 0;
+    static constexpr uint32_t kTaskHasEventLoopStopFlag = 1 << 1;
+    static constexpr uint32_t kPostEventFlag            = 1 << 2;
+    static constexpr uint32_t kTimerEventFlag           = 1 << 3;
 
     // ===== Methods that implement the PlatformManager abstract interface.
 
@@ -83,8 +84,6 @@ private:
     static void EventLoopTask(void * arg);
     static void TimerCallback(void * arg);
 
-    void RunEventLoopInternal(void);
-
     // ===== Members for internal use by the following friends.
 
     friend PlatformManager & PlatformMgr(void);
@@ -103,6 +102,8 @@ private:
     osMessageQueueId_t mQueue       = nullptr;
     osTimerId_t mTimer              = nullptr;
     bool mInitialized               = false;
+    std::atomic<bool> mRunEventLoop;
+    osThreadId_t mEventTask = nullptr;
 };
 
 /**
