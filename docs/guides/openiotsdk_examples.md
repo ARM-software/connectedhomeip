@@ -12,6 +12,7 @@ shell
 lock-app
 ota-requestor-app
 all-clusters-app
+tv-app
 ```
 
 You can use these examples as a reference for creating your own applications.
