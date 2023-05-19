@@ -134,7 +134,7 @@ jobs:
                   .environment/pigweed-venv/bin/python3 scripts/tools/memory/gh_sizes.py \
                     openiotsdk release lock-app \
                     examples/ota-requestor-app/openiotsdk/build/chip-openiotsdk-ota-requestor-app-example.elf \
-            
+
             - name: Build all-clusters-app example
               id: build_all_clusters_app
               timeout-minutes: 10
@@ -143,6 +143,16 @@ jobs:
                   .environment/pigweed-venv/bin/python3 scripts/tools/memory/gh_sizes.py \
                     openiotsdk release all-clusters-app \
                     examples/all-clusters-app/openiotsdk/build/chip-openiotsdk-all-clusters-app-example.elf \
+                    /tmp/bloat_reports/
+
+            - name: Build tv-app example
+              id: build_tv_app
+              timeout-minutes: 10
+              run: |
+                  scripts/examples/openiotsdk_example.sh -b ${{ matrix.cryptoBackend }} tv-app
+                  .environment/pigweed-venv/bin/python3 scripts/tools/memory/gh_sizes.py \
+                    openiotsdk release tv-app \
+                    examples/tv-app/openiotsdk/build/chip-openiotsdk-tv-app-example.elf \
                     /tmp/bloat_reports/
 
             - name: Build unit tests
@@ -182,13 +192,21 @@ jobs:
                   cp examples/ota-requestor-app/openiotsdk/build/chip-openiotsdk-ota-requestor-app-example.ota out/binaries/
                   scripts/setup/openiotsdk/network_setup.sh -n $TEST_NETWORK_NAME up
                   scripts/run_in_ns.sh ${TEST_NETWORK_NAME}ns scripts/examples/openiotsdk_example.sh -p out/binaries -v 2 -V 0.0.2 -C test -n ${TEST_NETWORK_NAME}tap ota-requestor-app
-            
+
             - name: "Test: all-clusters-app example"
               if: steps.build_all_clusters_app.outcome == 'success'
               timeout-minutes: 5
               run: |
                   scripts/setup/openiotsdk/network_setup.sh -n $TEST_NETWORK_NAME up
                   scripts/run_in_ns.sh ${TEST_NETWORK_NAME}ns scripts/examples/openiotsdk_example.sh -C test -n ${TEST_NETWORK_NAME}tap all-clusters-app
+                  scripts/setup/openiotsdk/network_setup.sh -n $TEST_NETWORK_NAME down
+
+            - name: "Test: tv-app example"
+              if: steps.build_tv_app.outcome == 'success'
+              timeout-minutes: 10
+              run: |
+                  scripts/setup/openiotsdk/network_setup.sh -n $TEST_NETWORK_NAME up
+                  scripts/run_in_ns.sh ${TEST_NETWORK_NAME}ns scripts/examples/openiotsdk_example.sh -C test -n ${TEST_NETWORK_NAME}tap tv-app
                   scripts/setup/openiotsdk/network_setup.sh -n $TEST_NETWORK_NAME down
 
             - name: "Test: unit-tests"
