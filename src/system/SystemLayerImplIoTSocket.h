@@ -46,17 +46,15 @@ public:
     void CancelTimer(TimerCompleteCallback onComplete, void * appState) override;
     CHIP_ERROR ScheduleWork(TimerCompleteCallback onComplete, void * appState) override;
 
-public:
-    // Platform implementation.
-    CHIP_ERROR HandlePlatformTimer(void);
-
 private:
     friend class PlatformEventing;
 
-    CHIP_ERROR StartPlatformTimer(System::Clock::Timeout aDelay);
-
     TimerPool<TimerList::Node> mTimerPool;
     TimerList mTimerList;
+    // List of expired timers being processed right now.  Stored in a member so
+    // we can cancel them.
+    TimerList mExpiredTimers;
+    uint32_t mNextTimeoutMs;
     bool mHandlingTimerComplete; // true while handling any timer completion
     ObjectLifeCycle mLayerState;
 
@@ -66,6 +64,7 @@ public:
     CHIP_ERROR DisableSelectCallback(chip::Inet::EndPointStateIoTSocket * endpoint, bool read, bool write) override;
 
     void Signal() override;
+    void PrepareEvents() override;
     CHIP_ERROR WaitForEvents() override;
     void HandleEvents() override;
 

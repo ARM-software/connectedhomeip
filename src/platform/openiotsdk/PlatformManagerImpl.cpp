@@ -173,11 +173,15 @@ void PlatformManagerImpl::HandlePostEvent()
 
 void PlatformManagerImpl::HandleTimerEvent(void)
 {
+#if CHIP_SYSTEM_CONFIG_USE_IOT_SOCKET
+    SystemLayerImpl().Signal();
+#else
     CHIP_ERROR err = SystemLayerImpl().HandlePlatformTimer();
     if (err != CHIP_NO_ERROR)
     {
         ChipLogError(DeviceLayer, "HandlePlatformTimer %ld", err.AsInteger());
     }
+#endif
 }
 
 void PlatformManagerImpl::_RunEventLoop()
@@ -217,19 +221,20 @@ void PlatformManagerImpl::_RunEventLoop()
 
     while (mRunEventLoop.load())
     {
-        UnlockChipStack();
 #if CHIP_SYSTEM_CONFIG_USE_IOT_SOCKET
+        SystemLayerImpl().PrepareEvents();
+
+        UnlockChipStack();
         SystemLayerImpl().WaitForEvents();
-        flags = osEventFlagsGet(mPlatformFlags);
-#else
-        flags = osEventFlagsWait(mPlatformFlags, kPostEventFlag | kTimerEventFlag, osFlagsWaitAny, osWaitForever);
-#endif // CHIP_SYSTEM_CONFIG_USE_IOT_SOCKET
         LockChipStack();
 
-#if CHIP_SYSTEM_CONFIG_USE_IOT_SOCKET
         SystemLayerImpl().HandleEvents();
-#endif // CHIP_SYSTEM_CONFIG_USE_IOT_SOCKET
-
+        flags = osEventFlagsGet(mPlatformFlags);
+#else
+        UnlockChipStack();
+        flags = osEventFlagsWait(mPlatformFlags, kPostEventFlag | kTimerEventFlag, osFlagsWaitAny, osWaitForever);
+        LockChipStack();
+#endif
         // In case of error we still need to know the value of flags we're not waiting for
         if (flags & osFlagsError)
         {

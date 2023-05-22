@@ -456,7 +456,7 @@ void ServiceEvents(uint32_t aSleepTimeMilliseconds)
     gSystemLayer.StartTimer(
         System::Clock::Milliseconds32(aSleepTimeMilliseconds), [](System::Layer *, void *) -> void {}, nullptr);
 
-#if CHIP_SYSTEM_CONFIG_USE_SOCKETS
+#if CHIP_SYSTEM_CONFIG_USE_SOCKETS || CHIP_SYSTEM_CONFIG_USE_IOT_SOCKET
     gSystemLayer.PrepareEvents();
     gSystemLayer.WaitForEvents();
     gSystemLayer.HandleEvents();
@@ -493,15 +493,6 @@ void ServiceEvents(uint32_t aSleepTimeMilliseconds)
     TapInterface_Select(&(sTapIFs[0]), &(sNetIFs[0]), aSleepTime, gNetworkOptions.TapDeviceName.size());
 #endif // CHIP_TARGET_STYLE_UNIX
 #endif // CHIP_SYSTEM_CONFIG_USE_LWIP
-
-#if CHIP_SYSTEM_CONFIG_USE_IOT_SOCKET
-    if (gSystemLayer.IsInitialized())
-    {
-        gSystemLayer.HandlePlatformTimer();
-        gSystemLayer.WaitForEvents();
-        gSystemLayer.HandleEvents();
-    }
-#endif // CHIP_SYSTEM_CONFIG_USE_IOT_SOCKET
 }
 
 #if CHIP_SYSTEM_CONFIG_USE_LWIP && !(CHIP_SYSTEM_CONFIG_LWIP_SKIP_INIT)

@@ -24,10 +24,14 @@
 #include <inet/EndPointStateIoTSocket.h>
 #include <iot_socket.h>
 #include <lib/support/CodeUtils.h>
+#include <platform/LockTracker.h>
 #include <system/PlatformEventSupport.h>
 #include <system/SystemFaultInjection.h>
 #include <system/SystemLayer.h>
+
 #include <system/SystemLayerImplIoTSocket.h>
+
+#include <OpenIoTSDKArchUtils.h>
 
 #if CHIP_SYSTEM_CONFIG_USE_LWIP
 #include <lwip/inet.h>
@@ -38,6 +42,8 @@ using namespace ::chip::Inet;
 
 namespace chip {
 namespace System {
+
+constexpr Clock::Seconds64 kDefaultMinSleepPeriod = Clock::Seconds64(60 * 60 * 24 * 30); // Month [sec]
 
 enum signal_flags_t
 {
@@ -78,6 +84,8 @@ CHIP_ERROR LayerImplOpenIoTSDK::Init()
 
 void LayerImplOpenIoTSDK::Shutdown()
 {
+    VerifyOrReturn(mLayerState.SetShuttingDown());
+
     if (mSignalSocket != EndPointStateIoTSocket::kInvalidSocketFd)
     {
         iotSocketClose(mSignalSocket);
@@ -88,11 +96,16 @@ void LayerImplOpenIoTSDK::Shutdown()
         osEventFlagsDelete(mSignalFlags);
         mSignalFlags = nullptr;
     }
-    mLayerState.ResetFromInitialized();
+    mTimerList.Clear();
+    mTimerPool.ReleaseAll();
+
+    mLayerState.ResetFromShuttingDown(); // Return to uninitialized state to permit re-initialization.
 }
 
 CHIP_ERROR LayerImplOpenIoTSDK::StartTimer(Clock::Timeout delay, TimerCompleteCallback onComplete, void * appState)
 {
+    assertChipStackLockedByCurrentThread();
+
     VerifyOrReturnError(mLayerState.IsInitialized(), CHIP_ERROR_INCORRECT_STATE);
 
     CHIP_SYSTEM_FAULT_INJECT(FaultInjection::kFault_TimeoutImmediate, delay = Clock::kZero);
@@ -104,30 +117,37 @@ CHIP_ERROR LayerImplOpenIoTSDK::StartTimer(Clock::Timeout delay, TimerCompleteCa
 
     if (mTimerList.Add(timer) == timer)
     {
-        // this is the new earliest timer and so the timer needs (re-)starting provided that
-        // the system is not currently processing expired timers, in which case it is left to
-        // HandleExpiredTimers() to re-start the timer.
-        if (!mHandlingTimerComplete)
-        {
-            StartPlatformTimer(delay);
-        }
+        // The new timer is the earliest, so the time until the next event has probably changed.
+        Signal();
     }
     return CHIP_NO_ERROR;
 }
 
 void LayerImplOpenIoTSDK::CancelTimer(TimerCompleteCallback onComplete, void * appState)
 {
+    assertChipStackLockedByCurrentThread();
+
     VerifyOrReturn(mLayerState.IsInitialized());
 
     TimerList::Node * timer = mTimerList.Remove(onComplete, appState);
-    if (timer != nullptr)
+    if (timer == nullptr)
     {
-        mTimerPool.Release(timer);
+        // The timer was not in our "will fire in the future" list, but it might
+        // be in the "we're about to fire these" chunk we already grabbed from
+        // that list.  Check for it there too, and if found there we still want
+        // to cancel it.
+        timer = mExpiredTimers.Remove(onComplete, appState);
     }
+    VerifyOrReturn(timer != nullptr);
+
+    mTimerPool.Release(timer);
+    Signal();
 }
 
 CHIP_ERROR LayerImplOpenIoTSDK::ScheduleWork(TimerCompleteCallback onComplete, void * appState)
 {
+    assertChipStackLockedByCurrentThread();
+
     VerifyOrReturnError(mLayerState.IsInitialized(), CHIP_ERROR_INCORRECT_STATE);
 
     TimerList::Node * timer = mTimerPool.Create(*this, SystemClock().GetMonotonicTimestamp(), onComplete, appState);
@@ -138,73 +158,6 @@ CHIP_ERROR LayerImplOpenIoTSDK::ScheduleWork(TimerCompleteCallback onComplete, v
         // The new timer is the earliest, so the time until the next event has probably changed.
         Signal();
     }
-    return CHIP_NO_ERROR;
-}
-
-/**
- * Start the platform timer with specified millsecond duration.
- */
-CHIP_ERROR LayerImplOpenIoTSDK::StartPlatformTimer(System::Clock::Timeout aDelay)
-{
-    VerifyOrReturnError(IsInitialized(), CHIP_ERROR_INCORRECT_STATE);
-    CHIP_ERROR status = PlatformEventing::StartTimer(*this, aDelay);
-    return status;
-}
-
-/**
- * Handle the platform timer expiration event. Completes any timers that have expired.
- *
- * A static API that gets called when the platform timer expires. Any expired timers are completed and removed from the list
- * of active timers in the layer object. If unexpired timers remain on completion, StartPlatformTimer will be called to
- * restart the platform timer.
- *
- * It is assumed that this API is called only while on the thread which owns the CHIP System Layer object.
- *
- * @note
- *      It's harmless if this API gets called and there are no expired timers.
- *
- *  @return CHIP_NO_ERROR on success, error code otherwise.
- *
- */
-CHIP_ERROR LayerImplOpenIoTSDK::HandlePlatformTimer()
-{
-    VerifyOrReturnError(IsInitialized(), CHIP_ERROR_INCORRECT_STATE);
-
-    // Expire each timer in turn until an unexpired timer is reached or the timerlist is emptied.  We set the current expiration
-    // time outside the loop; that way timers set after the current tick will not be executed within this expiration window
-    // regardless how long the processing of the currently expired timers took.
-    // The platform timer API has MSEC resolution so expire any timer with less than 1 msec remaining.
-    Clock::Timestamp expirationTime = SystemClock().GetMonotonicTimestamp() + Clock::Timeout(1);
-
-    // limit the number of timers handled before the control is returned to the event queue.  The bound is similar to
-    // (though not exactly same) as that on the sockets-based systems.
-
-    size_t timersHandled    = 0;
-    TimerList::Node * timer = nullptr;
-    while ((timersHandled < CHIP_SYSTEM_CONFIG_NUM_TIMERS) && ((timer = mTimerList.PopIfEarlier(expirationTime)) != nullptr))
-    {
-        mHandlingTimerComplete = true;
-        mTimerPool.Invoke(timer);
-        mHandlingTimerComplete = false;
-        timersHandled++;
-    }
-
-    if (!mTimerList.Empty())
-    {
-        // timers still exist so restart the platform timer.
-        Clock::Timeout delay = System::Clock::kZero;
-
-        Clock::Timestamp currentTime = SystemClock().GetMonotonicTimestamp();
-
-        if (currentTime < mTimerList.Earliest()->AwakenTime())
-        {
-            // the next timer expires in the future, so set the delay to a non-zero value
-            delay = mTimerList.Earliest()->AwakenTime() - currentTime;
-        }
-
-        StartPlatformTimer(delay);
-    }
-
     return CHIP_NO_ERROR;
 }
 
@@ -409,38 +362,6 @@ CHIP_ERROR LayerImplOpenIoTSDK::DisableSelectCallback(chip::Inet::EndPointStateI
     return CHIP_NO_ERROR;
 }
 
-CHIP_ERROR LayerImplOpenIoTSDK::WaitForEvents()
-{
-    if (mSignalSocket != EndPointStateIoTSocket::kInvalidSocketFd)
-    {
-        // update the masks
-        mSelectMutex.Lock();
-        osEventFlagsSet(mSignalFlags, SIGNAL_FLAGS_SELECT_PENDING);
-        memcpy(GetSelectMask(ReadMaskOut), GetSelectMask(ReadMask), mMaskSize);
-        memcpy(GetSelectMask(WriteMaskOut), GetSelectMask(WriteMask), mMaskSize);
-        memcpy(GetSelectMask(ExceptionMaskOut), GetSelectMask(ExceptionMask), mMaskSize);
-        mSelectMutex.Unlock();
-
-        int32_t ret = iotSocketSelect(GetSelectMask(ReadMaskOut), GetSelectMask(WriteMaskOut), GetSelectMask(ExceptionMaskOut),
-                                      osWaitForever);
-
-        osEventFlagsClear(mSignalFlags, SIGNAL_FLAGS_SELECT_PENDING);
-        if ((osEventFlagsGet(mSignalFlags) & SIGNAL_FLAGS_WAITING_FOR_SELECT_RETURN) != 0)
-        {
-            osEventFlagsClear(mSignalFlags, SIGNAL_FLAGS_WAITING_FOR_SELECT_RETURN);
-            osEventFlagsSet(mSignalFlags, SIGNAL_FLAGS_SELECT_RETURNED);
-        }
-
-        if (ret < 0)
-        {
-            ChipLogError(NotSpecified, "Select failed with error: %ld", ret);
-            return CHIP_ERROR_INTERNAL;
-        }
-    }
-
-    return CHIP_NO_ERROR;
-}
-
 void LayerImplOpenIoTSDK::Signal()
 {
     if (EnableSignalSocket() != CHIP_NO_ERROR)
@@ -461,8 +382,73 @@ void LayerImplOpenIoTSDK::Signal()
     }
 }
 
+void LayerImplOpenIoTSDK::PrepareEvents()
+{
+    assertChipStackLockedByCurrentThread();
+
+    const Clock::Timestamp currentTime = SystemClock().GetMonotonicTimestamp();
+    Clock::Timestamp awakenTime        = currentTime + kDefaultMinSleepPeriod;
+
+    TimerList::Node * timer = mTimerList.Earliest();
+    if (timer && timer->AwakenTime() < awakenTime)
+    {
+        awakenTime = timer->AwakenTime();
+    }
+
+    const Clock::Timestamp sleepTime         = (awakenTime > currentTime) ? (awakenTime - currentTime) : Clock::kZero;
+    chip::System::Clock::Milliseconds32 msec = std::chrono::duration_cast<chip::System::Clock::Milliseconds32>(sleepTime);
+    mNextTimeoutMs                           = static_cast<uint32_t>(msec.count());
+
+    if (mSignalSocket != EndPointStateIoTSocket::kInvalidSocketFd)
+    {
+        // update the masks
+        mSelectMutex.Lock();
+        osEventFlagsSet(mSignalFlags, SIGNAL_FLAGS_SELECT_PENDING);
+        memcpy(GetSelectMask(ReadMaskOut), GetSelectMask(ReadMask), mMaskSize);
+        memcpy(GetSelectMask(WriteMaskOut), GetSelectMask(WriteMask), mMaskSize);
+        memcpy(GetSelectMask(ExceptionMaskOut), GetSelectMask(ExceptionMask), mMaskSize);
+        mSelectMutex.Unlock();
+    }
+}
+
+CHIP_ERROR LayerImplOpenIoTSDK::WaitForEvents()
+{
+    if (mSignalSocket != EndPointStateIoTSocket::kInvalidSocketFd)
+    {
+        int32_t ret = iotSocketSelect(GetSelectMask(ReadMaskOut), GetSelectMask(WriteMaskOut), GetSelectMask(ExceptionMaskOut),
+                                      ms2tick(mNextTimeoutMs));
+
+        osEventFlagsClear(mSignalFlags, SIGNAL_FLAGS_SELECT_PENDING);
+        if ((osEventFlagsGet(mSignalFlags) & SIGNAL_FLAGS_WAITING_FOR_SELECT_RETURN) != 0)
+        {
+            osEventFlagsClear(mSignalFlags, SIGNAL_FLAGS_WAITING_FOR_SELECT_RETURN);
+            osEventFlagsSet(mSignalFlags, SIGNAL_FLAGS_SELECT_RETURNED);
+        }
+
+        if (ret < 0)
+        {
+            ChipLogError(NotSpecified, "Select failed with error: %ld", ret);
+            return CHIP_ERROR_INTERNAL;
+        }
+    }
+
+    return CHIP_NO_ERROR;
+}
+
 void LayerImplOpenIoTSDK::HandleEvents()
 {
+    assertChipStackLockedByCurrentThread();
+
+    // Obtain the list of currently expired timers. Any new timers added by timer callback are NOT handled on this pass,
+    // since that could result in infinite handling of new timers blocking any other progress.
+    VerifyOrDieWithMsg(mExpiredTimers.Empty(), DeviceLayer, "Re-entry into HandleEvents from a timer callback?");
+    mExpiredTimers          = mTimerList.ExtractEarlier(Clock::Timeout(1) + SystemClock().GetMonotonicTimestamp());
+    TimerList::Node * timer = nullptr;
+    while ((timer = mExpiredTimers.PopEarliest()) != nullptr)
+    {
+        mTimerPool.Invoke(timer);
+    }
+
     if (mSignalSocket != EndPointStateIoTSocket::kInvalidSocketFd)
     {
         char dummy;

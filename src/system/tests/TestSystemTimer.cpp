@@ -105,10 +105,9 @@ public:
     static void ServiceEvents(Layer & aLayer)
     {
         LayerImplOpenIoTSDK & layer = static_cast<LayerImplOpenIoTSDK &>(aLayer);
-        if (layer.IsInitialized())
-        {
-            layer.HandlePlatformTimer();
-        }
+        layer.PrepareEvents();
+        layer.WaitForEvents();
+        layer.HandleEvents();
     }
 };
 

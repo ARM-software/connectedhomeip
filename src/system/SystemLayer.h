@@ -197,6 +197,7 @@ public:
     virtual CHIP_ERROR EnableSelectCallback(chip::Inet::EndPointStateIoTSocket * endpoint, bool read, bool write)  = 0;
     virtual CHIP_ERROR DisableSelectCallback(chip::Inet::EndPointStateIoTSocket * endpoint, bool read, bool write) = 0;
     virtual void Signal()                                                                                          = 0;
+    virtual void PrepareEvents()                                                                                   = 0;
     virtual CHIP_ERROR WaitForEvents()                                                                             = 0;
     virtual void HandleEvents()                                                                                    = 0;
 };
