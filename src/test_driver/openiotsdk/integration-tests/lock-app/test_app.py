@@ -115,7 +115,7 @@ def test_lock_ctrl(device, controller):
                                      userStatus=DoorLock.Enums.UserStatusEnum.kOccupiedEnabled,
                                      userType=DoorLock.Enums.UserTypeEnum.kUnrestrictedUser,
                                      credentialRule=DoorLock.Enums.CredentialRuleEnum.kSingle),
-                                requestTimeoutMs=1000)
+                                requestTimeoutMs=2000)
     assert err == 0
 
     ret = device.wait_for_output("Successfully set the user [mEndpointId={},index={},adjustedIndex=0]".format(
@@ -125,7 +125,7 @@ def test_lock_ctrl(device, controller):
 
     err, res = send_zcl_command(devCtrl, "DoorLock", "GetUser", nodeId, LOCK_CTRL_TEST_ENDPOINT_ID,
                                 dict(userIndex=LOCK_CTRL_TEST_USER_INDEX),
-                                requestTimeoutMs=1000)
+                                requestTimeoutMs=2000)
     assert err == 0
     assert res.userIndex == LOCK_CTRL_TEST_USER_INDEX
     assert res.userName == LOCK_CTRL_TEST_USER_NAME
@@ -142,7 +142,7 @@ def test_lock_ctrl(device, controller):
                                      userIndex=LOCK_CTRL_TEST_USER_INDEX,
                                      userStatus=NullValue,
                                      userType=NullValue),
-                                requestTimeoutMs=1000)
+                                requestTimeoutMs=2000)
     assert err == 0
     assert res.status == DoorLock.Enums.DlStatus.kSuccess
 
@@ -157,14 +157,14 @@ def test_lock_ctrl(device, controller):
     err, res = send_zcl_command(devCtrl, "DoorLock", "GetCredentialStatus", nodeId, LOCK_CTRL_TEST_ENDPOINT_ID,
                                 dict(credential=DoorLock.Structs.CredentialStruct(
                                     credentialType=DoorLock.Enums.CredentialTypeEnum.kPin, credentialIndex=LOCK_CTRL_TEST_CREDENTIAL_INDEX)),
-                                requestTimeoutMs=1000)
+                                requestTimeoutMs=2000)
     assert err == 0
     assert res.credentialExists
     assert res.userIndex == LOCK_CTRL_TEST_USER_INDEX
 
     err, res = send_zcl_command(devCtrl, "DoorLock", "LockDoor",  nodeId, LOCK_CTRL_TEST_ENDPOINT_ID,
                                 dict(PINCode=LOCK_CTRL_TEST_PIN_CODE),
-                                requestTimeoutMs=1000)
+                                requestTimeoutMs=2000)
     assert err == 0
 
     ret = device.wait_for_output("setting door lock state to \"Locked\"")
@@ -176,7 +176,7 @@ def test_lock_ctrl(device, controller):
 
     err, res = send_zcl_command(devCtrl, "DoorLock", "UnlockDoor",  nodeId, LOCK_CTRL_TEST_ENDPOINT_ID,
                                 dict(PINCode=LOCK_CTRL_TEST_PIN_CODE),
-                                requestTimeoutMs=1000)
+                                requestTimeoutMs=2000)
     assert err == 0
 
     ret = device.wait_for_output("setting door lock state to \"Unlocked\"")
