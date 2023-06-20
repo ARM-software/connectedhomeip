@@ -24,7 +24,6 @@ list(APPEND CMAKE_MODULE_PATH ${OPEN_IOT_SDK_CONFIG}/cmake)
 
 set(APP_TARGET chip-openiotsdk-ota-requestor-app-example_ns)
 
-set(TFM_SUPPORT YES)
 set(TFM_PROJECT_CONFIG_HEADER_FILE "${CMAKE_CURRENT_SOURCE_DIR}/tf-m-config/TfmProjectConfig.h")
 set(CONFIG_CHIP_OPEN_IOT_SDK_OTA_ENABLE YES)
 
@@ -44,12 +43,12 @@ add_subdirectory(${OPEN_IOT_SDK_EXAMPLE_COMMON}/app ./app_build)
 
 chip_add_data_model(openiotsdk-app PUBLIC ota-requestor)
 
-target_include_directories(${APP_TARGET} 
+target_include_directories(${APP_TARGET}
     PRIVATE
         main/include
 )
 
-target_sources(${APP_TARGET} 
+target_sources(${APP_TARGET}
     PRIVATE
         main/main_ns.cpp
 )
