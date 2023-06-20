@@ -22,7 +22,6 @@
 include(FetchContent)
 
 get_filename_component(OPEN_IOT_SDK_SOURCE ${CHIP_ROOT}/third_party/open-iot-sdk/sdk REALPATH)
-get_filename_component(OPEN_IOT_SDK_STORAGE_SOURCE ${CHIP_ROOT}/third_party/open-iot-sdk/storage REALPATH)
 
 # Open IoT SDK targets passed to CHIP build
 list(APPEND CONFIG_CHIP_EXTERNAL_TARGETS)
@@ -33,7 +32,7 @@ set(TFM_NS_APP_VERSION "0.0.0" CACHE STRING "TF-M non-secure application version
 set(CONFIG_CHIP_OPEN_IOT_SDK_LWIP_DEBUG NO CACHE BOOL "Enable LwIP debug logs")
 
 # Default LwIP options directory (should contain user_lwipopts.h file)
-if (NOT LWIP_PROJECT_OPTS_DIR)  
+if (NOT LWIP_PROJECT_OPTS_DIR)
     set(LWIP_PROJECT_OPTS_DIR ${OPEN_IOT_SDK_CONFIG}/lwip)
 endif()
 
@@ -283,21 +282,6 @@ if("mbedtls" IN_LIST IOTSDK_FETCH_LIST)
     )
 endif()
 
-# Additional Open IoT SDK port components
-
-# Add Open IoT SDK storage source
-add_subdirectory(${OPEN_IOT_SDK_STORAGE_SOURCE} ./sdk_storage_build)
-list(APPEND CONFIG_CHIP_EXTERNAL_TARGETS
-    iotsdk-blockdevice
-    iotsdk-tdbstore
-)
-
-# Add custom storage library
-add_subdirectory(${OPEN_IOT_SDK_CONFIG}/storage storage_build)
-list(APPEND CONFIG_CHIP_EXTERNAL_TARGETS
-    openiotsdk-storage
-)
-
 function(sdk_post_build target)
     string(REPLACE "_ns" "" APP_NAME ${target})
 if(TFM_SUPPORT)
@@ -386,7 +370,7 @@ endif()
         COMMAND rm
         ARGS -Rf
             $<TARGET_FILE_DIR:${target}>/${target}.bin
-            $<TARGET_FILE_DIR:${target}>/${target}_signed.bin 
+            $<TARGET_FILE_DIR:${target}>/${target}_signed.bin
             $<TARGET_FILE_DIR:${target}>/${target}_merged.hex
             $<TARGET_FILE_DIR:${target}>/${target}_merged.elf
         VERBATIM
