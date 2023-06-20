@@ -25,7 +25,6 @@ list(APPEND CMAKE_MODULE_PATH ${OPEN_IOT_SDK_CONFIG}/cmake)
 
 set(APP_TARGET chip-openiotsdk-all-clusters-app-example_ns)
 
-set(TFM_SUPPORT YES)
 set(TFM_PROJECT_CONFIG_HEADER_FILE "${CMAKE_CURRENT_SOURCE_DIR}/tf-m-config/TfmProjectConfig.h")
 
 # Toolchain files need to exist before first call to project

@@ -52,11 +52,9 @@
 #include "openiotsdk_dfu_manager.h"
 #endif // CHIP_OPEN_IOT_SDK_OTA_ENABLE
 
-#ifdef TFM_SUPPORT
 #include "psa/fwu_config.h"
 #include "psa/update.h"
 #include "tfm_ns_interface.h"
-#endif // TFM_SUPPORT
 
 using namespace ::chip;
 using namespace ::chip::Platform;
@@ -75,12 +73,10 @@ static osEventFlagsId_t event_flags_id;
 
 static DeviceLayer::DeviceInfoProviderImpl gDeviceInfoProvider;
 
-#ifdef TFM_SUPPORT
 extern "C" {
 // RTOS-specific initialization that is not declared in any header file
 uint32_t tfm_ns_interface_init(void);
 }
-#endif // TFM_SUPPORT
 
 /** Wait for specific event and check error */
 static int wait_for_event(uint32_t event)
@@ -144,7 +140,6 @@ static void network_state_callback(network_state_callback_event_t event)
     }
 }
 
-#ifdef TFM_SUPPORT
 static int get_psa_images_details()
 {
     psa_status_t status;
@@ -172,7 +167,6 @@ static int get_psa_images_details()
 
     return EXIT_SUCCESS;
 }
-#endif // TFM_SUPPORT
 
 int openiotsdk_platform_init(void)
 {
@@ -196,14 +190,12 @@ int openiotsdk_platform_init(void)
     }
 #endif
 
-#ifdef TFM_SUPPORT
     ret = get_psa_images_details();
     if (ret != 0)
     {
         ChipLogError(NotSpecified, "Get PSA image details failed: %d", ret);
         return EXIT_FAILURE;
     }
-#endif // TFM_SUPPORT
 
     return EXIT_SUCCESS;
 }
