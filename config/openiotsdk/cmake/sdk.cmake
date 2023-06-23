@@ -37,11 +37,12 @@ endif()
 
 # Overwrite versions of Open IoT SDK components
 
-# Add a Matter specific version of Mbedtls
+# Fetch the same version of mbedtls as TF-M
+# You can find the TF-M settings in TFM_SOURCE_DIR/config/config_base.cmake
 FetchContent_Declare(
     mbedtls
     GIT_REPOSITORY https://github.com/ARMmbed/mbedtls
-    GIT_TAG        v3.2.1
+    GIT_TAG        mbedtls-3.2.1
     GIT_SHALLOW    ON
     GIT_PROGRESS   ON
 )
@@ -67,7 +68,6 @@ set(IOTSDK_FETCH_LIST
     mcu-driver-reference-platforms-for-arm
     cmsis-5
     cmsis-freertos
-    mbedtls
     lwip
     cmsis-sockets-api
     trusted-firmware-m
@@ -87,6 +87,13 @@ else()
 endif()
 if(TFM_PROJECT_CONFIG_HEADER_FILE)
     set(TFM_CMAKE_ARGS "${TFM_CMAKE_ARGS};-DPROJECT_CONFIG_HEADER_FILE=${TFM_PROJECT_CONFIG_HEADER_FILE}")
+endif()
+if ("${CONFIG_CHIP_CRYPTO}" STREQUAL "psa")
+    if (FETCHCONTENT_SOURCE_DIR_MBEDTLS)
+        set(TFM_CMAKE_ARGS "${TFM_CMAKE_ARGS};-DMBEDCRYPTO_PATH=${FETCHCONTENT_SOURCE_DIR_MBEDTLS}")
+    else()
+        set(TFM_CMAKE_ARGS "${TFM_CMAKE_ARGS};-DMBEDCRYPTO_PATH=${FETCHCONTENT_BASE_DIR}/mbedtls-src")
+    endif()
 endif()
 
 # Add Open IoT SDK source
@@ -194,29 +201,6 @@ if(TARGET mcu-driver-hal)
     endif()
 endif()
 
-# Mbedtls config
-if(TARGET mbedtls-config)
-    target_include_directories(mbedtls-config
-        INTERFACE
-            ${OPEN_IOT_SDK_CONFIG}/mbedtls
-    )
-
-    target_sources(mbedtls-config
-        INTERFACE
-            ${OPEN_IOT_SDK_CONFIG}/mbedtls/platform_alt.cpp
-    )
-
-    target_compile_definitions(mbedtls-config
-        INTERFACE
-            MBEDTLS_CONFIG_FILE="${OPEN_IOT_SDK_CONFIG}/mbedtls/mbedtls_config.h"
-    )
-
-    target_link_libraries(mbedtls-config
-        INTERFACE
-            mbedtls-threading-cmsis-rtos
-    )
-endif()
-
 if("mcu-driver-reference-platforms-for-arm" IN_LIST IOTSDK_FETCH_LIST)
     list(APPEND CONFIG_CHIP_EXTERNAL_TARGETS
         mcu-driver-bootstrap
@@ -261,15 +245,6 @@ if("trusted-firmware-m" IN_LIST IOTSDK_FETCH_LIST)
     list(APPEND CONFIG_CHIP_EXTERNAL_TARGETS
         tfm-ns-interface
         tfm-ns-interface-cmsis-rtos
-    )
-endif()
-
-# Note: Mbed TLS must appear after TF-M otherwise psa from mbed TLS is used
-if("mbedtls" IN_LIST IOTSDK_FETCH_LIST)
-    list(APPEND CONFIG_CHIP_EXTERNAL_TARGETS
-        mbedtls
-        mbedtls-config
-        mbedtls-threading-cmsis-rtos
     )
 endif()
 
