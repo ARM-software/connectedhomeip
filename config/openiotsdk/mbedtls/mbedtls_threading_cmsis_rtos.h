@@ -1,5 +1,3 @@
-
-
 /*
  *
  *    Copyright (c) 2023 Project CHIP Authors
@@ -18,13 +16,20 @@
  *    limitations under the License.
  */
 
-#ifndef OIS_MBEDTLS_CONFIG_PSA_H
-#define OIS_MBEDTLS_CONFIG_PSA_H
+#ifndef MBEDTLS_THREADING_CMSIS_RTOS_H
+#define MBEDTLS_THREADING_CMSIS_RTOS_H
 
-#define MBEDTLS_SHA1_C
-#define PSA_WANT_ALG_SHA_1
-#define MBEDTLS_ECP_WINDOW_SIZE 6 /**< Maximum window size used */
-#undef MBEDTLS_ECP_FIXED_POINT_OPTIM
-#define MBEDTLS_ECP_FIXED_POINT_OPTIM 1 /**< Enable fixed-point speed-up */
+#include "cmsis_os2.h"
 
-#endif // OIS_MBEDTLS_CONFIG_PSA_H
+/** This is an internal Mbed TLS structure used by the threading module.
+ *  It's required in alternative threading support.
+ */
+typedef struct
+{
+    osMutexId_t mutex;
+} mbedtls_threading_mutex_t;
+
+/** Set CMSIS RTOS as alternative threading implemenation. */
+void mbedtls_threading_set_cmsis_rtos(void);
+
+#endif // ! MBEDTLS_THREADING_CMSIS_RTOS_H

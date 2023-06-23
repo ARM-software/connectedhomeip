@@ -40,7 +40,7 @@ static int mbedtls_platform_nv_seed_read(unsigned char * buf, size_t buf_len)
     return 0;
 }
 
-static int mbedtls_platform_nv_seed_write(unsigned char * buf, size_t buf_len)
+static int mbedtls_platform_nv_seed_write(unsigned char *, size_t)
 {
     return 0;
 }
