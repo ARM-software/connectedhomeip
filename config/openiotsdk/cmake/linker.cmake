@@ -21,10 +21,10 @@
 
 function(set_target_link target)
     target_link_libraries(${target}
-        mdh-arm-corstone-300-startup
+        mdh-arm-startup-an552
     )
 
-    if (NOT LINKER_SCRIPT)        
+    if (NOT LINKER_SCRIPT)
         set(LINKER_SCRIPT ${OPEN_IOT_SDK_CONFIG}/ld/cs300_gcc.ld)
     endif()
     target_link_options(${target} PRIVATE -T ${LINKER_SCRIPT})

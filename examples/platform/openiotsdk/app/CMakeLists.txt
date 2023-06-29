@@ -27,7 +27,8 @@ target_link_libraries(openiotsdk-startup
         # iotsdk-serial-retarget contains the UART but we don't need the retarget part
         $<FILTER:$<TARGET_OBJECTS:iotsdk-serial-retarget>,EXCLUDE,.*gcc_retarget.*>
         cmsis-rtos-api
-        mcu-driver-hal
+        mcu-driver-hal-api
+        mbed-critical
         tfm-ns-interface
 )
 

@@ -54,6 +54,11 @@
  */
 #define LWIP_DHCP 0
 
+/**
+ * Not detect address duplications. This fixes the SDK issue with a fixed IPv6 local address.
+ */
+#define LWIP_IPV6_DUP_DETECT_ATTEMPTS 0
+
 #ifdef LWIP_DEBUG
 
 // Debug Options

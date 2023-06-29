@@ -17,7 +17,7 @@
  */
 
 #include <algorithm>
-#include <cmsis.h>
+#include CMSIS_device_header
 #include <errno.h>
 #include <new>
 #include <stdbool.h>
@@ -26,8 +26,8 @@
 #include <string.h>
 #include <sys/unistd.h>
 
-#include "bootstrap/mbed_critical.h"
 #include "cmsis_os2.h"
+#include "mbed_critical/mbed_critical.h"
 extern "C" {
 #include "hal/serial_api.h"
 }
@@ -143,7 +143,7 @@ static RingBuffer<128> rx_buffer;
  * - initialize RTOS
  * - Start the RTOS with the main thread
  */
-extern "C" void mbed_sdk_init(void)
+extern "C" void software_init_hook(void)
 {
     serial = get_example_serial();
     mdh_serial_set_baud(serial, IOT_SDK_APP_SERIAL_BAUDRATE);
