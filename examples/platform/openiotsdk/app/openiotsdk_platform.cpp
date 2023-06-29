@@ -129,10 +129,10 @@ static void post_network_connect()
  *
  * @param event network up or down event.
  */
-static void network_state_callback(network_state_callback_event_t event)
+static void network_state_callback(const network_state_event_args_t * event_args)
 {
-    uint32_t event_flag = (event == NETWORK_UP) ? NETWORK_UP_FLAG : NETWORK_DOWN_FLAG;
-    ChipLogDetail(NotSpecified, "Network %s", (event == NETWORK_UP) ? "UP" : "DOWN");
+    uint32_t event_flag = (event_args->event == NETWORK_UP) ? NETWORK_UP_FLAG : NETWORK_DOWN_FLAG;
+    ChipLogDetail(NotSpecified, "Network %s", (event_args->event == NETWORK_UP) ? "UP" : "DOWN");
     int res = osEventFlagsSet(event_flags_id, event_flag);
     if (res < 0)
     {

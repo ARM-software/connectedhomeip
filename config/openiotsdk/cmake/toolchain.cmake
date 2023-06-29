@@ -23,7 +23,7 @@ include(FetchContent)
 
 FetchContent_Declare(iotsdk-toolchains
     GIT_REPOSITORY  https://git.gitlab.arm.com/iot/open-iot-sdk/toolchain.git
-    GIT_TAG         v2022.09
+    GIT_TAG         053f05d49dffec4e90b61a59e93687067c22d0fb
     SOURCE_DIR      ${CMAKE_BINARY_DIR}/toolchains
 )
 FetchContent_MakeAvailable(iotsdk-toolchains)

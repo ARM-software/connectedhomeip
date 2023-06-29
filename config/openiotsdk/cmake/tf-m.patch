@@ -1,12 +1,122 @@
+diff --git a/bl2/CMakeLists.txt b/bl2/CMakeLists.txt
+index 2005714..99ab9fc 100644
+--- a/bl2/CMakeLists.txt
++++ b/bl2/CMakeLists.txt
+@@ -15,6 +15,7 @@
+     $<$<BOOL:${DEFAULT_MCUBOOT_FLASH_MAP}>:src/default_flash_map.c>
+     $<$<BOOL:${MCUBOOT_DATA_SHARING}>:src/shared_data.c>
+     $<$<BOOL:${PLATFORM_DEFAULT_PROVISIONING}>:src/provisioning.c>
++    $<$<BOOL:${CONFIG_GNU_SYSCALL_STUB_ENABLED}>:${CMAKE_SOURCE_DIR}/platform/ext/common/syscalls_stub.c>
+ )
+
+ add_subdirectory(ext/mcuboot)
+diff --git a/docs/getting_started/tfm_getting_started.rst b/docs/getting_started/tfm_getting_started.rst
+index a11de46..b9a620e 100644
+--- a/docs/getting_started/tfm_getting_started.rst
++++ b/docs/getting_started/tfm_getting_started.rst
+@@ -217,9 +217,6 @@
+           support. The bug is reported in `here <https://gcc.gnu.org/bugzilla/show_bug.cgi?id=99157>`__.
+           Select other GNU Arm compiler versions instead.
+
+-          GNU Arm compiler version greater and equal than *11.3.Rel1* has a linker issue in syscall.
+-          Select other GNU Arm compiler versions instead.
+-
+     - IAR Arm compiler v8.42.x, v8.50.x
+
+       .. tabs::
+diff --git a/platform/ext/common/syscalls_stub.c b/platform/ext/common/syscalls_stub.c
+new file mode 100755
+index 0000000..42986c0
+--- /dev/null
++++ b/platform/ext/common/syscalls_stub.c
+@@ -0,0 +1,49 @@
++/*
++ * Copyright (c) 2023, Arm Limited. All rights reserved.
++ *
++ * SPDX-License-Identifier: BSD-3-Clause
++ *
++ */
++
++#include <stddef.h>
++#include <stdint.h>
++
++__attribute__((weak))
++void _close(void)
++{
++}
++
++__attribute__((weak))
++void _fstat(void)
++{
++}
++
++__attribute__((weak))
++void _getpid(void)
++{
++}
++
++__attribute__((weak))
++void _isatty(void)
++{
++}
++
++__attribute__((weak))
++void _kill(void)
++{
++}
++
++__attribute__((weak))
++void _lseek(void)
++{
++}
++
++__attribute__((weak))
++void _read(void)
++{
++}
++
++__attribute__((weak))
++void _write(void)
++{
++}
+diff --git a/secure_fw/partitions/lib/runtime/CMakeLists.txt b/secure_fw/partitions/lib/runtime/CMakeLists.txt
+index cfb9978..d2627c0 100644
+--- a/secure_fw/partitions/lib/runtime/CMakeLists.txt
++++ b/secure_fw/partitions/lib/runtime/CMakeLists.txt
+@@ -18,6 +18,8 @@
+ )
+
+ target_sources(tfm_sprt
++    PUBLIC
++        $<$<BOOL:${CONFIG_GNU_SYSCALL_STUB_ENABLED}>:${CMAKE_SOURCE_DIR}/platform/ext/common/syscalls_stub.c>
+     PRIVATE
+         ./crt_memcmp.c
+         ./crt_memmove.c
 diff --git a/toolchain_GNUARM.cmake b/toolchain_GNUARM.cmake
-index d044ed4a5..3d8f64d17 100644
+index 798971851..c0b71570e 100644
 --- a/toolchain_GNUARM.cmake
 +++ b/toolchain_GNUARM.cmake
-@@ -71,7 +71,6 @@ macro(tfm_toolchain_reset_linker_flags)
+@@ -71,7 +71,7 @@ macro(tfm_toolchain_reset_linker_flags)
          --entry=Reset_Handler
-         --specs=nano.specs
+         -specs=nano.specs
          LINKER:-check-sections
 -        LINKER:-fatal-warnings
++        #LINKER:-fatal-warnings
          LINKER:--gc-sections
          LINKER:--no-wchar-size-warning
          ${MEMORY_USAGE_FLAG}
+@@ -170,9 +170,12 @@ macro(tfm_toolchain_reload_compiler)
+                             " See https://gcc.gnu.org/bugzilla/show_bug.cgi?id=99157 for the issue detail.")
+     endif()
+
++    # GNU Arm compiler version greater equal than *11.3.Rel1*
++    # has a linker issue that required system calls are missing,
++    # such as _read and _write. Add stub functions of required
++    # system calls to solve this issue.
+     if (GCC_VERSION VERSION_GREATER_EQUAL 11.3.1)
+-        message(FATAL_ERROR "GNU Arm compiler version greater and equal than *11.3.Rel1* has a linker issue in syscall."
+-                            " Select other GNU Arm compiler versions instead.")
++        set(CONFIG_GNU_SYSCALL_STUB_ENABLED TRUE)
+     endif()
+
+     unset(CMAKE_C_FLAGS_INIT)
