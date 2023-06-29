@@ -23,15 +23,17 @@ include(FetchContent)
 
 get_filename_component(OPEN_IOT_SDK_SOURCE ${CHIP_ROOT}/third_party/open-iot-sdk/sdk REALPATH)
 
+include(profile)
+
 # Open IoT SDK targets passed to CHIP build
-list(APPEND CONFIG_CHIP_EXTERNAL_TARGETS)
+list(APPEND CONFIG_CHIP_EXTERNAL_TARGETS project_profile)
 
 # Additional Open IoT SDK build configuration
 set(TFM_NS_APP_VERSION "0.0.0" CACHE STRING "TF-M non-secure application version (in the x.x.x format)")
 set(CONFIG_CHIP_OPEN_IOT_SDK_LWIP_DEBUG NO CACHE BOOL "Enable LwIP debug logs")
 
 # Default LwIP options directory (should contain user_lwipopts.h file)
-if (NOT LWIP_PROJECT_OPTS_DIR)  
+if (NOT LWIP_PROJECT_OPTS_DIR)
     set(LWIP_PROJECT_OPTS_DIR ${OPEN_IOT_SDK_CONFIG}/lwip)
 endif()
 
@@ -50,7 +52,7 @@ FetchContent_Declare(
 FetchContent_Declare(
     trusted-firmware-m
     GIT_REPOSITORY  https://git.trustedfirmware.org/TF-M/trusted-firmware-m.git
-    GIT_TAG         d0c0a67f1b412e89d09b0987091c12998c4e4660
+    GIT_TAG         TF-Mv1.8.0
     GIT_SHALLOW     OFF
     GIT_PROGRESS    ON
     # Note: This prevents FetchContent_MakeAvailable() from calling
@@ -65,28 +67,48 @@ FetchContent_Declare(
 # Open IoT SDK configuration
 set(IOTSDK_FETCH_LIST
     mcu-driver-reference-platforms-for-arm
+    mbed-critical
     cmsis-5
     cmsis-freertos
     mbedtls
     lwip
-    cmsis-sockets-api
     trusted-firmware-m
 )
 
 set(MDH_PLATFORM ARM_AN552_MPS3)
 set(VARIANT "FVP")
 set(FETCHCONTENT_QUIET OFF)
-set(TFM_PLATFORM ${OPEN_IOT_SDK_EXAMPLE_COMMON}/tf-m/targets/an552)
-set(TFM_PSA_FIRMWARE_UPDATE ON)
-set(MCUBOOT_IMAGE_VERSION_NS ${TFM_NS_APP_VERSION})
-set(TFM_CMAKE_ARGS "-DCONFIG_TFM_ENABLE_FP=ON;-DTFM_PROFILE=profile_medium;-DTFM_EXCEPTION_INFO_DUMP=ON;-DCONFIG_TFM_HALT_ON_CORE_PANIC=ON;-DTFM_ISOLATION_LEVEL=1;-DTFM_MBEDCRYPTO_PLATFORM_EXTRA_CONFIG_PATH=${OPEN_IOT_SDK_CONFIG}/mbedtls/mbedtls_config_psa.h;-DMBEDCRYPTO_BUILD_TYPE=${CMAKE_BUILD_TYPE};-DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}")
+set(TFM_CMAKE_ARGS
+    -D TFM_PLATFORM=${OPEN_IOT_SDK_EXAMPLE_COMMON}/tf-m/targets/an552
+    -D TFM_PROFILE=profile_medium
+    -D CONFIG_TFM_ENABLE_FP=ON
+    -D TFM_PARTITION_FIRMWARE_UPDATE=ON
+    -D PLATFORM_HAS_FIRMWARE_UPDATE_SUPPORT=ON
+    -D MCUBOOT_DATA_SHARING=ON
+    -D MCUBOOT_IMAGE_VERSION_NS=${TFM_NS_APP_VERSION}
+    -D TFM_EXCEPTION_INFO_DUMP=ON
+    -D CONFIG_TFM_HALT_ON_CORE_PANIC=ON
+    -D TFM_ISOLATION_LEVEL=1
+    -D TFM_MBEDCRYPTO_PLATFORM_EXTRA_CONFIG_PATH=${OPEN_IOT_SDK_CONFIG}/mbedtls/mbedtls_config_psa.h
+)
+
 if ("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
-    set(TFM_CMAKE_ARGS "${TFM_CMAKE_ARGS};-DMCUBOOT_LOG_LEVEL=INFO;-DTFM_SPM_LOG_LEVEL=TFM_SPM_LOG_LEVEL_DEBUG;-DTFM_PARTITION_LOG_LEVEL=TFM_PARTITION_LOG_LEVEL_INFO")
+    list(APPEND TFM_CMAKE_ARGS
+        -D MCUBOOT_LOG_LEVEL=INFO
+        -D TFM_SPM_LOG_LEVEL=TFM_SPM_LOG_LEVEL_DEBUG
+        -D TFM_PARTITION_LOG_LEVEL=TFM_PARTITION_LOG_LEVEL_INFO
+    )
 else()
-    set(TFM_CMAKE_ARGS "${TFM_CMAKE_ARGS};-DMCUBOOT_LOG_LEVEL=ERROR;-DTFM_SPM_LOG_LEVEL=TFM_SPM_LOG_LEVEL_DEBUG;-DTFM_PARTITION_LOG_LEVEL=TFM_PARTITION_LOG_LEVEL_ERROR")
+    list(APPEND TFM_CMAKE_ARGS
+        -D MCUBOOT_LOG_LEVEL=ERROR
+        -D TFM_SPM_LOG_LEVEL=TFM_SPM_LOG_LEVEL_DEBUG
+        -D TFM_PARTITION_LOG_LEVEL=TFM_PARTITION_LOG_LEVEL_ERROR
+    )
 endif()
 if(TFM_PROJECT_CONFIG_HEADER_FILE)
-    set(TFM_CMAKE_ARGS "${TFM_CMAKE_ARGS};-DPROJECT_CONFIG_HEADER_FILE=${TFM_PROJECT_CONFIG_HEADER_FILE}")
+    list(APPEND TFM_CMAKE_ARGS
+        -D PROJECT_CONFIG_HEADER_FILE=${TFM_PROJECT_CONFIG_HEADER_FILE}
+    )
 endif()
 
 # Add Open IoT SDK source
@@ -98,49 +120,35 @@ list(APPEND CMAKE_MODULE_PATH ${open-iot-sdk_SOURCE_DIR}/components/trusted-firm
 
 # Configure component properties
 
-# CMSIS 5 require projects to provide configuration macros via RTE_Components.h
-# and CMSIS_device_header. The macro CMSIS_device_header is not automatically set
-# based on CMAKE_SYSTEM_PROCESSOR in the place where cmsis-core is first defined,
-# because a project may want to provide its own device header.
-if(TARGET cmsis-core)
-    target_compile_definitions(cmsis-core
+if(TARGET mcu-driver-hal-api)
+    # It is required to pass to mcu-driver-hal-api that it is compiled in NS mode
+    target_compile_definitions(mcu-driver-hal-api
         INTERFACE
-            $<$<STREQUAL:${CMAKE_SYSTEM_PROCESSOR},cortex-m55>:CMSIS_device_header="ARMCM55.h">
+            DOMAIN_NS=1
     )
 endif()
 
 # Add RTOS configuration headers
 # Link cmsis-rtos-api against a concrete implementation
 if(TARGET cmsis-rtos-api)
-    target_include_directories(cmsis-core
+    target_include_directories(cmsis-config
         INTERFACE
             cmsis-config
     )
 
-    target_compile_definitions(cmsis-rtos-api
-        PUBLIC
-            DOMAIN_NS=1
-    )
-
-    if(TARGET freertos-kernel)
-        target_include_directories(freertos-kernel
-            PUBLIC
+    if(TARGET freertos-cmsis-rtos)
+        target_include_directories(freertos-config
+            INTERFACE
                 freertos-config
         )
 
-        target_link_libraries(freertos-kernel
-            PUBLIC
-                cmsis-core
+        target_link_libraries(freertos-config
+            INTERFACE
+                cmsis-config
         )
-
         target_link_libraries(cmsis-rtos-api
             PUBLIC
                 freertos-cmsis-rtos
-        )
-    elseif(TARGET cmsis-rtx)
-        target_link_libraries(cmsis-rtos-api
-            INTERFACE
-                cmsis-rtx
         )
     endif()
 endif()
@@ -178,22 +186,6 @@ if(TARGET ethernet-lan91c111)
     )
 endif()
 
-if(TARGET mcu-driver-hal)
-    target_compile_definitions(mcu-driver-hal
-        INTERFACE
-            DOMAIN_NS=1
-    )
-
-    # Fixing the optimization issue for mcu-driver-hal target in the release build.
-    # The default -Os optimization causes performance issues for the application.
-    # We need to replace it with -O2 which is suitable for performance.
-    # This fix can be removed in the future when the issue will be fixed in SDK directly.
-    if ("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
-        target_compile_options(mcu-driver-hal INTERFACE $<$<COMPILE_LANGUAGE:CXX>:-O2>)
-        target_compile_options(mcu-driver-hal INTERFACE $<$<COMPILE_LANGUAGE:C>:-O2>)
-    endif()
-endif()
-
 # Mbedtls config
 if(TARGET mbedtls-config)
     target_include_directories(mbedtls-config
@@ -219,16 +211,14 @@ endif()
 
 if("mcu-driver-reference-platforms-for-arm" IN_LIST IOTSDK_FETCH_LIST)
     list(APPEND CONFIG_CHIP_EXTERNAL_TARGETS
-        mcu-driver-bootstrap
-        mcu-driver-hal
-        mdh-arm-corstone-300-common
-        target-interface
+        mcu-driver-hal-api
+        mdh-arm-hal-impl-an552
     )
 endif()
 
 if("cmsis-5" IN_LIST IOTSDK_FETCH_LIST)
     list(APPEND CONFIG_CHIP_EXTERNAL_TARGETS
-        cmsis-core
+        iotsdk-cmsis-core-device
         cmsis-rtos-api
         iotsdk-ip-network-api
     )
@@ -247,13 +237,6 @@ if("lwip" IN_LIST IOTSDK_FETCH_LIST)
         lwip-cmsis-sys
         lwip-cmsis-port-low-input-latency
         lwipopts
-    )
-endif()
-
-if("cmsis-sockets-api" IN_LIST IOTSDK_FETCH_LIST)
-    list(APPEND CONFIG_CHIP_EXTERNAL_TARGETS
-        cmsis-sockets-api
-        lwip-sockets
     )
 endif()
 
@@ -289,7 +272,7 @@ function(sdk_post_build target)
             # Sign the non-secure (application) image for TF-M bootloader (BL2)"
             python3 ${BINARY_DIR}/install/image_signing/scripts/wrapper/wrapper.py
                 --layout ${BINARY_DIR}/install/image_signing/layout_files/signing_layout_ns.o
-                -v ${MCUBOOT_IMAGE_VERSION_NS}
+                -v ${TFM_NS_APP_VERSION}
                 -k ${BINARY_DIR}/install/image_signing/keys/root-RSA-3072_1.pem
                 --public-key-format full
                 --align 1 --pad --pad-header -H 0x400 -s auto -d "(0, 0.0.0+0)"
@@ -311,7 +294,7 @@ if(CONFIG_CHIP_OPEN_IOT_SDK_OTA_ENABLE)
             # Sign the update image
             python3 ${BINARY_DIR}/install/image_signing/scripts/wrapper/wrapper.py
                 --layout ${BINARY_DIR}/install/image_signing/layout_files/signing_layout_ns.o
-                -v ${MCUBOOT_IMAGE_VERSION_NS}
+                -v ${TFM_NS_APP_VERSION}
                 -k ${BINARY_DIR}/install/image_signing/keys/root-RSA-3072_1.pem
                 --public-key-format full
                 --align 1 --pad-header -H 0x400 -s auto -d "(0, 0.0.0+0)"
@@ -360,7 +343,7 @@ endif()
         COMMAND rm
         ARGS -Rf
             $<TARGET_FILE_DIR:${target}>/${target}.bin
-            $<TARGET_FILE_DIR:${target}>/${target}_signed.bin 
+            $<TARGET_FILE_DIR:${target}>/${target}_signed.bin
             $<TARGET_FILE_DIR:${target}>/${target}_merged.hex
             $<TARGET_FILE_DIR:${target}>/${target}_merged.elf
         VERBATIM

@@ -14,7 +14,7 @@
 #include "device_definition.h"
 #include "ffm/interrupt.h"
 #include "load/interrupt_defs.h"
-#include "spm_ipc.h"
+#include "spm.h"
 #include "tfm_hal_interrupt.h"
 #include "tfm_peripherals_def.h"
 #include "tfm_plat_test.h"
