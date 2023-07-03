@@ -23,13 +23,19 @@ import shutil
 import chip.CertificateAuthority
 import chip.native
 import pytest
+import pytest_asyncio
+import nest_asyncio
+
 from chip import exceptions
 
-from .fvp_device import FvpDevice
-from .telnet_connection import TelnetConnection
+from .pyedmgr_device import PyedmgrDevice
+from pyedmgr import TestCase, TestCaseContext
+
 from .terminal_device import TerminalDevice
 
 log = logging.getLogger(__name__)
+
+nest_asyncio.apply()
 
 
 @pytest.fixture(scope="session")
@@ -51,11 +57,6 @@ def fvpConfig(request, rootDir):
         return request.config.getoption('fvpConfig')
     else:
         return os.path.join(rootDir, 'config/openiotsdk/fvp/cs300.conf')
-
-
-@pytest.fixture(scope="session")
-def telnetPort(request):
-    return request.config.getoption('telnetPort')
 
 
 @pytest.fixture(scope="session")
@@ -84,13 +85,91 @@ def softwareVersion(request):
         return ("1", "0.0.1")
 
 
-@pytest.fixture(scope="function")
-def device(fvp, fvpConfig, binaryPath, telnetPort, networkInterface):
-    connection = TelnetConnection('localhost', telnetPort)
-    device = FvpDevice(fvp, fvpConfig, binaryPath, connection, networkInterface, "FVPdev")
-    device.start()
+@pytest.fixture
+def gdbPlugin(pytestconfig):
+    yield pytestconfig.getoption("--gdbPlugin")
+
+
+@pytest.fixture
+def kvsFile(pytestconfig):
+    yield pytestconfig.getoption("--kvsFile")
+
+
+@pytest.fixture
+def storageParam():
+    yield dict(instance="qspi_sram", memspace=0, address=0x660000, size=0x12000)
+
+
+@pytest.fixture
+def pyedmgrConfig(
+    fvp,
+    fvpConfig,
+    networkInterface,
+    gdbPlugin,
+    kvsFile,
+    storageParam,
+    binaryPath,
+):
+    args = []
+
+    if gdbPlugin:
+        args.extend(("--allow-debug-plugin", "--plugin", gdbPlugin))
+
+    if networkInterface in (None, "", "user"):
+        args.extend(("-C", "mps3_board.hostbridge.userNetworking=1"))
+    else:
+        args.extend(("-C", f"mps3_board.hostbridge.interfaceName={networkInterface}"))
+
+    if kvsFile:
+        if os.path.isfile(kvsFile):
+            args.extend(
+                (
+                    "--data",
+                    "mps3_board.{}={}@{}:{}".format(
+                        storageParam["instance"],
+                        kvsFile,
+                        storageParam["memspace"],
+                        storageParam["address"],
+                    ),
+                )
+            )
+        args.extend(
+            (
+                "--dump",
+                "mps3_board.{}={}@{}:{},{}".format(
+                    storageParam["instance"],
+                    kvsFile,
+                    storageParam["memspace"],
+                    storageParam["address"],
+                    storageParam["size"],
+                ),
+            )
+        )
+
+    return {
+        fvp: {
+            "firmware": [binaryPath],
+            "args": args,
+            "config": fvpConfig,
+        }
+    }
+
+
+@pytest.mark.asyncio
+@pytest_asyncio.fixture(scope="function")
+async def pyedmgrContext(pyedmgrConfig) -> TestCaseContext:
+    for case in TestCase.parse(pyedmgrConfig):
+        async with case as context:
+            yield context
+
+
+@pytest.mark.asyncio
+@pytest_asyncio.fixture(scope="function")
+async def device(pyedmgrContext: TestCaseContext) -> PyedmgrDevice:
+    device: PyedmgrDevice = PyedmgrDevice(pyedmgrContext.allocated_devices[0], name="FVPdev")
+    await device.start()
     yield device
-    device.stop()
+    await device.stop()
 
 
 @pytest.fixture(scope="session")
@@ -128,8 +207,9 @@ def controller(controllerConfig):
     os.remove(controllerConfig['persistentStoragePath'])
 
 
-@pytest.fixture(scope="session")
-def ota_provider(otaProvider, otaProviderConfig):
+@pytest.mark.asyncio
+@pytest_asyncio.fixture(scope="session")
+async def ota_provider(otaProvider, otaProviderConfig):
     args = [
         '--discriminator', otaProviderConfig['discriminator'],
         '--secured-device-port',  otaProviderConfig['port'],
@@ -139,9 +219,9 @@ def ota_provider(otaProvider, otaProviderConfig):
     ]
 
     device = TerminalDevice(otaProvider, args, "OTAprovider")
-    device.start()
+    await device.start()
 
     yield device
 
-    device.stop()
+    await device.stop()
     os.remove(otaProviderConfig['persistentStoragePath'])

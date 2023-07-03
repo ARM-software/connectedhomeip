@@ -42,7 +42,7 @@ add_subdirectory(${OPEN_IOT_SDK_EXAMPLE_COMMON}/app ./app_build)
 
 target_compile_definitions(openiotsdk-startup
     PRIVATE
-        IOT_SDK_APP_SERIAL_BAUDRATE=9600
+        IOT_SDK_APP_SERIAL_BAUDRATE=4800
 )
 
 target_compile_definitions(openiotsdk-startup
