@@ -31,13 +31,14 @@ def binaryPath(request, rootDir):
         assert False
 
 
-def test_unit_tests(device):
-    ret = device.wait_for_output("Open IoT SDK unit-tests start", timeout=30)
+@pytest.mark.asyncio
+async def test_unit_tests(device):
+    ret = await device.wait_for_output("Open IoT SDK unit-tests start", timeout=30)
     assert ret is not None and len(ret) > 0
-    ret = device.wait_for_output("Open IoT SDK unit-tests run", timeout=30)
+    ret = await device.wait_for_output("Open IoT SDK unit-tests run", timeout=30)
     assert ret is not None and len(ret) > 0
 
-    ret = device.wait_for_output("Test status:", 1200)
+    ret = await device.wait_for_output("Test status:", 1200)
     # Get test status
     test_status = ret[-1]
     result = re.findall(r'\d+', test_status)

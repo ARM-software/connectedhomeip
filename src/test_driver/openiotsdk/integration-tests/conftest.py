@@ -15,6 +15,9 @@
 #    limitations under the License.
 #
 
+import pytest
+import asyncio
+
 pytest_plugins = ['common.fixtures']
 
 
@@ -40,3 +43,15 @@ def pytest_addoption(parser):
                      help='Path to OTA provider application')
     parser.addoption('--softwareVersion', action='store',
                      help='Software version of update image in the format <number>:<x.x.x> eg. 1:0.0.01')
+
+    parser.addoption("--gdbPlugin", action="store")
+    parser.addoption("--kvsFile", action="store")
+
+
+# Note redefine fixture from pytest-syncio to have scope session
+@pytest.fixture(scope="session")
+def event_loop():
+    policy = asyncio.get_event_loop_policy()
+    loop = policy.new_event_loop()
+    yield loop
+    loop.close()

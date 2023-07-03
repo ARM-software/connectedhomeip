@@ -224,6 +224,20 @@ function run_fvp() {
     rm -rf /tmp/FVP_run_$$
 }
 
+function ensure_pyedmgr_is_installed {
+    if ! python -c "import pyedmgr" >/dev/null 2>&1; then
+        local tmpdir=$(mktemp -d)
+        (
+            cd "$tmpdir"
+            git clone "https://gitlab.arm.com/iot/open-iot-sdk/tools/pyedmgr"
+            cd pyedmgr
+            pip install -r requirements.txt
+            python setup.py install
+        )
+        rm -rf "$tmpdir"
+    fi
+}
+
 function run_test() {
 
     # Check if executable file exists
@@ -243,6 +257,8 @@ function run_test() {
         echo "Error: pytest not installed." >&2
         exit 1
     fi
+
+    ensure_pyedmgr_is_installed
 
     TEST_OPTIONS=()
 
