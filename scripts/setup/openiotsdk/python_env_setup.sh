@@ -23,6 +23,7 @@ HERE="$(dirname "$0")"
 CHIP_ROOT="$(realpath "$HERE"/../../..)"
 VENV_PATH=""
 CONTROLLER_INSTALL=0
+PYEDMGR_INSTALL=0
 
 function show_usage() {
     cat <<EOF
@@ -34,6 +35,7 @@ Options:
     -h,--help                           Show this help
     -p,--path    <venv_path>            Create a virtual environment in the <venv_path> directory <venv_path - default is empty which means extend Matter environment>
     --controller                        Install the Matter Python controller
+    --pyedmgr                           Install the pyedmgr tool
 EOF
 }
 
@@ -41,8 +43,15 @@ function controller_install() {
     "$CHIP_ROOT"/scripts/build_python.sh --install_virtual_env "$VENV_PATH" --clean_virtual_env no
 }
 
+function pyedmgr_install() {
+    cd "$CHIP_ROOT"/third_party/open-iot-sdk/pyedmgr
+    pip install -r requirements.txt
+    python setup.py install
+    cd -
+}
+
 SHORT=p:,h
-LONG=path:,controller,help
+LONG=path:,controller,pyedmgr,help
 OPTS=$(getopt -n build --options "$SHORT" --longoptions "$LONG" -- "$@")
 
 eval set -- "$OPTS"
@@ -59,6 +68,10 @@ while :; do
             ;;
         --controller)
             CONTROLLER_INSTALL=1
+            shift
+            ;;
+        --pyedmgr)
+            PYEDMGR_INSTALL=1
             shift
             ;;
         -* | --*)
@@ -85,6 +98,11 @@ fi
 if [[ $CONTROLLER_INSTALL -ne 0 ]]; then
     echo "Install the Matter Python controller" >&2
     controller_install
+fi
+
+if [[ $PYEDMGR_INSTALL -ne 0 ]]; then
+    echo "Install the pyedmgr tool" >&2
+    pyedmgr_install
 fi
 
 pip install -r "$CHIP_ROOT"/scripts/setup/requirements.openiotsdk.txt

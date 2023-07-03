@@ -17,30 +17,29 @@
 
 import asyncio
 import logging
-from asyncio.subprocess import Process
+import re
+
+from pyedmgr import TestDevice
 
 from .device import Device
 
 log = logging.getLogger(__name__)
 
 
-class TerminalDevice(Device):
+class PyedmgrDevice(Device):
 
-    def __init__(self, app, args, name=None):
-        super(TerminalDevice, self).__init__(name)
-        self.cmd = [app] + args
-
-    async def _start(self):
-        self.proc: Process = await asyncio.create_subprocess_exec(*self.cmd, stdout=asyncio.subprocess.PIPE, stdin=asyncio.subprocess.PIPE)
-
-    async def _stop(self):
-        self.proc.stdin.close()
-        self.proc.terminate()
-        await self.proc.wait()
+    def __init__(self, device: TestDevice, name=None):
+        super(PyedmgrDevice, self).__init__(name)
+        self.device = device
 
     async def _read_line(self):
-        line = await asyncio.wait_for(self.proc.stdout.readline(), timeout=0.2)
-        return line.decode('utf8')
+        line = await asyncio.wait_for(self.device.channel.readline_async(), timeout=0.2)
+        if isinstance(line, bytes) or isinstance(line, bytearray):
+            line = line.decode("utf-8", errors="replace").strip()
+        return re.sub(r'\033\[((?:\d|;)*)([a-zA-Z])', '', line)
 
     async def _write(self, data):
-        await self.proc.stdin.write(data)
+        # FVPs are not great at handling serial overflows. Send character per character
+        for b in data.encode('utf-8'):
+            await asyncio.sleep(0.05)
+            await self.device.channel.write_async(b.to_bytes(1, 'little'))

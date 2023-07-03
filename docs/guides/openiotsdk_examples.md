@@ -282,6 +282,17 @@ Open IoT SDK platform requirements and optional items:
 
     [here](../../src/controller/python/README.md).
 
+-   `pyedmgr` - required by integration tests. Use `--pyedmgr` argument to
+    install.
+
+        Example:
+        ```
+        {MATTER_ROOT}/scripts/setup/openiotsdk/python_env_setup.sh --pyedmgr
+        ```
+        More information about the `pyedmgr` you can find
+
+    [here](https://iot.sites.arm.com/open-iot-sdk/tools/pyedmgr/).
+
 You can also setup a separate Python virtual environment in the specific
 directory. Use `-p/--path` argument and pass your own path.
 
