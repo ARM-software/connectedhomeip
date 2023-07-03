@@ -795,6 +795,11 @@ Example:
 set(APP_TARGET chip-openiotsdk-new-example-example_ns)
 ```
 
+### Integration test
+
+To add the integration test to the new example follow the steps from
+[integration tests guide](./openiotsdk_integration_tests.md#add-new-matters-application-test).
+
 ### Example tools
 
 Add a new example name to the list in the
@@ -828,5 +833,20 @@ Example:
         openiotsdk release new-example \
         examples/new-example/openiotsdk/build/chip-openiotsdk-new-example-example.elf \
         /tmp/bloat_reports/
+...
+```
+
+If the integration test for the new example is available add the additional step
+for its validation in the CI.
+
+Example:
+
+```
+...
+- name: "Test: new-example example"
+    if: steps.build_new_example.outcome == 'success'
+    timeout-minutes: 10
+    run: |
+        scripts/examples/openiotsdk_example.sh -C test new-example
 ...
 ```
