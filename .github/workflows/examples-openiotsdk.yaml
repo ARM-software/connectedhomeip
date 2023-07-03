@@ -61,7 +61,7 @@ jobs:
 
             - name: Set up platform environment
               run: |
-                  scripts/setup/openiotsdk/python_env_setup.sh -p $TEST_PYTHON_VENV --controller
+                  scripts/setup/openiotsdk/python_env_setup.sh -p $TEST_PYTHON_VENV --controller --pyedmgr
                   scripts/setup/openiotsdk/network_setup.sh -n $TEST_NETWORK_NAME up
 
             - name: Build shell example

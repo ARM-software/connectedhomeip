@@ -67,46 +67,49 @@ def otaProviderConfig(request, updateBinaryPath):
 
 
 @pytest.mark.smoketest
-def test_smoke_test(device):
-    ret = device.wait_for_output("Open IoT SDK ota-requestor-app example application start")
+@pytest.mark.asyncio
+async def test_smoke_test(device):
+    ret = await device.wait_for_output("Open IoT SDK ota-requestor-app example application start")
     assert ret is not None and len(ret) > 0
-    ret = device.wait_for_output("Open IoT SDK ota-requestor-app example application run")
+    ret = await device.wait_for_output("Open IoT SDK ota-requestor-app example application run")
     assert ret is not None and len(ret) > 0
 
 
 @pytest.mark.commissioningtest
-def test_commissioning(device, controller):
+@pytest.mark.asyncio
+async def test_commissioning(device, controller):
     assert controller is not None
     devCtrl = controller
 
-    ret = device.wait_for_output("Open IoT SDK ota-requestor-app example application start")
+    ret = await device.wait_for_output("Open IoT SDK ota-requestor-app example application start")
     assert ret is not None and len(ret) > 0
 
-    setupPayload = get_setup_payload(device)
+    setupPayload = await get_setup_payload(device)
     assert setupPayload is not None
 
-    commissionable_device = discover_device(devCtrl, setupPayload)
+    commissionable_device = await discover_device(devCtrl, setupPayload)
     assert commissionable_device is not None
 
     assert commissionable_device.vendorId == int(setupPayload.attributes['VendorID'])
     assert commissionable_device.productId == int(setupPayload.attributes['ProductID'])
     assert commissionable_device.addresses[0] is not None
 
-    nodeId = connect_device(devCtrl, setupPayload, commissionable_device)
+    nodeId = await connect_device(devCtrl, setupPayload, commissionable_device)
     assert nodeId is not None
     log.info("Device {} connected".format(commissionable_device.addresses[0]))
 
-    ret = device.wait_for_output("Commissioning completed successfully")
+    ret = await device.wait_for_output("Commissioning completed successfully")
     assert ret is not None and len(ret) > 0
 
-    assert disconnect_device(devCtrl, nodeId)
+    assert await disconnect_device(devCtrl, nodeId)
 
 
 OTA_REQUESTOR_CTRL_TEST_ENDPOINT_ID = 0
 
 
 @pytest.mark.ctrltest
-def test_update_ctrl(device, controller, ota_provider, softwareVersion):
+@pytest.mark.asyncio
+async def test_update_ctrl(device, controller, ota_provider, softwareVersion):
     assert controller is not None
     devCtrl = controller
     version_number, version_str = softwareVersion
@@ -114,43 +117,48 @@ def test_update_ctrl(device, controller, ota_provider, softwareVersion):
     log.info("Setup OTA provider...")
 
     # Get OTA provider setup payload
-    setupPayloadProvider = get_setup_payload(ota_provider)
+    setupPayloadProvider = await get_setup_payload(ota_provider)
     assert setupPayloadProvider is not None
 
     # Discover and commission the OTA provider
-    commissionable_provider_device = discover_device(devCtrl, setupPayloadProvider)
+    commissionable_provider_device = await discover_device(devCtrl, setupPayloadProvider)
     assert commissionable_provider_device is not None
 
-    providerNodeId = connect_device(devCtrl, setupPayloadProvider, commissionable_provider_device)
+    providerNodeId = await connect_device(devCtrl, setupPayloadProvider, commissionable_provider_device)
     assert providerNodeId is not None
 
-    ret = ota_provider.wait_for_output("Commissioning completed successfully")
+    ret = await ota_provider.wait_for_output("Commissioning completed successfully")
     assert ret is not None and len(ret) > 0
 
     log.info("OTA provider ready")
     log.info("Setup OTA requestor...")
 
     # Get OTA requestor setup payload
-    setupPayload = get_setup_payload(device)
+    setupPayload = await get_setup_payload(device)
     assert setupPayload is not None
 
     # Discover and commission the OTA requestor
-    commissionable_requestor_device = discover_device(devCtrl, setupPayload)
+    commissionable_requestor_device = await discover_device(devCtrl, setupPayload)
     assert commissionable_requestor_device is not None
 
-    requestorNodeId = connect_device(devCtrl, setupPayload, commissionable_requestor_device)
+    requestorNodeId = await connect_device(devCtrl, setupPayload, commissionable_requestor_device)
     assert requestorNodeId is not None
 
-    ret = device.wait_for_output("Commissioning completed successfully")
+    ret = await device.wait_for_output("Commissioning completed successfully")
     assert ret is not None and len(ret) > 0
 
     log.info("OTA requestor ready")
     log.info("Install ACL entries")
 
     #  Install necessary ACL entries in OTA provider to enable access by OTA requestor
-    err, res = write_zcl_attribute(devCtrl, "AccessControl", "Acl", providerNodeId,  OTA_REQUESTOR_CTRL_TEST_ENDPOINT_ID,
-                                   [{"fabricIndex": 1, "privilege": 5, "authMode": 2, "subjects": [requestorNodeId], "targets": NullValue},
-                                    {"fabricIndex": 1, "privilege": 3, "authMode": 2, "subjects": NullValue, "targets": [{"cluster": 41, "endpoint": NullValue, "deviceType": NullValue}]}])
+    err, res = await write_zcl_attribute(
+        devCtrl, "AccessControl", "Acl", providerNodeId,  OTA_REQUESTOR_CTRL_TEST_ENDPOINT_ID,
+        [
+            {"fabricIndex": 1, "privilege": 5, "authMode": 2, "subjects": [requestorNodeId], "targets": NullValue},
+            {"fabricIndex": 1, "privilege": 3, "authMode": 2, "subjects": NullValue,
+                "targets": [{"cluster": 41, "endpoint": NullValue, "deviceType": NullValue}]}
+        ]
+    )
     assert err == 0
     assert res[0].Status == chip.interaction_model.Status.Success
 
@@ -159,12 +167,18 @@ def test_update_ctrl(device, controller, ota_provider, softwareVersion):
     log.info("Announce the OTA provider and start the firmware update process")
 
     # Announce the OTA provider and start the firmware update process
-    err, res = send_zcl_command(devCtrl, "OtaSoftwareUpdateRequestor", "AnnounceOTAProvider", requestorNodeId, OTA_REQUESTOR_CTRL_TEST_ENDPOINT_ID,
-                                dict(providerNodeID=providerNodeId, vendorID=int(setupPayloadProvider.attributes['VendorID']),
-                                     announcementReason=OtaSoftwareUpdateRequestor.Enums.OTAAnnouncementReason.kUrgentUpdateAvailable,
-                                     metadataForNode=None, endpoint=0))
+    err, res = await send_zcl_command(
+        devCtrl, "OtaSoftwareUpdateRequestor", "AnnounceOTAProvider", requestorNodeId, OTA_REQUESTOR_CTRL_TEST_ENDPOINT_ID,
+        dict(
+            providerNodeID=providerNodeId,
+            vendorID=int(setupPayloadProvider.attributes['VendorID']),
+            announcementReason=OtaSoftwareUpdateRequestor.Enums.OTAAnnouncementReason.kUrgentUpdateAvailable,
+            metadataForNode=None,
+            endpoint=0
+        )
+    )
 
-    ret = device.wait_for_output("New version of the software is available")
+    ret = await device.wait_for_output("New version of the software is available")
     assert ret is not None and len(ret) > 1
 
     version = ret[-1].split()[-1]
@@ -174,17 +188,17 @@ def test_update_ctrl(device, controller, ota_provider, softwareVersion):
 
     log.info("New software image downloading and installing...")
 
-    ret = device.wait_for_output("Open IoT SDK ota-requestor-app example application start", timeout=1200)
+    ret = await device.wait_for_output("Open IoT SDK ota-requestor-app example application start", timeout=1200)
     assert ret is not None and len(ret) > 0
 
     device.set_verbose(True)
 
-    ret = device.wait_for_output("Current software version")
+    ret = await device.wait_for_output("Current software version")
     assert ret is not None and len(ret) > 1
 
     version_app = ret[-1].split()[-2:]
     assert version_number == re.sub(r"[\[\]]", "", version_app[0])
     assert version_str == version_app[1]
 
-    assert disconnect_device(devCtrl, requestorNodeId)
-    assert disconnect_device(devCtrl, providerNodeId)
+    assert await disconnect_device(devCtrl, requestorNodeId)
+    assert await disconnect_device(devCtrl, providerNodeId)

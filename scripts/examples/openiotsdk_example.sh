@@ -165,6 +165,7 @@ function run_fvp() {
     fi
 
     RUN_OPTIONS=(-C mps3_board.telnetterminal0.start_port="$TELNET_TERMINAL_PORT")
+    RUN_OPTIONS+=(-C mps3_board.telnetterminal0.mode=telnet)
     RUN_OPTIONS+=(--quantum=25)
 
     if "$DEBUG"; then

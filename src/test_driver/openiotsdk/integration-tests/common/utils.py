@@ -16,6 +16,7 @@
 #
 
 import asyncio
+import functools
 import logging
 import random
 import re
@@ -31,13 +32,13 @@ log = logging.getLogger(__name__)
 IP_ADDRESS_BUFFER_LEN = 100
 
 
-def get_setup_payload(device):
+async def get_setup_payload(device):
     """
     Get device setup payload from logs
     :param device: serial device instance
     :return: setup payload or None
     """
-    ret = device.wait_for_output("SetupQRCode")
+    ret = await device.wait_for_output("SetupQRCode")
     if ret is None or len(ret) < 2:
         return None
 
@@ -53,7 +54,7 @@ def get_setup_payload(device):
     return setup_payload
 
 
-def discover_device(devCtrl, setupPayload):
+async def discover_device(devCtrl, setupPayload):
     """
     Discover specific device in network.
     Search by device discriminator from setup payload
@@ -62,10 +63,18 @@ def discover_device(devCtrl, setupPayload):
     :return: CommissionableNode object if node device discovered or None if failed
     """
     log.info("Attempting to find device on network")
-    longDiscriminator = int(setupPayload.attributes['Long discriminator'])
+    longDiscriminator = int(setupPayload.attributes["Long discriminator"])
     try:
-        res = devCtrl.DiscoverCommissionableNodes(
-            discovery.FilterType.LONG_DISCRIMINATOR, longDiscriminator, stopOnFirst=True, timeoutSecond=5)
+        res = await asyncio.get_running_loop().run_in_executor(
+            None,
+            functools.partial(
+                devCtrl.DiscoverCommissionableNodes,
+                discovery.FilterType.LONG_DISCRIMINATOR,
+                longDiscriminator,
+                stopOnFirst=True,
+                timeoutSecond=5,
+            )
+        )
     except exceptions.ChipStackError as ex:
         log.error("DiscoverCommissionableNodes failed {}".format(str(ex)))
         return None
@@ -75,7 +84,7 @@ def discover_device(devCtrl, setupPayload):
     return res[0]
 
 
-def connect_device(devCtrl, setupPayload, commissionableDevice, nodeId=None):
+async def connect_device(devCtrl, setupPayload, commissionableDevice, nodeId=None):
     """
     Connect to Matter discovered device on network
     :param devCtrl: device controller instance
@@ -87,10 +96,18 @@ def connect_device(devCtrl, setupPayload, commissionableDevice, nodeId=None):
     if nodeId is None:
         nodeId = random.randint(1, 1000000)
 
-    pincode = int(setupPayload.attributes['SetUpPINCode'])
+    pincode = int(setupPayload.attributes["SetUpPINCode"])
     try:
-        res = devCtrl.CommissionOnNetwork(
-            nodeId, pincode, filterType=discovery.FilterType.INSTANCE_NAME, filter=commissionableDevice.instanceName)
+        res = await asyncio.get_running_loop().run_in_executor(
+            None,
+            functools.partial(
+                devCtrl.CommissionOnNetwork,
+                nodeId,
+                pincode,
+                filterType=discovery.FilterType.INSTANCE_NAME,
+                filter=commissionableDevice.instanceName,
+            )
+        )
     except exceptions.ChipStackError as ex:
         log.error("Commission discovered device failed {}".format(str(ex)))
         return None
@@ -100,7 +117,7 @@ def connect_device(devCtrl, setupPayload, commissionableDevice, nodeId=None):
     return nodeId
 
 
-def disconnect_device(devCtrl, nodeId):
+async def disconnect_device(devCtrl, nodeId):
     """
     Disconnect Matter device
     :param devCtrl: device controller instance
@@ -108,14 +125,22 @@ def disconnect_device(devCtrl, nodeId):
     :return: node ID if connection successful or None if failed
     """
     try:
-        devCtrl.CloseSession(nodeId)
+        await asyncio.get_running_loop().run_in_executor(None, devCtrl.CloseSession, nodeId)
     except exceptions.ChipStackException as ex:
         log.error("CloseSession failed {}".format(str(ex)))
         return False
     return True
 
 
-def send_zcl_command(devCtrl, cluster: str, command: str, nodeId: int, endpoint: int, args, requestTimeoutMs: int = None):
+async def send_zcl_command(
+    devCtrl,
+    cluster: str,
+    command: str,
+    nodeId: int,
+    endpoint: int,
+    args,
+    requestTimeoutMs: int = None,
+):
     """
     Send ZCL command to device.
     :param devCtrl: device controller instance
@@ -144,7 +169,9 @@ def send_zcl_command(devCtrl, cluster: str, command: str, nodeId: int, endpoint:
         else:
             req = commandObj()
 
-        res = asyncio.run(devCtrl.SendCommand(int(nodeId), int(endpoint), req, timedRequestTimeoutMs=requestTimeoutMs))
+        res = await devCtrl.SendCommand(
+            int(nodeId), int(endpoint), req, timedRequestTimeoutMs=requestTimeoutMs
+        )
 
     except exceptions.ChipStackException as ex:
         log.error("An exception occurred during processing ZCL command: {}".format(str(ex)))
@@ -156,7 +183,9 @@ def send_zcl_command(devCtrl, cluster: str, command: str, nodeId: int, endpoint:
     return (err, res)
 
 
-def write_zcl_attribute(devCtrl, cluster: str, attribute: str, nodeId: int, endpoint: int, value):
+async def write_zcl_attribute(
+    devCtrl, cluster: str, attribute: str, nodeId: int, endpoint: int, value
+):
     """
     Write ZCL attribute to device.
     :param devCtrl: device controller instance
@@ -182,7 +211,7 @@ def write_zcl_attribute(devCtrl, cluster: str, attribute: str, nodeId: int, endp
         attributeObj = getattr(clusterObj.Attributes, attribute)
         req = attributeObj(value)
 
-        res = asyncio.run(devCtrl.WriteAttribute(nodeId, [(endpoint, req)]))
+        res = await devCtrl.WriteAttribute(nodeId, [(endpoint, req)])
 
     except exceptions.ChipStackException as ex:
         log.error("An exception occurred during processing ZCL attribute: {}".format(str(ex)))
@@ -194,7 +223,9 @@ def write_zcl_attribute(devCtrl, cluster: str, attribute: str, nodeId: int, endp
     return (err, res)
 
 
-def read_zcl_attribute(devCtrl, cluster: str, attribute: str, nodeId: int, endpoint: int):
+async def read_zcl_attribute(
+    devCtrl, cluster: str, attribute: str, nodeId: int, endpoint: int
+):
     """
     Read ZCL attribute from device.
     :param devCtrl: device controller instance
@@ -218,14 +249,13 @@ def read_zcl_attribute(devCtrl, cluster: str, attribute: str, nodeId: int, endpo
         clusterObj = getattr(GeneratedObjects, cluster)
         attributeObj = getattr(clusterObj.Attributes, attribute)
 
-        result = asyncio.run(devCtrl.ReadAttribute(nodeId, [(endpoint, attributeObj)]))
+        result = await devCtrl.ReadAttribute(nodeId, [(endpoint, attributeObj)])
 
         path = ClusterAttribute.AttributePath(
             EndpointId=endpoint, Attribute=attributeObj)
 
         res = IM.AttributeReadResult(path=IM.AttributePath(nodeId=nodeId, endpointId=path.EndpointId, clusterId=path.ClusterId,
-                                     attributeId=path.AttributeId), status=0, value=result[endpoint][clusterObj][attributeObj],
-                                     dataVersion=result[endpoint][clusterObj][ClusterAttribute.DataVersion])
+                                     attributeId=path.AttributeId), status=0, value=result[endpoint][clusterObj][attributeObj], dataVersion=result[endpoint][clusterObj][ClusterAttribute.DataVersion])
 
     except exceptions.ChipStackException as ex:
         log.error("An exception occurred during processing ZCL attribute: {}".format(str(ex)))
