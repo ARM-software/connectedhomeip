@@ -33,8 +33,6 @@ set(CONFIG_CHIP_AUTOMATION_LOGGING YES CACHE BOOL "Enable logging at automation 
 set(CONFIG_CHIP_ERROR_LOGGING YES CACHE BOOL "Enable logging at error level")
 
 set(CONFIG_CHIP_CRYPTO "mbedtls" CACHE STRING "Matter crypto backend. Mbedtls as default")
-set(CONFIG_BUILD_MATTER_MBEDTLS_LIB YES) # Build Matter mbedtls library
-set(CONFIG_EXTERNAL_MBEDTLS_LIB NO) # Use external mbedtls library
 set(CONFIG_CHIP_OPEN_IOT_SDK_SOFTWARE_VERSION "0" CACHE STRING "Software version number")
 set(CONFIG_CHIP_OPEN_IOT_SDK_SOFTWARE_VERSION_STRING ${TFM_NS_APP_VERSION} CACHE STRING "Software version in string format x.x.x")
 set(CONFIG_CHIP_OPEN_IOT_SDK_OTA_ENABLE NO CACHE BOOL "Enable OTA support")
@@ -49,51 +47,6 @@ endif()
 # TF-M support requires the right order of generating targets
 list(APPEND CONFIG_GN_DEPENDENCIES tfm-ns-interface)
 
-list(APPEND CMAKE_MODULE_PATH ${OPEN_IOT_SDK_CONFIG}/mbedtls)
-add_library(mbedtls-config INTERFACE)
-include(mbedlts-platform)
-ois_add_mbedtls_platform(mbedtls-config
-    SCOPE   INTERFACE
-)
-
-if ("${CONFIG_CHIP_CRYPTO}" STREQUAL "psa")
-    # Use external mbedtls version that is compatible with TF-M
-    set(ENABLE_PROGRAMS OFF CACHE BOOL "" FORCE)
-    set(ENABLE_TESTING OFF CACHE BOOL "" FORCE)
-    FetchContent_MakeAvailable(mbedtls)
-
-    target_compile_definitions(mbedtls-config
-        INTERFACE
-            MBEDTLS_CONFIG_FILE="mbedtls_config_tfm.h"
-    )
-
-    target_link_libraries(mbedtls
-        PUBLIC
-            mbedtls-config
-    )
-
-    target_link_libraries(mbedx509
-        PUBLIC
-            mbedtls-config
-    )
-
-    target_link_libraries(mbedcrypto
-        PUBLIC
-            mbedtls-config
-    )
-
-    list(APPEND CONFIG_CHIP_EXTERNAL_TARGETS
-        mbedtls
-    )
-    set(CONFIG_BUILD_MATTER_MBEDTLS_LIB NO)
-    set(CONFIG_EXTERNAL_MBEDTLS_LIB YES)
-else()
-    target_compile_definitions(mbedtls-config
-    INTERFACE
-        MBEDTLS_CONFIG_FILE="mbedtls_config.h"
-    )
-endif()
-
 # Add CHIP sources
 add_subdirectory(${OPEN_IOT_SDK_CONFIG} ./chip_build)
 
@@ -102,13 +55,7 @@ add_subdirectory(${OPEN_IOT_SDK_CONFIG} ./chip_build)
 if ("${CONFIG_CHIP_CRYPTO}" STREQUAL "psa")
     target_compile_definitions(chip
         INTERFACE
-            CONFIG_CHIP_CRYPTO_PSA
-    )
-else()
-    target_link_libraries(chip
-        INTERFACE
-            mbedtls-config
-    )
+            CONFIG_CHIP_CRYPTO_PSA)
 endif()
 
 function(chip_add_data_model target scope model_name)

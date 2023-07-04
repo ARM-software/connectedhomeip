@@ -25,6 +25,7 @@
 #pragma once
 
 #include "cmsis_os2.h"
+#include "mbedtls/platform.h"
 #include <atomic>
 #include <platform/CHIPDeviceConfig.h>
 #include <platform/PlatformManager.h>

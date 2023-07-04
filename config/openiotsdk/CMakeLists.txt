@@ -62,7 +62,6 @@ matter_add_gn_arg_bool  ("chip_progress_logging"                CONFIG_CHIP_PROG
 matter_add_gn_arg_bool  ("chip_automation_logging"              CONFIG_CHIP_AUTOMATION_LOGGING)
 matter_add_gn_arg_bool  ("chip_error_logging"                   CONFIG_CHIP_ERROR_LOGGING)
 matter_add_gn_arg_string("chip_crypto"                          "${CONFIG_CHIP_CRYPTO}")
-matter_add_gn_arg_bool  ("chip_external_mbedtls"                CONFIG_EXTERNAL_MBEDTLS_LIB)
 matter_add_gn_arg_string("chip_openiotsdk_software_version"           "${CONFIG_CHIP_OPEN_IOT_SDK_SOFTWARE_VERSION}")
 matter_add_gn_arg_string("chip_openiotsdk_software_version_string"    "${CONFIG_CHIP_OPEN_IOT_SDK_SOFTWARE_VERSION_STRING}")
 matter_add_gn_arg_bool  ("chip_enable_ota_requestor"            CONFIG_CHIP_OPEN_IOT_SDK_OTA_ENABLE)
@@ -79,7 +78,6 @@ matter_generate_args_tmp_file()
 matter_build(chip
     LIB_SHELL   ${CONFIG_CHIP_LIB_SHELL}
     LIB_TESTS   ${CONFIG_CHIP_LIB_TESTS}
-    LIB_MBEDTLS ${CONFIG_BUILD_MATTER_MBEDTLS_LIB}
     GN_DEPENDENCIES ${CONFIG_GN_DEPENDENCIES}
 )
 
