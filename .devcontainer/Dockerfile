@@ -15,7 +15,7 @@
 ARG BUILD_VERSION
 
 # All tools required for compilation belong in chip-build, forms "truth" for CHIP build tooling
-FROM connectedhomeip/chip-build-vscode:${BUILD_VERSION}
+FROM connectedhomeip/chip-build-openiotsdk:${BUILD_VERSION}
 
 # This Dockerfile contains things useful for an interactive development environment
 ARG USERNAME=vscode
@@ -51,26 +51,27 @@ RUN curl https://raw.githubusercontent.com/restyled-io/restyler/master/bin/resty
     && chmod +x /usr/local/bin/restyle-path \
     && :
 
-RUN mkdir -p /opt/sdk/sdks/ \
-    && chown -R $USERNAME:$USERNAME \
-    /opt/sdk/sdks/ `# NXP uses a patch_sdk script to change SDK files` \
-    /opt/espressif/esp-idf `# $USERNAME needs to own the esp-idf and tools for the examples to build` \
-    /opt/espressif/tools \
-    /opt/NordicSemiconductor/nrfconnect/ `# $USERNAME needs to own west configuration to build nRF Connect examples` \
-    /opt/ubuntu-21.04-aarch64-sysroot/usr/ `# allow read/write access to header and libraries` \
-    /opt/android/sdk `# allow licenses to be accepted` \
-    /opt/ameba/ambd_sdk_with_chip_non_NDA/ `# AmebaD requires access to change build_info.h` \
-    /opt/fsl-imx-xwayland/5.15-kirkstone/ \
-    /opt/openocd \
-    && :
+# RUN mkdir -p /opt/sdk/sdks/ \
+#     && chown -R $USERNAME:$USERNAME \
+#     /opt/sdk/sdks/ `# NXP uses a patch_sdk script to change SDK files` \
+#     /opt/espressif/esp-idf `# $USERNAME needs to own the esp-idf and tools for the examples to build` \
+#     /opt/espressif/tools \
+#     /opt/NordicSemiconductor/nrfconnect/ `# $USERNAME needs to own west configuration to build nRF Connect examples` \
+#     /opt/ubuntu-21.04-aarch64-sysroot/usr/ `# allow read/write access to header and libraries` \
+#     /opt/android/sdk `# allow licenses to be accepted` \
+#     /opt/ameba/ambd_sdk_with_chip_non_NDA/ `# AmebaD requires access to change build_info.h` \
+#     /opt/fsl-imx-xwayland/5.15-kirkstone/ \
+#     /opt/openocd \
+#     && :
 
-# Fix Tizen SDK paths for new user
-RUN sed -i '/^TIZEN_SDK_DATA_PATH/d' $TIZEN_SDK_ROOT/sdk.info \
-    && echo TIZEN_SDK_DATA_PATH=/home/$USERNAME/tizen-sdk-data >> $TIZEN_SDK_ROOT/sdk.info \
-    && ln -sf /home/$USERNAME/.tizen-cli-config $TIZEN_SDK_ROOT/tools/.tizen-cli-config \
-    && : # last line
+# # Fix Tizen SDK paths for new user
+# RUN sed -i '/^TIZEN_SDK_DATA_PATH/d' $TIZEN_SDK_ROOT/sdk.info \
+#     && echo TIZEN_SDK_DATA_PATH=/home/$USERNAME/tizen-sdk-data >> $TIZEN_SDK_ROOT/sdk.info \
+#     && ln -sf /home/$USERNAME/.tizen-cli-config $TIZEN_SDK_ROOT/tools/.tizen-cli-config \
+#     && : # last line
 
-ENV TIZEN_ROOTFS /tizen_rootfs
+# ENV TIZEN_ROOTFS /tizen_rootfs
 
 # Fast Model GDB plugins path for debugging support
 ENV FAST_MODEL_PLUGINS_PATH /opt/FastModelsPortfolio_11.16/plugins/Linux64_GCC-9.3
+ENV PW_ENVIRONMENT_ROOT=/workspaces/connectedhomeip/.environment
