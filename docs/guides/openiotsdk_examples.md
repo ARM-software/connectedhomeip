@@ -264,21 +264,37 @@ environment:
             export FAST_MODEL_PLUGINS_PATH=/opt/FastModelsPortfolio_11.16/plugins/Linux64_GCC-9.3
             ```
 
-### Testing setup
+### Python setup
 
-The Matter Python packages are required for the integration test suite. They are
-not provided as part of the VSCode devcontainer. To install these run the
-following command from the CLI:
+Matter examples requires specific Python environment. To setup all required
+Python packages use the helper script
+`${MATTER_ROOT}/scripts/setup/openiotsdk/python_env_setup.sh`. It installs base
+Open IoT SDK platform requirements and optional items:
+
+-   Matter Python controller - required by integration tests. Use `--controller`
+    argument to install.
+
+        Example:
+        ```
+        {MATTER_ROOT}/scripts/setup/openiotsdk/python_env_setup.sh --controller
+        ```
+        More information about the Python controller you can find
+
+    [here](../../src/controller/python/README.md).
+
+You can also setup a separate Python virtual environment in the specific
+directory. Use `-p/--path` argument and pass your own path.
+
+Example:
 
 ```
-${MATTER_ROOT}/scripts/run_in_build_env.sh \
-    './scripts/build_python.sh --install_virtual_env out/venv'
-
-source out/venv/bin/activate
+{MATTER_ROOT}/scripts/setup/openiotsdk/python_env_setup.sh --path out/venv
 ```
 
-More information about the Python tools you can find
-[here](../../src/controller/python/README.md).
+> 💡 **Notes**:
+>
+> If a custom Python virtual environment path is not passed the default Matter
+> environment is extended with additional packages.
 
 ## Configuration
 

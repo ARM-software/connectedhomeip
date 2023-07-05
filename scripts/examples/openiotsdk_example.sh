@@ -42,10 +42,10 @@ FAILED_TESTS=0
 IS_UNIT_TEST=0
 FVP_NETWORK="user"
 KVS_STORAGE_FILE=""
-NO_ACTIVATE=""
 CRYPTO_BACKEND="mbedtls"
 APP_VERSION="1"
 APP_VERSION_STR="0.0.1"
+VENV_PATH=""
 
 declare -A ps_storage_param=([instance]=qspi_sram [memspace]=0 [address]=0x660000 [size]=0x12000)
 
@@ -73,7 +73,7 @@ Options:
     -n,--network    <network_name>      FVP network interface name <network_name - default is "user" which means user network mode>
     -v,--version    <version_number>    Application version number <version_number - default is 1>
     -V,--versionStr <version_str>       Application version string <version_strr - default is "0.0.1">
-    --no-activate                       Do not activate the chip build environment
+    -e,--env        <env_path>          Use specific Python virtual environment <env_path - default is empty which means use Matter environment>
 Examples:
 EOF
 
@@ -280,8 +280,8 @@ function run_test() {
     fi
 }
 
-SHORT=C:,p:,d:,l:,b:,n:,k:,K:,v:,V:,c,s,h
-LONG=command:,path:,debug:,lwipdebug:,backend:,network:,kvsstore:,kvsfile:,version:,versionStr:,clean,scratch,help,no-activate
+SHORT=C:,p:,d:,l:,b:,n:,k:,K:,v:,V:,e:,c,s,h
+LONG=command:,path:,debug:,lwipdebug:,backend:,network:,kvsstore:,kvsfile:,version:,versionStr:,env:,clean,scratch,help
 OPTS=$(getopt -n build --options "$SHORT" --longoptions "$LONG" -- "$@")
 
 eval set -- "$OPTS"
@@ -328,16 +328,16 @@ while :; do
             FVP_NETWORK=$2
             shift 2
             ;;
-        --no-activate)
-            NO_ACTIVATE='YES'
-            shift
-            ;;
         -v | --version)
             APP_VERSION=$2
             shift 2
             ;;
         -V | --versionStr)
             APP_VERSION_STR=$2
+            shift 2
+            ;;
+        -e | --env)
+            VENV_PATH=$2
             shift 2
             ;;
         -* | --*)
@@ -410,9 +410,11 @@ if [ -z "$BUILD_PATH" ]; then
     BUILD_PATH="$EXAMPLE_PATH/build"
 fi
 
-if [ -z "$NO_ACTIVATE" ]; then
+if [ -z "$VENV_PATH" ]; then
     # Activate Matter environment
     source "$CHIP_ROOT"/scripts/activate.sh
+else
+    source "$VENV_PATH/bin/activate"
 fi
 
 if [[ $IS_UNIT_TEST -eq 0 ]]; then

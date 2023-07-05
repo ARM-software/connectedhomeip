@@ -15,9 +15,7 @@ appnope==0.1.3
 asttokens==2.2.1
     # via stack-data
 attrs==22.2.0
-    # via
-    #   jsonschema
-    #   pytest
+    # via jsonschema
 backcall==0.2.0
     # via ipython
 beautifulsoup4==4.11.2
@@ -28,6 +26,8 @@ bflb-iot-tool==1.8.3
     # via -r requirements.bouffalolab.txt
 bitstring==3.1.9
     # via -r requirements.esp32.txt
+brotli==1.0.9
+    # via flask-compress
 build==0.8.0
     # via
     #   -r requirements.all.txt
@@ -50,6 +50,7 @@ click==8.1.3
     # via
     #   -r requirements.build.txt
     #   -r requirements.esp32.txt
+    #   flask
     #   idf-component-manager
     #   imgtool
     #   mbed-tools
@@ -87,6 +88,8 @@ ecdsa==0.18.0
     #   -r requirements.esp32.txt
     #   -r requirements.ti.txt
     #   bflb-iot-tool
+exceptiongroup==1.1.2
+    # via pytest
 executing==1.2.0
     # via stack-data
 fastcore==1.5.28
@@ -95,6 +98,15 @@ fasteners==0.18
     # via mbed-os-tools
 filelock==3.9.0
     # via virtualenv
+flask==0.12.5
+    # via
+    #   flask-compress
+    #   flask-socketio
+    #   gdbgui
+flask-compress==1.13
+    # via gdbgui
+flask-socketio==2.9.6
+    # via gdbgui
 future==0.18.3
     # via
     #   -r requirements.esp32.txt
@@ -102,6 +114,10 @@ future==0.18.3
     #   idf-component-manager
     #   mbed-os-tools
     #   pylink-square
+gdbgui==0.13.2.0 ; python_version < "3.11" and platform_machine != "aarch64" and sys_platform == "linux"
+    # via -r requirements.esp32.txt
+gevent==1.5.0
+    # via gdbgui
 ghapi==1.0.3
     # via -r requirements.memory.txt
 gitdb==4.0.10
@@ -110,6 +126,8 @@ gitpython==3.1.31 ; platform_machine != "aarch64" and sys_platform == "linux"
     # via
     #   -r requirements.mbed.txt
     #   mbed-tools
+greenlet==2.0.2
+    # via gevent
 humanfriendly==10.0
     # via coloredlogs
 idf-component-manager==1.2.2
@@ -118,6 +136,8 @@ idna==3.4
     # via requests
 imgtool==1.9.0
     # via -r requirements.openiotsdk.txt
+importlib-metadata==6.7.0
+    # via markdown
 iniconfig==2.0.0
     # via pytest
 intelhex==2.3.0
@@ -127,13 +147,16 @@ intelhex==2.3.0
     #   mbed-os-tools
 ipython==8.11.0
     # via -r requirements.all.txt
-itsdangerous==2.0.1
-    # via -r requirements.esp32.txt
+itsdangerous==2.0.1 ; python_version < "3.11"
+    # via
+    #   -r requirements.esp32.txt
+    #   flask
 jedi==0.18.2
     # via ipython
 jinja2==3.0.3
     # via
     #   -r requirements.build.txt
+    #   flask
     #   mbed-tools
 jsonschema==4.17.3
     # via -r requirements.zephyr.txt
@@ -230,8 +253,6 @@ ptyprocess==0.7.0
     # via pexpect
 pure-eval==0.2.2
     # via stack-data
-py==1.11.0
-    # via pytest
 pycklink==0.1.1
     # via bflb-iot-tool
 pycparser==2.21
@@ -241,9 +262,13 @@ pycryptodome==3.9.8
     #   bflb-crypto-plus
     #   bflb-iot-tool
 pygdbmi==0.9.0.2
-    # via -r requirements.esp32.txt
+    # via
+    #   -r requirements.esp32.txt
+    #   gdbgui
 pygments==2.14.0
-    # via ipython
+    # via
+    #   gdbgui
+    #   ipython
 pykwalify==1.8.0
     # via west
 pylink-square==0.5.0
@@ -262,9 +287,9 @@ pyserial==3.5
     #   bflb-iot-tool
     #   mbed-os-tools
     #   mbed-tools
-pytest==6.2.5 ; sys_platform == "linux"
+pytest==7.4.0
     # via
-    #   -r requirements.mbed.txt
+    #   -r requirements.openiotsdk.txt
     #   pytest-json-report
     #   pytest-metadata
 pytest-json-report==1.5.0
@@ -282,7 +307,9 @@ python-dotenv==1.0.0 ; platform_machine != "aarch64" and sys_platform == "linux"
 python-engineio==3.14.2
     # via python-socketio
 python-socketio==4.6.1
-    # via -r requirements.esp32.txt
+    # via
+    #   -r requirements.esp32.txt
+    #   flask-socketio
 pytz==2022.7.1
     # via pandas
 pyudev==0.24.0 ; platform_machine != "aarch64" and sys_platform == "linux"
@@ -311,6 +338,8 @@ requests-toolbelt==0.10.1
     # via idf-component-manager
 ruamel-yaml==0.17.21
     # via pykwalify
+ruamel-yaml-clib==0.2.7
+    # via ruamel-yaml
 schema==0.7.5
     # via idf-component-manager
 six==1.16.0
@@ -338,8 +367,13 @@ tabulate==0.9.0
     # via
     #   -r requirements.memory.txt
     #   mbed-tools
-toml==0.10.2
-    # via pytest
+tomli==2.0.1
+    # via
+    #   build
+    #   mypy
+    #   pep517
+    #   pip-tools
+    #   pytest
 tornado==6.2
     # via -r requirements.all.txt
 tqdm==4.64.1
@@ -371,12 +405,16 @@ wcwidth==0.2.6
     #   prompt-toolkit
 websockets==10.4
     # via -r requirements.yaml_tests.txt
+werkzeug==0.16.1
+    # via flask
 west==1.0.0
     # via -r requirements.zephyr.txt
 wheel==0.38.4 ; sys_platform == "linux"
     # via
     #   -r requirements.all.txt
     #   pip-tools
+zipp==3.15.0
+    # via importlib-metadata
 
 # The following packages are considered to be unsafe in a requirements file:
 # pip
