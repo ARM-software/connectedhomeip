@@ -26,7 +26,7 @@ PLATFORM=corstone300
 CLEAN=0
 SCRATCH=0
 EXAMPLE_PATH=""
-BUILD_PATH=""
+BUILD_PATH="out/examples"
 TOOLCHAIN=arm-none-eabi-gcc
 DEBUG=false
 LWIP_DEBUG=false
@@ -68,7 +68,7 @@ Options:
     -d,--debug      <debug_enable>      Build in debug mode <true | false - default>
     -l,--lwipdebug  <lwip_debug_enable> Build with LwIP debug logs support <true | false - default>
     -b,--backend    <crypto_backend)    Select crypto backend <psa | mbedtls - default>
-    -p,--path       <build_path>        Build path <build_path - default is example_dir/build>
+    -p,--path       <build_path>        Build path <build_path - default is out/examples>
     -K,--kvsfile    <kvs_storage_file>  Path to KVS storage file which will be used to ensure persistence <kvs_storage_file - default is empty which means disable persistence>
     -n,--network    <network_name>      FVP network interface name <network_name - default is "user" which means user network mode>
     -v,--version    <version_number>    Application version number <version_number - default is 1>
@@ -392,8 +392,10 @@ if [[ "$EXAMPLE" == "unit-tests" ]]; then
     fi
     EXAMPLE_PATH="$CHIP_ROOT/src/test_driver/openiotsdk/unit-tests"
     IS_UNIT_TEST=1
+    BUILD_PATH="$BUILD_PATH/unit-tests"
 else
     EXAMPLE_PATH="$CHIP_ROOT/examples/$EXAMPLE/openiotsdk"
+    BUILD_PATH="$BUILD_PATH/$EXAMPLE"
 fi
 
 case "$CRYPTO_BACKEND" in
@@ -406,10 +408,6 @@ case "$CRYPTO_BACKEND" in
 esac
 
 TOOLCHAIN_PATH="toolchains/toolchain-$TOOLCHAIN.cmake"
-
-if [ -z "$BUILD_PATH" ]; then
-    BUILD_PATH="$EXAMPLE_PATH/build"
-fi
 
 if [ -z "$VENV_PATH" ]; then
     # Activate Matter environment
