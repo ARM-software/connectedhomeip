@@ -430,16 +430,16 @@
             "name": "Debug Open IoT SDK example application",
             "type": "cortex-debug",
             "request": "launch",
-            "cwd": "${workspaceRoot}/examples/${input:openiotsdkExample}/openiotsdk",
-            "executable": "./build/chip-openiotsdk-${input:openiotsdkExample}-example.elf",
+            "cwd": "${workspaceRoot}/out/examples/${input:openiotsdkExample}",
+            "executable": "chip-openiotsdk-${input:openiotsdkExample}-example.elf",
             "armToolchainPath": "${env:PW_ENVIRONMENT_ROOT}/cipd/packages/arm/bin/",
             "servertype": "external",
             "gdbTarget": "${input:openiotsdkRemoteHost}:31627", //GDBserver port on FVP
             "overrideLaunchCommands": [
                 "-enable-pretty-printing",
-                "add-symbol-file ./build/bl2.elf 0x10000000",
-                "add-symbol-file ./build/tfm_s.elf 0x38000400",
-                "add-symbol-file ./build/chip-openiotsdk-${input:openiotsdkExample}-example_ns.elf 0x28060400",
+                "add-symbol-file bl2.elf 0x10000000",
+                "add-symbol-file tfm_s.elf 0x38000400",
+                "add-symbol-file chip-openiotsdk-${input:openiotsdkExample}-example_ns.elf 0x28060400",
                 "break main_ns.cpp:main"
             ],
             "runToEntryPoint": "main",
@@ -450,16 +450,16 @@
             "name": "Debug Open IoT SDK unit-tests application",
             "type": "cortex-debug",
             "request": "launch",
-            "cwd": "${workspaceRoot}/src/test_driver/openiotsdk/unit-tests",
-            "executable": "./build/${input:openiotsdkUnitTest}.elf",
+            "cwd": "${workspaceRoot}/out/examples/unit-tests",
+            "executable": "${input:openiotsdkUnitTest}.elf",
             "armToolchainPath": "${env:PW_ENVIRONMENT_ROOT}/cipd/packages/arm/bin/",
             "servertype": "external",
             "gdbTarget": ":31627", //GDBserver port on FVP
             "overrideLaunchCommands": [
                 "-enable-pretty-printing",
-                "add-symbol-file ./build/bl2.elf 0x10000000",
-                "add-symbol-file ./build/tfm_s.elf 0x38000400",
-                "add-symbol-file ./build/${input:openiotsdkUnitTest}_ns.elf 0x28060400",
+                "add-symbol-file bl2.elf 0x10000000",
+                "add-symbol-file tfm_s.elf 0x38000400",
+                "add-symbol-file ${input:openiotsdkUnitTest}_ns.elf 0x28060400",
                 "break main_ns.cpp:main"
             ],
             "runToEntryPoint": "main",

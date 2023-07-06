@@ -34,6 +34,7 @@ jobs:
         env:
             TEST_NETWORK_NAME: OIStest
             TEST_PYTHON_VENV: out/venv
+            TEST_BUILD_PATH: out/examples
 
         runs-on: ubuntu-latest
         if: github.actor != 'restyled-io[bot]'
@@ -67,55 +68,55 @@ jobs:
             - name: Build shell example
               id: build_shell
               run: |
-                  scripts/examples/openiotsdk_example.sh shell
+                  scripts/examples/openiotsdk_example.sh -p $TEST_BUILD_PATH shell
                   .environment/pigweed-venv/bin/python3 scripts/tools/memory/gh_sizes.py \
                     openiotsdk release shell \
-                    examples/shell/openiotsdk/build/chip-openiotsdk-shell-example.elf \
+                    $TEST_BUILD_PATH/shell/chip-openiotsdk-shell-example.elf \
                     /tmp/bloat_reports/
 
             - name: Build lock-app example (mbedtls)
               id: build_lock_app_mbedtls
               run: |
-                  scripts/examples/openiotsdk_example.sh -b mbedtls lock-app
+                  scripts/examples/openiotsdk_example.sh -p $TEST_BUILD_PATH -b mbedtls lock-app
                   .environment/pigweed-venv/bin/python3 scripts/tools/memory/gh_sizes.py \
                     openiotsdk release lock-app-mbedtls \
-                    examples/lock-app/openiotsdk/build/chip-openiotsdk-lock-app-example.elf \
+                    $TEST_BUILD_PATH/lock-app/chip-openiotsdk-lock-app-example.elf \
                     /tmp/bloat_reports/
 
             - name: Build ota-requestor-app example
               id: build_ota_requestor_app
               timeout-minutes: 10
               run: |
-                  scripts/examples/openiotsdk_example.sh -v 1 -V 0.0.1 ota-requestor-app
+                  scripts/examples/openiotsdk_example.sh -p $TEST_BUILD_PATH -v 1 -V 0.0.1 ota-requestor-app
                   .environment/pigweed-venv/bin/python3 scripts/tools/memory/gh_sizes.py \
                     openiotsdk release ota-requestor-app \
-                    examples/ota-requestor-app/openiotsdk/build/chip-openiotsdk-ota-requestor-app-example.elf \
+                    $TEST_BUILD_PATH/ota-requestor-app/chip-openiotsdk-ota-requestor-app-example.elf \
                     /tmp/bloat_reports/
 
             - name: Build all-clusters-app example
               id: build_all_clusters_app
               timeout-minutes: 10
               run: |
-                  scripts/examples/openiotsdk_example.sh all-clusters-app
+                  scripts/examples/openiotsdk_example.sh -p $TEST_BUILD_PATH all-clusters-app
                   .environment/pigweed-venv/bin/python3 scripts/tools/memory/gh_sizes.py \
                     openiotsdk release all-clusters-app \
-                    examples/all-clusters-app/openiotsdk/build/chip-openiotsdk-all-clusters-app-example.elf \
+                    $TEST_BUILD_PATH/all-clusters-app/chip-openiotsdk-all-clusters-app-example.elf \
                     /tmp/bloat_reports/
 
             - name: Build tv-app example
               id: build_tv_app
               timeout-minutes: 10
               run: |
-                  scripts/examples/openiotsdk_example.sh tv-app
+                  scripts/examples/openiotsdk_example.sh -p $TEST_BUILD_PATH tv-app
                   .environment/pigweed-venv/bin/python3 scripts/tools/memory/gh_sizes.py \
                     openiotsdk release tv-app \
-                    examples/tv-app/openiotsdk/build/chip-openiotsdk-tv-app-example.elf \
+                    $TEST_BUILD_PATH/tv-app/chip-openiotsdk-tv-app-example.elf \
                     /tmp/bloat_reports/
 
             - name: Build unit tests (mbedtls)
               id: build_unit_tests_mbedtls
               run: |
-                  scripts/examples/openiotsdk_example.sh -b mbedtls unit-tests
+                  scripts/examples/openiotsdk_example.sh -p $TEST_BUILD_PATH -b mbedtls unit-tests
 
             - name: Build the OTA provider (Linux)
               id: build_ota_provider_app
@@ -138,10 +139,10 @@ jobs:
               if: steps.build_ota_requestor_app.outcome == 'success' && steps.build_ota_provider_app.outcome == 'success'
               timeout-minutes: 30
               run: |
-                  mkdir out/binaries
-                  cp examples/ota-requestor-app/openiotsdk/build/chip-openiotsdk-ota-requestor-app-example.elf out/binaries/
-                  scripts/examples/openiotsdk_example.sh -c -v 2 -V 0.0.2 ota-requestor-app
-                  cp examples/ota-requestor-app/openiotsdk/build/chip-openiotsdk-ota-requestor-app-example.ota out/binaries/
+                  mkdir -p out/binaries/ota-requestor-app
+                  cp $TEST_BUILD_PATH/ota-requestor-app/chip-openiotsdk-ota-requestor-app-example.elf out/binaries/ota-requestor-app
+                  scripts/examples/openiotsdk_example.sh -p $TEST_BUILD_PATH -c -v 2 -V 0.0.2 ota-requestor-app
+                  cp $TEST_BUILD_PATH/ota-requestor-app/chip-openiotsdk-ota-requestor-app-example.ota out/binaries/ota-requestor-app
                   scripts/run_in_ns.sh ${TEST_NETWORK_NAME}ns scripts/examples/openiotsdk_example.sh -C test -e $TEST_PYTHON_VENV -p out/binaries -v 2 -V 0.0.2 -n ${TEST_NETWORK_NAME}tap ota-requestor-app
 
             - name: "Test: all-clusters-app example"
@@ -164,16 +165,12 @@ jobs:
             - name: Build lock-app example (psa)
               id: build_lock_app_psa
               run: |
-                  scripts/examples/openiotsdk_example.sh -c -b psa lock-app
-                  .environment/pigweed-venv/bin/python3 scripts/tools/memory/gh_sizes.py \
-                    openiotsdk release lock-app-psa \
-                    examples/lock-app/openiotsdk/build/chip-openiotsdk-lock-app-example.elf \
-                    /tmp/bloat_reports/
+                  scripts/examples/openiotsdk_example.sh -p $TEST_BUILD_PATH -c -b psa lock-app
 
             - name: Build unit tests (psa)
               id: build_unit_tests_psa
               run: |
-                  scripts/examples/openiotsdk_example.sh -b psa unit-tests
+                  scripts/examples/openiotsdk_example.sh -p $TEST_BUILD_PATH -b psa unit-tests
 
             - name: "Test: lock-app example (psa)"
               if: steps.build_lock_app_psa.outcome == 'success'
