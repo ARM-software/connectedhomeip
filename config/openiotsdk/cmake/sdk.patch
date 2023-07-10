@@ -1,0 +1,27 @@
+diff --git a/components/connectivity/lwip/lwip_cmsis_port/src/lwip_stack.c b/components/connectivity/lwip/lwip_cmsis_port/src/lwip_stack.c
+index 95e3afc..cac5ef6 100644
+--- a/components/connectivity/lwip/lwip_cmsis_port/src/lwip_stack.c
++++ b/components/connectivity/lwip/lwip_cmsis_port/src/lwip_stack.c
+@@ -64,13 +64,7 @@ static const ip_addr_t *get_ipv6_addr(const struct netif *netif)
+     }
+ 
+     for (int i = 0; i < LWIP_IPV6_NUM_ADDRESSES; i++) {
+-        if (ip6_addr_isvalid(netif_ip6_addr_state(netif, i)) && !ip6_addr_islinklocal(netif_ip6_addr(netif, i))) {
+-            return netif_ip_addr6(netif, i);
+-        }
+-    }
+-
+-    for (int i = 0; i < LWIP_IPV6_NUM_ADDRESSES; i++) {
+-        if (ip6_addr_isvalid(netif_ip6_addr_state(netif, i))) {
++        if (!ip6_addr_isany(netif_ip6_addr(netif, i))) {
+             return netif_ip_addr6(netif, i);
+         }
+     }
+@@ -222,6 +216,7 @@ static err_t ethernet_interface_bringup(netif_context_t *context)
+ 
+ #if LWIP_IPV6
+     netif_create_ip6_linklocal_address(&context->lwip_netif, (u8_t)(context->lwip_netif.hwaddr_len == ETH_HWADDR_LEN));
++    context->lwip_netif.ip6_autoconfig_enabled = 1;
+ #endif /* LWIP_IPV6 */
+ 
+     context->connected = CONNECTION_STATUS_CONNECTING;

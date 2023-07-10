@@ -82,6 +82,7 @@ jobs:
 
             - name: Set up platform environment
               run: |
+                  git apply --directory='third_party/open-iot-sdk/sdk/' config/openiotsdk/cmake/sdk.patch
                   scripts/setup/openiotsdk/python_env_setup.sh -p $TEST_PYTHON_VENV --controller --pyedmgr
                   scripts/setup/openiotsdk/network_setup.sh -n $TEST_NETWORK_NAME up
 
