@@ -100,6 +100,21 @@ template("chip_test_suite") {
     }
   }
 
+  if (chip_device_platform == "openiotsdk")
+  {
+    if (defined(invoker.test_sources)) {
+      _test_name = string_replace(invoker.output_name, "lib", "")
+      _test_sources_list = []
+      foreach(_test, invoker.test_sources) {
+          _test_sources_list += [ string_replace(_test, ".cpp", "") ]
+      }
+      _test_sources_str = string_join(",", _test_sources_list)
+      _output = _test_name + "=" + _test_sources_str
+
+      write_file("${root_out_dir}/lib/${_test_name}/test_sources.txt", _output, "string")
+    }
+  }
+
   if (chip_link_tests) {
     tests = []
 

@@ -26,6 +26,9 @@ PLATFORM=corstone300
 CLEAN=0
 SCRATCH=0
 EXAMPLE_PATH=""
+EXAMPLE_EXE_PATH=""
+TEST_NAME=""
+TEST_CASE_NAME=""
 BUILD_PATH="out/examples"
 TOOLCHAIN=arm-none-eabi-gcc
 DEBUG=false
@@ -39,7 +42,6 @@ EXAMPLE_TEST_PATH="$CHIP_ROOT/src/test_driver/openiotsdk/integration-tests"
 TELNET_TERMINAL_PORT=5000
 TELNET_CONNECTION_PORT=""
 FAILED_TESTS=0
-IS_UNIT_TEST=0
 FVP_NETWORK="user"
 KVS_STORAGE_FILE=""
 CRYPTO_BACKEND="mbedtls"
@@ -52,11 +54,17 @@ declare -A ps_storage_param=([instance]=qspi_sram [memspace]=0 [address]=0x66000
 readarray -t SUPPORTED_APP_NAMES <"$CHIP_ROOT"/examples/platform/openiotsdk/supported_examples.txt
 SUPPORTED_APP_NAMES+=("unit-tests")
 
-readarray -t TEST_NAMES <"$CHIP_ROOT"/src/test_driver/openiotsdk/unit-tests/test_components.txt
+readarray -t TEST_COMPONETNS <"$CHIP_ROOT"/src/test_driver/openiotsdk/unit-tests/test_components.txt
+declare -A test_componenets_cases
+
+for test in "${TEST_COMPONETNS[@]}"; do
+    IFS='=' read -ra parts <<<"$test"
+    test_componenets_cases["${parts[0]}"]="${parts[1]}"
+done
 
 function show_usage() {
     cat <<EOF
-Usage: $0 [options] example [test_name]
+Usage: $0 [options] example [test_name] [test_case]
 
 Build, run or test the Open IoT SDK examples and unit-tests.
 
@@ -87,8 +95,14 @@ You run or test individual test suites of unit tests by using their names [test_
 
 EOF
 
-    for test in "${TEST_NAMES[@]}"; do
-        echo "    $test"
+    for test in "${!test_componenets_cases[@]}"; do
+        echo "  Test name:$test"
+        echo "      Test cases:"
+        value=${test_componenets_cases[$test]}
+        IFS=',' read -ra test_cases <<<"$value"
+        for test_case in "${test_cases[@]}"; do
+            echo "          $test_case"
+        done
     done
 
     cat <<EOF
@@ -376,12 +390,25 @@ case "$COMMAND" in
 esac
 
 if [[ "$EXAMPLE" == "unit-tests" ]]; then
+    EXAMPLE_PATH="$CHIP_ROOT/src/test_driver/openiotsdk/unit-tests"
+    BUILD_PATH="$BUILD_PATH/unit-tests"
     if [ ! -z "$2" ]; then
-        if [[ " ${TEST_NAMES[*]} " =~ " $2 " ]]; then
-            EXAMPLE=$2
-            echo "Use specific unit test $EXAMPLE"
-        elif [[ "$2" == "all" ]]; then
-            echo "Use all unit tests"
+        TEST_NAME=$2
+        if [ -v test_componenets_cases["${TEST_NAME}"] ]; then
+            echo "Use specific unit test $TEST_NAME"
+            if [ ! -z "$3" ]; then
+                TEST_CASE_NAME=$3
+                value=${test_componenets_cases[$TEST_NAME]}
+                IFS=',' read -ra test_cases <<<"$value"
+                if [[ " ${test_cases[*]} " =~ " $TEST_CASE_NAME " ]]; then
+                    echo "Use specific unit test case $TEST_CASE_NAME"
+                    EXAMPLE_EXE_PATH="$BUILD_PATH/$TEST_NAME/$TEST_CASE_NAME.elf"
+                else
+                    echo " Wrong unit test name"
+                    show_usage
+                    exit 2
+                fi
+            fi
         else
             echo " Wrong unit test name"
             show_usage
@@ -390,12 +417,12 @@ if [[ "$EXAMPLE" == "unit-tests" ]]; then
     else
         echo "Use all unit tests"
     fi
-    EXAMPLE_PATH="$CHIP_ROOT/src/test_driver/openiotsdk/unit-tests"
-    IS_UNIT_TEST=1
-    BUILD_PATH="$BUILD_PATH/unit-tests"
+    EXAMPLE_TEST_PATH+="/unit-tests"
 else
     EXAMPLE_PATH="$CHIP_ROOT/examples/$EXAMPLE/openiotsdk"
     BUILD_PATH="$BUILD_PATH/$EXAMPLE"
+    EXAMPLE_EXE_PATH="$BUILD_PATH/chip-openiotsdk-$EXAMPLE-example.elf"
+    EXAMPLE_TEST_PATH+="/$EXAMPLE"
 fi
 
 case "$CRYPTO_BACKEND" in
@@ -416,21 +443,13 @@ else
     source "$VENV_PATH/bin/activate"
 fi
 
-if [[ $IS_UNIT_TEST -eq 0 ]]; then
-    EXAMPLE_EXE_PATH="$BUILD_PATH/chip-openiotsdk-$EXAMPLE-example.elf"
-    EXAMPLE_TEST_PATH+="/$EXAMPLE"
-else
-    EXAMPLE_EXE_PATH="$BUILD_PATH/$EXAMPLE.elf"
-    EXAMPLE_TEST_PATH+="/unit-tests"
-fi
-
 if [[ "$COMMAND" == *"build"* ]]; then
     build_with_cmake
 fi
 
 if [[ "$COMMAND" == *"run"* ]]; then
-    if [[ "$EXAMPLE" == "unit-tests" ]]; then
-        echo "You have to specify the test suites to run"
+    if [ -z "$EXAMPLE_EXE_PATH" ]; then
+        echo "You have to specify the application to run"
         show_usage
         exit 2
     else
@@ -440,13 +459,35 @@ fi
 
 if [[ "$COMMAND" == *"test"* ]]; then
     if [[ "$EXAMPLE" == "unit-tests" ]]; then
-        for NAME in "${TEST_NAMES[@]}"; do
-            EXAMPLE=$NAME
-            EXAMPLE_EXE_PATH="$BUILD_PATH/$EXAMPLE.elf"
-            echo "Test specific unit test $EXAMPLE"
-            run_test
-        done
-
+        if [ ! -z "$TEST_NAME" ]; then
+            if [ ! -z "$TEST_CASE_NAME" ]; then
+                EXAMPLE=$TEST_CASE_NAME
+                echo "Test specific unit test case $EXAMPLE"
+                run_test
+            else
+                value=${test_componenets_cases[$TEST_NAME]}
+                IFS=',' read -ra test_cases <<<"$value"
+                for test_case in "${test_cases[@]}"; do
+                    EXAMPLE=$test_case
+                    EXAMPLE_EXE_PATH="$BUILD_PATH/$TEST_NAME/$EXAMPLE.elf"
+                    echo "Test specific unit test case $EXAMPLE"
+                    run_test
+                done
+            fi
+        else
+            for test in "${!test_componenets_cases[@]}"; do
+                echo "$test"
+                value=${test_componenets_cases[$test]}
+                IFS=',' read -ra test_cases <<<"$value"
+                for test_case in "${test_cases[@]}"; do
+                    echo "$test_case"
+                    EXAMPLE=$test_case
+                    EXAMPLE_EXE_PATH="$BUILD_PATH/$test/$EXAMPLE.elf"
+                    echo "Test specific unit test case $EXAMPLE"
+                    run_test
+                done
+            done
+        fi
     else
         run_test
     fi
