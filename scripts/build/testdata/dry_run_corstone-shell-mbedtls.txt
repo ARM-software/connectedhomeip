@@ -1,0 +1,8 @@
+# Commands will be run in CHIP project root.
+cd "{root}"
+
+# Generating corstone-shell-mbedtls
+cmake -GNinja -S {root}/examples/shell/corstone -B {out}/corstone-shell-mbedtls --toolchain=toolchains/toolchain-arm-none-eabi-gcc.cmake -DCMAKE_SYSTEM_PROCESSOR=cortex-m55 -DCMAKE_BUILD_TYPE=Release -DCONFIG_CHIP_CRYPTO=mbedtls
+
+# Building corstone-shell-mbedtls
+cmake --build {out}/corstone-shell-mbedtls

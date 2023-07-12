@@ -39,7 +39,7 @@ static_library("helpers") {
     "TestSetupSignallingPosix.cpp",
   ]
 
-  if (current_os != "mbed" && chip_device_platform != "openiotsdk") {
+  if (current_os != "mbed" && chip_device_platform != "corstone") {
     sources += [ "TestInetLayer.cpp" ]
   }
 

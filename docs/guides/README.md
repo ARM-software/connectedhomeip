@@ -23,12 +23,12 @@
 -   [Silicon Labs - Building](./silabs_efr32_building.md)
 -   [Silicon Labs - Software Update](./silabs_efr32_software_update.md)
 -   [TI - Platform Overview](./ti_platform_overview.md)
--   [Open IoT SDK - Platform Overview](./openiotsdk_platform_overview.md)
--   [Open IoT SDK - Examples](./openiotsdk_examples.md)
--   [Open IoT SDK - Unit Tests](./openiotsdk_unit_tests.md)
--   [Open IoT SDK - Integration Tests](./openiotsdk_integration_tests.md)
--   [Open IoT SDK - Commissioning](./openiotsdk_commissioning.md)
--   [Open IoT SDK - Software Update](./openiotsdk_examples_software_update.md)
+-   [Corstone- Platform Overview](./corstone_platform_overview.md)
+-   [Corstone- Examples](./corstone_examples.md)
+-   [Corstone- Unit Tests](./corstone_unit_tests.md)
+-   [Corstone- Integration Tests](./corstone_integration_tests.md)
+-   [Corstone- Commissioning](./corstone_commissioning.md)
+-   [Corstone- Software Update](./corstone_examples_software_update.md)
 
 ## Development Guides
 

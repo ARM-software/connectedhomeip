@@ -46,7 +46,7 @@ ALL_PLATFORMS = set([
     'webos',
     'mw320',
     'genio',
-    'openiotsdk',
+    'corstone',
     'silabs_docker',
 ])
 

@@ -231,9 +231,9 @@
             }
         },
         {
-            "label": "Setup Open IoT SDK network",
+            "label": "Setup Corstone network",
             "type": "shell",
-            "command": "sudo scripts/setup/openiotsdk/network_setup.sh -n${input:openiotsdkNetworkSetupName} ${input:openiotsdkNetworkSetupCmd}",
+            "command": "sudo scripts/setup/corstone/network_setup.sh -n${input:corstoneNetworkSetupName} ${input:corstoneNetworkSetupCmd}",
             "problemMatcher": {
                 "pattern": {
                     "regexp": "^(.*):(\\d+):(\\d+):\\s+(warning|error):\\s+(.*)$",
@@ -244,15 +244,15 @@
             }
         },
         {
-            "label": "Build Open IoT SDK example",
+            "label": "Build Corstone example",
             "type": "shell",
-            "command": "scripts/examples/openiotsdk_example.sh",
+            "command": "scripts/examples/corstone_example.sh",
             "args": [
                 "-Cbuild",
-                "-d${input:openiotsdkDebugMode}",
-                "-l${input:openiotsdkLwipDebug}",
-                "-b${input:openiotsdkCryptoBackend}",
-                "${input:openiotsdkExample}"
+                "-d${input:corstoneDebugMode}",
+                "-l${input:corstoneLwipDebug}",
+                "-b${input:corstoneCryptoBackend}",
+                "${input:corstoneExample}"
             ],
             "group": "build",
             "problemMatcher": {
@@ -265,14 +265,14 @@
             }
         },
         {
-            "label": "Build Open IoT SDK unit-tests",
+            "label": "Build Corstone unit-tests",
             "type": "shell",
-            "command": "scripts/examples/openiotsdk_example.sh",
+            "command": "scripts/examples/corstone_example.sh",
             "args": [
                 "-Cbuild",
-                "-d${input:openiotsdkDebugMode}",
-                "-l${input:openiotsdkLwipDebug}",
-                "-b${input:openiotsdkCryptoBackend}",
+                "-d${input:corstoneDebugMode}",
+                "-l${input:corstoneLwipDebug}",
+                "-b${input:corstoneCryptoBackend}",
                 "unit-tests"
             ],
             "group": "build",
@@ -286,15 +286,15 @@
             }
         },
         {
-            "label": "Run Open IoT SDK example",
+            "label": "Run Corstone example",
             "type": "shell",
             "command": "scripts/run_in_ns.sh",
             "args": [
-                "${input:openiotsdkNetworkNamespace}",
-                "scripts/examples/openiotsdk_example.sh",
+                "${input:corstoneNetworkNamespace}",
+                "scripts/examples/corstone_example.sh",
                 "-Crun",
-                "-n${input:openiotsdkNetworkInterface}",
-                "${input:openiotsdkExample}"
+                "-n${input:corstoneNetworkInterface}",
+                "${input:corstoneExample}"
             ],
             "group": "test",
             "problemMatcher": {
@@ -307,10 +307,10 @@
             }
         },
         {
-            "label": "Run Open IoT SDK unit-tests",
+            "label": "Run Corstone unit-tests",
             "type": "shell",
-            "command": "scripts/examples/openiotsdk_example.sh",
-            "args": ["-Crun", "unit-tests", "${input:openiotsdkUnitTest}"],
+            "command": "scripts/examples/corstone_example.sh",
+            "args": ["-Crun", "unit-tests", "${input:corstoneUnitTest}"],
             "group": "test",
             "problemMatcher": {
                 "pattern": {
@@ -322,15 +322,15 @@
             }
         },
         {
-            "label": "Test Open IoT SDK example",
+            "label": "Test Corstone example",
             "type": "shell",
             "command": "scripts/run_in_ns.sh",
             "args": [
-                "${input:openiotsdkNetworkNamespace}",
-                "scripts/examples/openiotsdk_example.sh",
+                "${input:corstoneNetworkNamespace}",
+                "scripts/examples/corstone_example.sh",
                 "-Ctest",
-                "-n${input:openiotsdkNetworkInterface}",
-                "${input:openiotsdkExample}"
+                "-n${input:corstoneNetworkInterface}",
+                "${input:corstoneExample}"
             ],
             "group": "test",
             "problemMatcher": {
@@ -343,10 +343,10 @@
             }
         },
         {
-            "label": "Test Open IoT SDK unit-tests",
+            "label": "Test Corstone unit-tests",
             "type": "shell",
-            "command": "scripts/examples/openiotsdk_example.sh",
-            "args": ["-Ctest", "unit-tests", "${input:openiotsdkUnitTest}"],
+            "command": "scripts/examples/corstone_example.sh",
+            "args": ["-Ctest", "unit-tests", "${input:corstoneUnitTest}"],
             "group": "test",
             "problemMatcher": {
                 "pattern": {
@@ -358,16 +358,16 @@
             }
         },
         {
-            "label": "Debug Open IoT SDK example",
+            "label": "Debug Corstone example",
             "type": "shell",
             "command": "scripts/run_in_ns.sh",
             "args": [
-                "${input:openiotsdkNetworkNamespace}",
-                "scripts/examples/openiotsdk_example.sh",
+                "${input:corstoneNetworkNamespace}",
+                "scripts/examples/corstone_example.sh",
                 "-Crun",
-                "-n${input:openiotsdkNetworkInterface}",
+                "-n${input:corstoneNetworkInterface}",
                 "-dtrue",
-                "${input:openiotsdkExample}"
+                "${input:corstoneExample}"
             ],
             "group": "none",
             "isBackground": true,
@@ -386,14 +386,14 @@
             }
         },
         {
-            "label": "Debug Open IoT SDK unit-tests",
+            "label": "Debug Corstone unit-tests",
             "type": "shell",
-            "command": "scripts/examples/openiotsdk_example.sh",
+            "command": "scripts/examples/corstone_example.sh",
             "args": [
                 "-Crun",
                 "-dtrue",
                 "unit-tests",
-                "${input:openiotsdkUnitTest}"
+                "${input:corstoneUnitTest}"
             ],
             "group": "none",
             "isBackground": true,
@@ -457,65 +457,65 @@
         },
         {
             "type": "pickString",
-            "id": "openiotsdkNetworkSetupCmd",
+            "id": "corstoneNetworkSetupCmd",
             "description": "Which command do you wish to use?",
             "options": ["up", "down", "restart"],
             "default": "up"
         },
         {
             "type": "promptString",
-            "id": "openiotsdkNetworkSetupName",
+            "id": "corstoneNetworkSetupName",
             "description": "Type the network namespace name that you want to use.",
             "default": "ARM"
         },
         {
             "type": "pickString",
-            "id": "openiotsdkDebugMode",
+            "id": "corstoneDebugMode",
             "description": "Do you want to use debug mode?",
             "options": ["false", "true"],
             "default": "false"
         },
         {
             "type": "pickString",
-            "id": "openiotsdkLwipDebug",
+            "id": "corstoneLwipDebug",
             "description": "Do you want to use LwIP debug logs?",
             "options": ["false", "true"],
             "default": "false"
         },
         {
             "type": "pickString",
-            "id": "openiotsdkCryptoBackend",
+            "id": "corstoneCryptoBackend",
             "description": "Which Crypto algorithm do you wish to use?",
             "options": ["mbedtls", "psa"],
             "default": "mbedtls"
         },
         {
             "type": "command",
-            "id": "openiotsdkExample",
+            "id": "corstoneExample",
             "command": "shellCommand.execute",
             "args": {
-                "command": "cat examples/platform/openiotsdk/supported_examples.txt",
-                "description": "What Open IoT SDK example application do you want to use?"
+                "command": "cat examples/platform/corstone/supported_examples.txt",
+                "description": "What Corstone example application do you want to use?"
             }
         },
         {
             "type": "command",
-            "id": "openiotsdkUnitTest",
+            "id": "corstoneUnitTest",
             "command": "shellCommand.execute",
             "args": {
-                "command": "cat src/test_driver/openiotsdk/unit-tests/test_components.txt",
-                "description": "What Open IoT SDK unit test application do you want to use?"
+                "command": "cat src/test_driver/corstone/unit-tests/test_components.txt",
+                "description": "What Corstone unit test application do you want to use?"
             }
         },
         {
             "type": "promptString",
-            "id": "openiotsdkNetworkNamespace",
+            "id": "corstoneNetworkNamespace",
             "description": "Type the network namespace that you want to use. \"default\" means host default network namespace",
             "default": "default"
         },
         {
             "type": "promptString",
-            "id": "openiotsdkNetworkInterface",
+            "id": "corstoneNetworkInterface",
             "description": "Type the network interface name that you want to use. \"user\" means user network mode",
             "default": "user"
         },
@@ -660,8 +660,8 @@
                 "nrf-nrf5340dk-pump",
                 "nrf-nrf5340dk-pump-controller",
                 "nrf-nrf5340dk-shell",
-                "openiotsdk-lock",
-                "openiotsdk-shell",
+                "corstone-lock",
+                "corstone-shell",
                 "qpg-qpg6100-lock",
                 "telink-tlsr9518adk80d-all-clusters",
                 "telink-tlsr9518adk80d-all-clusters-minimal",
