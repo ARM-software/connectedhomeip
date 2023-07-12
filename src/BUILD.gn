@@ -125,9 +125,9 @@ if (chip_build_tests) {
       # TODO(#10447): Controller test has HF on EFR32.
       deps += [ "${chip_root}/src/controller/tests/data_model" ]
 
-      # Skip controller test for Open IoT SDK
+      # Skip controller test for Corstone
       # https://github.com/project-chip/connectedhomeip/issues/23747
-      if (chip_device_platform != "openiotsdk") {
+      if (chip_device_platform != "corstone") {
         deps += [ "${chip_root}/src/controller/tests" ]
       }
     }

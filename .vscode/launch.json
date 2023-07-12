@@ -427,43 +427,43 @@
         },
 
         {
-            "name": "Debug Open IoT SDK example application",
+            "name": "Debug Corstone example application",
             "type": "cortex-debug",
             "request": "launch",
-            "cwd": "${workspaceRoot}/examples/${input:openiotsdkExample}/openiotsdk",
-            "executable": "./build/chip-openiotsdk-${input:openiotsdkExample}-example.elf",
+            "cwd": "${workspaceRoot}/out/examples/${input:corstoneExample}",
+            "executable": "chip-corstone-${input:corstoneExample}-example.elf",
             "armToolchainPath": "${env:PW_ENVIRONMENT_ROOT}/cipd/packages/arm/bin/",
             "servertype": "external",
-            "gdbTarget": "${input:openiotsdkRemoteHost}:31627", //GDBserver port on FVP
+            "gdbTarget": "${input:corstoneRemoteHost}:31627", //GDBserver port on FVP
             "overrideLaunchCommands": [
                 "-enable-pretty-printing",
-                "add-symbol-file ./build/bl2.elf 0x10000000",
-                "add-symbol-file ./build/tfm_s.elf 0x38000400",
-                "add-symbol-file ./build/chip-openiotsdk-${input:openiotsdkExample}-example_ns.elf 0x28060400",
+                "add-symbol-file bl2.elf 0x10000000",
+                "add-symbol-file tfm_s.elf 0x38000400",
+                "add-symbol-file chip-corstone-${input:corstoneExample}-example_ns.elf 0x28060400",
                 "break main_ns.cpp:main"
             ],
             "runToEntryPoint": "main",
-            "preLaunchTask": "Debug Open IoT SDK example",
+            "preLaunchTask": "Debug Corstone example",
             "showDevDebugOutput": "parsed"
         },
         {
-            "name": "Debug Open IoT SDK unit-tests application",
+            "name": "Debug Corstone unit-tests application",
             "type": "cortex-debug",
             "request": "launch",
-            "cwd": "${workspaceRoot}/src/test_driver/openiotsdk/unit-tests",
-            "executable": "./build/${input:openiotsdkUnitTest}.elf",
+            "cwd": "${workspaceRoot}/out/examples/unit-tests",
+            "executable": "${input:corstoneUnitTest}.elf",
             "armToolchainPath": "${env:PW_ENVIRONMENT_ROOT}/cipd/packages/arm/bin/",
             "servertype": "external",
             "gdbTarget": ":31627", //GDBserver port on FVP
             "overrideLaunchCommands": [
                 "-enable-pretty-printing",
-                "add-symbol-file ./build/bl2.elf 0x10000000",
-                "add-symbol-file ./build/tfm_s.elf 0x38000400",
-                "add-symbol-file ./build/${input:openiotsdkUnitTest}_ns.elf 0x28060400",
+                "add-symbol-file bl2.elf 0x10000000",
+                "add-symbol-file tfm_s.elf 0x38000400",
+                "add-symbol-file ${input:corstoneUnitTest}_ns.elf 0x28060400",
                 "break main_ns.cpp:main"
             ],
             "runToEntryPoint": "main",
-            "preLaunchTask": "Debug Open IoT SDK unit-tests",
+            "preLaunchTask": "Debug Corstone unit-tests",
             "showDevDebugOutput": "parsed"
         }
     ],
@@ -523,26 +523,26 @@
         },
         {
             "type": "command",
-            "id": "openiotsdkExample",
+            "id": "corstoneExample",
             "command": "shellCommand.execute",
             "args": {
-                "command": "cat examples/platform/openiotsdk/supported_examples.txt",
-                "description": "What Open IoT SDK example application do you want to use?"
+                "command": "cat examples/platform/corstone/supported_examples.txt",
+                "description": "What Corstone example application do you want to use?"
             }
         },
         {
             "type": "promptString",
-            "id": "openiotsdkRemoteHost",
+            "id": "corstoneRemoteHost",
             "description": "Type the hostname/IP address of external GDB target that you want to connect to. Leave blank for internal GDB server",
             "default": ""
         },
         {
             "type": "command",
-            "id": "openiotsdkUnitTest",
+            "id": "corstoneUnitTest",
             "command": "shellCommand.execute",
             "args": {
-                "command": "cat src/test_driver/openiotsdk/unit-tests/test_components.txt",
-                "description": "What Open IoT SDK unit test application do you want to use?"
+                "command": "cat src/test_driver/corstone/unit-tests/test_components.txt",
+                "description": "What Corstone unit test application do you want to use?"
             }
         }
     ]

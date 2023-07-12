@@ -276,15 +276,15 @@
 	branch = main
 	platforms = genio
 [submodule "open-iot-sdk"]
-	path = third_party/open-iot-sdk/sdk
-	url = https://git.gitlab.arm.com/iot/open-iot-sdk/sdk.git
+	path = third_party/corstone/sdk
+	url = https://gitlab.arm.com/iot/open-iot-sdk/sdk
 	branch = main
-	platforms = openiotsdk
+	platforms = corstone
 [submodule "pyedmgr"]
-	path = third_party/open-iot-sdk/pyedmgr
+	path = third_party/corstone/pyedmgr
 	url = https://gitlab.arm.com/iot/open-iot-sdk/tools/pyedmgr
 	branch = main
-	platforms = openiotsdk
+	platforms = corstone
 [submodule "bouffalolab_sdk"]
 	path = third_party/bouffalolab/repo
 	url = https://github.com/bouffalolab/bl_iot_sdk_tiny.git

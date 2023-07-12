@@ -957,7 +957,6 @@ OnOffClusterTest
 OnOffSwitchConfiguration
 OnPlatformEvent
 OO
-openiotsdk
 openjdk
 OpenOCD
 OpenSSL
