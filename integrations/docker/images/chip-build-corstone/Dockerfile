@@ -28,7 +28,6 @@ COPY --from=build /opt/FVP_Corstone_SSE-300/ /opt/FVP_Corstone_SSE-300/
 RUN set -x \
     && apt-get update \
     && DEBIAN_FRONTEND=noninteractive apt-get install -fy \
-    expect \
     telnet \
     srecord \
     && apt-get clean \
