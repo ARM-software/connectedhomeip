@@ -12,7 +12,7 @@ FROM connectedhomeip/chip-build-ameba:${VERSION} AS ameba
 FROM connectedhomeip/chip-build-k32w:${VERSION} AS k32w
 FROM connectedhomeip/chip-build-imx:${VERSION} AS imx
 FROM connectedhomeip/chip-build-ti:${VERSION} AS ti
-FROM connectedhomeip/chip-build-openiotsdk:${VERSION} AS openiotsdk
+FROM connectedhomeip/chip-build-corstone:${VERSION} AS corstone
 FROM connectedhomeip/chip-build-bouffalolab:${VERSION} AS bouffalolab
 FROM connectedhomeip/chip-build-asr:${VERSION} AS asr
 FROM connectedhomeip/chip-build:${VERSION}
@@ -50,7 +50,7 @@ COPY --from=imx /opt/fsl-imx-xwayland /opt/fsl-imx-xwayland
 
 COPY --from=ti /opt/ti/sysconfig_1.15.0 /opt/ti/sysconfig_1.15.0
 
-COPY --from=openiotsdk /opt/FVP_Corstone_SSE-300/ /opt/FVP_Corstone_SSE-300/
+COPY --from=corstone /opt/FVP_Corstone_SSE-300/ /opt/FVP_Corstone_SSE-300/
 
 COPY --from=bouffalolab /opt/bouffalolab_sdk /opt/bouffalolab_sdk
 
@@ -73,7 +73,7 @@ RUN set -x \
     && rm -rf /var/lib/apt/lists/* \
     && : # last line
 
-# Required for the Open IoT SDK platform
+# Required for the Corstone platform
 RUN set -x \
     && apt-get update \
     && DEBIAN_FRONTEND=noninteractive apt-get install -fy \
